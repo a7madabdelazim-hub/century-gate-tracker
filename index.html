@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Century Gate">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231e40af'/%3E%3Cstop offset='1' stop-color='%230f172a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='115' fill='url(%23g)'/%3E%3Ccircle cx='256' cy='256' r='120' opacity='0.3' fill='none' stroke='%2360a5fa' stroke-width='12'/%3E%3Cpath d='M176 256 L256 176 L336 256 L256 336 Z' stroke='%2393c5fd' stroke-width='8' fill='none' opacity='0.6'/%3E%3Ctext x='256' y='310' font-family='system-ui, sans-serif' font-size='180' font-weight='800' fill='%23ffffff' text-anchor='middle'%3ECG%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231e40af'/%3E%3Cstop offset='1' stop-color='%230f172a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='115' fill='url(%23bg)'/%3E%3Cpath d='M160 120 H320 V390 H160 Z' fill='none' stroke='%23ffffff' stroke-width='18' stroke-linejoin='round'/%3E%3Cpath d='M190 160 L290 160 L260 210 L260 260 L220 260 L220 210 Z' fill='%2360a5fa' opacity='0.9'/%3E%3Cpath d='M190 300 H290 M190 330 H260' stroke='%2393c5fd' stroke-width='14' stroke-linecap='round'/%3E%3Ccircle cx='330' cy='330' r='55' fill='%2310b981' stroke='%23ffffff' stroke-width='8'/%3E%3Cpath d='M305 330 L325 350 L355 310' fill='none' stroke='%23ffffff' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
 <!-- jsPDF and AutoTable for PDF Export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -56,7 +56,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .btn-danger:hover{background:var(--red-bg);border-color:var(--red)}
 .btn-sm{padding:4px 8px;font-size:11px}
 
-/* FIX 1: Dashboard Scrollability on Mobile */
+/* Dashboard */
 #dashboardArea{max-height:45vh;overflow-y:auto;overflow-x:hidden;transition:max-height .3s ease;flex-shrink:0;-webkit-overflow-scrolling:touch}
 #dashboardArea.hidden{max-height:0 !important}
 .dash-inner{padding:12px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;background:var(--surface);border-bottom:1px solid var(--border)}
@@ -100,7 +100,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
 caption{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 
-/* FIX 4: Prevent iOS sticky header jumping with hardware acceleration */
 thead th{position:-webkit-sticky;position:sticky;top:0;z-index:50;background:#f8fafc;border-bottom:2px solid var(--border);padding:10px 8px;font-size:13px;font-weight:800;color:#0f172a;text-align:left;white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s,background .15s;border-right:1px solid var(--border);border-top:1px solid var(--border);transform: translateZ(0); -webkit-transform: translateZ(0); will-change: transform;}
 thead th:first-child{border-left:1px solid var(--border)}
 thead th:last-child{border-right:1px solid var(--border)}
@@ -140,17 +139,7 @@ td.cliche-col input, th.cliche-col {
   font-weight: 700;
 }
 
-/* FIX 5: Color coding for Invoice Status and Payment Badges */
-td.inv-status-paid select { color: var(--green-text); font-weight: 700; }
-td.inv-status-unpaid select { color: var(--red-text); font-weight: 700; }
-
 .auto-cell{background:var(--accent-bg);border-radius:4px;padding:4px 6px;font-weight:700;font-size:12px;text-align:right;color:var(--accent);min-width:60px;display:block;border:1px solid var(--accent-border)}
-.auto-cell.payment{font-weight:600;text-align:center;font-size:11px}
-
-.badge{display:inline-block;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
-.badge-green{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
-.badge-red{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
-.badge-amber{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
 
 .cb-wrap{display:flex;align-items:center;justify-content:center;height:32px}
 .cb-wrap input[type="checkbox"]{appearance:none;width:18px;height:18px;border:2px solid var(--border);border-radius:4px;cursor:pointer;transition:all .15s;position:relative;flex-shrink:0}
@@ -199,7 +188,6 @@ tr:hover .del-btn{opacity:1}
   .table-wrap { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   thead th { padding: 8px 6px; font-size: 11px; }
   td input, td select { padding: 8px 4px; font-size: 13px; }
-  .cb-wrap input[type="checkbox"] { width: 20px; height: 20px; }
   
   .toast-container { left: 16px; right: 16px; bottom: 20px; }
   .toast { width: 100%; text-align: center; }
@@ -252,12 +240,11 @@ tr:hover .del-btn{opacity:1}
       <option>In Progress</option>
       <option>Completed</option>
     </select>
-    <!-- FIX 2: Invoice Status Filter Box -->
+    <!-- 1. Renamed Dropdown and Updated Options -->
     <select class="filter-select" id="filterInvoice" onchange="applyFilters()">
-      <option value="">All Invoices</option>
-      <option value="full">✅ Fully Paid</option>
-      <option value="advance">🔵 50% Advance Paid</option>
-      <option value="none">❌ No Payment</option>
+      <option value="">All Invoices Status</option>
+      <option value="Invoiced">Invoiced</option>
+      <option value="Not Invoiced">Not Invoiced</option>
     </select>
     <div class="toolbar-right">
       <span class="row-count" id="rowCount"></span>
@@ -272,8 +259,7 @@ tr:hover .del-btn{opacity:1}
         <col style="width:80px"><col style="width:130px"><col style="width:88px"><col style="width:115px">
         <col style="width:90px"><col style="width:125px"><col style="width:155px">
         <col style="width:72px"><col style="width:60px"><col style="width:85px"><col style="width:95px"><col style="width:95px">
-        <col style="width:130px"><col style="width:95px"><col style="width:90px"><col style="width:100px">
-        <col style="width:65px"><col style="width:40px"><col style="width:42px"><col style="width:135px">
+        <col style="width:130px"><col style="width:95px"><col style="width:100px"><col style="width:100px">
         <col style="width:28px">
       </colgroup>
       <thead id="thead"></thead>
@@ -295,8 +281,7 @@ tr:hover .del-btn{opacity:1}
 <div class="toast-container" id="toasts"></div>
 
 <script>
-var PAY_NONE = 'none', PAY_ADV = 'advance', PAY_FULL = 'full';
-
+// 2. Removed 'remQty', 'advance', 'fullPay', 'paySum' from COLS
 var COLS=[
   {k:'id',l:'Order ID',t:'text',sortable:true},
   {k:'date',l:'Order Date',t:'date',sortable:true},
@@ -312,12 +297,8 @@ var COLS=[
   {k:'total',l:'Total Value',t:'auto',sortable:true},
   {k:'deadline',l:'Deadline',t:'date',sortable:true},
   {k:'prodStatus',l:'Production',t:'select',o:['In Progress','Completed'],sortable:true},
-  {k:'invStatus',l:'Invoice',t:'select',o:['Invoiced','Not Invoiced'],sortable:true},
+  {k:'invStatus',l:'Invoice Status',t:'select',o:['Invoiced','Not Invoiced'],sortable:true},
   {k:'delStatus',l:'Delivery',t:'select',o:['Fully Delivered','Not Shipped'],sortable:true},
-  {k:'remQty',l:'Rem. Qty',t:'number',sortable:false},
-  {k:'advance',l:'50%',t:'checkbox',sortable:true},
-  {k:'fullPay',l:'Full',t:'checkbox',sortable:true},
-  {k:'paySum',l:'Payment Summary',t:'payauto',sortable:true},
   {k:'_del',l:'',t:'delete',sortable:false}
 ];
 
@@ -326,14 +307,6 @@ function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/<
 function fmt(n){if(n==null||n==='')return'';return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmtInt(n){if(n==null||n==='')return'';return Number(n).toLocaleString('en-US')}
 function calcTotal(r){return safeNum(r.qty)*safeNum(r.price)+safeNum(r.cliche)}
-function paySum(r){if(r.fullPay)return PAY_FULL;if(r.advance)return PAY_ADV;return PAY_NONE}
-
-// FIX 5: Color coded payment labels
-function payLabel(s){
-  if(s===PAY_FULL)return'<span class="badge badge-green">&#10003; Fully Paid</span>';
-  if(s===PAY_ADV)return'<span class="badge badge-amber">&#9679; 50% Advance Paid</span>';
-  return'<span class="badge badge-red">&#10007; No Payment</span>';
-}
 
 function parseDate(str) {
   if (!str) return '';
@@ -353,173 +326,174 @@ function toast(msg,type){
   setTimeout(function(){if(d.parentNode)d.remove()},3000);
 }
 
-function arrToObj(a){return{id:a[0],date:parseDate(a[1]),custNo:a[2],custName:a[3],orderType:a[4],productType:a[5],desc:a[6],qty:a[7],unit:a[8],price:a[9],cliche:a[10],total:a[11],deadline:parseDate(a[12]),prodStatus:a[13],invStatus:a[14],delStatus:a[15],remQty:a[16],advance:!!a[17],fullPay:!!a[18]}}
+// Removed unmapped fields from array object mapping
+function arrToObj(a){return{id:a[0],date:parseDate(a[1]),custNo:a[2],custName:a[3],orderType:a[4],productType:a[5],desc:a[6],qty:a[7],unit:a[8],price:a[9],cliche:a[10],total:a[11],deadline:parseDate(a[12]),prodStatus:a[13],invStatus:a[14],delStatus:a[15]}}
 
 function getInitialData(){return[
-["ORD-001","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Sheet","ALU SHEET",63,"CTN",126.50,0,7969.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-002","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 13 CM",100,"CTN",88.00,0,8800.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,1],
-["ORD-003","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 10 CM",128,"CTN",107.25,0,13728.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-004","07-Apr-2026","12034091","HIPPO","New Order","Printed Paper Bags","TH BAG",11250,"PCS",0.63,2000,9087.50,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-005","07-Apr-2026","12034091","HIPPO","New Order","Printed Sheet","SHEET 25*35",50000,"PCS",0.095,400,5150.00,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-006","14-Apr-2026","12034088","FATTBOY","Reorder","Printed Paper Bags","SOS BAG",103,"CTN",118.50,0,12205.50,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-007","14-Apr-2026","12034088","FATTBOY","Reorder","Printed Boxes","LARGE FRIES BOX",30000,"PCS",0.18,0,5400.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-008","14-Apr-2026","12034088","FATTBOY","New Order","Printed Boxes","NASHFEL BOX",16100,"PCS",0.46,0,7406.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-009","14-Apr-2026","12034089","JOMIER","Reorder","Printed Paper Bags","SOS BAG",117,"CTN",118.50,0,13864.50,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-010","14-Apr-2026","12034089","JOMIER","New Order","Printed Boxes","FRIES BOX",26000,"PCS",0.43,0,11180.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-011","14-Apr-2026","12034089","JOMIER","Reorder","Printed Cups","PAPER CUP 7oz",45000,"PCS",0.14,0,6300.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-012","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SAT BAG",71,"CTN",290.00,0,20590.00,"14-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-013","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Cups","9oz PAPER CUP WITH LID",210,"CTN",137.50,0,28875.00,"14-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-014","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Napkins","NAPKIN 2PLY",200,"CTN",75.00,0,15000.00,"14-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-015","10-Apr-2026","12034060","FLAG","Reorder","Printed Boxes","FRIES BOX",11730,"PCS",0.94,0,11026.20,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-016","20-Apr-2026","12034060","YOUR BURGER","New Order","Printed Boxes","BURGER BOX",10000,"PCS",0.60,0,6000.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-017","10-May-2026","12034060","YOUR BURGER","New Order","Printed Paper Bags","TH BAG BASE 18",10000,"PCS",0.69,1000.00,7900.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-018","28-Apr-2026","12034039","DANAT TIBA","Reorder","Plain Items","BROWN PAPER #8",1200,"CTN",22.00,0,26400.00,"05-May-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-019","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Paper Bags","SOS BAG",146,"CTN",92.00,2300.00,15732.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-020","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Paper Bags","TWISTED HANDLE BAG",72,"CTN",97.50,2850.00,9870.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-021","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Cups","PAPER CUP 9oz",104,"CTN",130.00,1200.00,14720.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-022","14-Jun-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",70,"CTN",63.00,0,4410.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-023","30-May-2026","12034068","OLD BS GOLD","Reorder","Printed Sheet","ALU SHEET",120000,"PCS",0.12,0,14256.00,"15-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-024","19-Apr-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",105.00,0,5250.00,"20-May-2026","Completed","Not Invoiced","Not Shipped","",0,0],
-["ORD-025","19-Apr-2026","12034073","CLASH BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",70.00,0,3500.00,"20-May-2026","Completed","Not Invoiced","Not Shipped","",0,0],
-["ORD-026","23-May-2026","12034084","HALIM","New Order","Printed Sheet","PTD SHEET 25×35",50,"CTN",70.00,0,3500.00,"16-May-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-027","02-Jun-2026","12034084","TOLIMA","New Order","Printed Paper Bags","PTD POUCH",20000,"PCS",0.16,800.00,4000.00,"25-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-028","23-May-2026","12034084","TOLIMA","New Order","Printed Sheet","PTD SHEET 25×35",50,"CTN",70.00,0,3500.00,"16-May-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-029","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","AUTOCUT 800",200,"CTN",48.00,0,9600.00,"22-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-030","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","MAXI ROLL 700",240,"CTN",35.00,0,8400.00,"22-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-031","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","BLUE ROLL 31*25",240,"CTN",78.00,0,18720.00,"22-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-032","12-May-2026","12034010","AMJAD ALFALAH","Reorder","Plain Items","AUTOCUT",1000,"CTN",52.00,0,52000.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-033","12-May-2026","12034048","ROKN AL KAFLA","Reorder","Plain Items","BLUE ROLL 475 SHEET CGC",80,"CTN",100.00,0,8000.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-034","09-May-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","12oz PAPER CUP",51,"PCS",190.00,0,9690.00,"10-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-035","09-May-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"10-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-036","07-May-2026","12034079","WADI AL ATTA","Reorder","Plain Items","HUTU PAPER CUP",135,"CTN",61.00,0,8235.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-037","10-May-2026","12034041","ASAWER EL HEGAZ","Reorder","Plain Items","PTD PLAIN ITEMS",1,"CTN",14076.00,0,14076.00,"12-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-038","11-May-2026","12034081","AYED","Reorder","Printed Napkins","NAPKIN 1PLY",500,"CTN",55.00,0,27500.00,"01-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-039","01-Jun-2026","12034084","BARBRA","New Order","Printed Napkins","NAPKIN 2PLY",50,"CTN",65.00,0,3250.00,"20-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-040","11-May-2026","12034084","SPANICH","Reorder","Printed Paper Bags","PTD TH BAG",22200,"PCS",0.48,0,10656.00,"01-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-041","19-May-2026","12034051","SALAH","Reorder","Printed Sheet","PTD SHEET 25×35",47,"CTN",77.00,0,3619.00,"05-Jun-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-042","17-May-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",36.00,0,7200.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-043","19-May-2026","12034047","AGSAN TIBA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",180,"CTN",37.00,0,6660.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-044","19-May-2026","12034047","AGSAN TIBA","Reorder","Plain Items","AUTO CUT",200,"CTN",54.00,0,10800.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-045","01-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","AUTO CUT PRO",100,"CTN",54.00,0,5400.00,"02-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-046","01-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",50,"CTN",33.00,0,1650.00,"02-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-047","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 600G",840,"CTN",30.00,0,25200.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-048","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 700G",300,"CTN",33.00,0,9900.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-049","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 800G",300,"CTN",36.00,0,10800.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-050","19-May-2026","12034070","44X","Reorder","Plain Items","GLAVES TRANS",50,"CTN",65.00,0,3250.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-051","19-May-2026","12034070","44X","Reorder","Plain Items","GLAVES BLACK",70,"CTN",72.00,0,5040.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-052","21-May-2026","12034052","MATAJER AL JAZEERA","Reorder","Plain Items","ALU FOIL 45",50,"CTN",153.00,0,7650.00,"21-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-053","21-May-2026","12034052","MATAJER AL JAZEERA","Reorder","Plain Items","ALU FOIL 30",100,"CTN",105.00,0,10500.00,"21-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-054","10-May-2026","12034070","44X","New Order","Printed Cups","PAPER CUP 4oz",50,"CTN",75.00,0,3750.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-055","10-Jun-2026","12034060","FLAG","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",162.50,0,8125.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-056","10-Jun-2026","12034060","YOUR BURGER","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",156.00,0,7800.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-057","10-Jun-2026","12034066","COOKIE LOVERS","New Order","Printed Paper Bags","TH BAG",15000,"PCS",0.48,800.00,8000.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-058","10-Jun-2026","12034066","COOKIE LOVERS","New Order","Printed Paper Bags","SOS BAG",30000,"PCS",0.17,2100.00,7200.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-059","04-Jun-2026","12034085","JAAJ","New Order","Printed Boxes","BROASTED BOX",20000,"PCS",0.39,0,7800.00,"15-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-060","06-Jun-2026","12034083","BIG Z","New Order","Printed Paper Bags","TH BAG",10000,"PCS",0.50,1640.00,6640.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-061","06-Jun-2026","12034083","BIG Z","New Order","Printed Paper Bags","SOS BAG",500,"KILO",9.50,850.00,5600.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-062","06-Jun-2026","12034083","BIG Z","New Order","Printed Cups","PAPER CUP 9oz",20,"CTN",170.00,0,3400.00,"25-Jun-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-063","07-Jun-2026","12034076","SHRIMP NATION","Reorder","Printed Paper Bags","SAT BAG",10,"CTN",145.00,0,1450.00,"08-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-064","07-Jun-2026","12034076","SHRIMP NATION","Reorder","Printed Napkins","NAPKIN",50,"CTN",50.00,0,2500.00,"08-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-065","18-Jun-2026","12034085","HOTSPOT","New Order","Printed Boxes","PTD FBB BOX",20000,"PCS",0.40,0,8000.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-066","18-Jun-2026","12034085","HOTSPOT","New Order","Printed Boxes","PTD FBB BOX",10000,"PCS",0.43,0,4300.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-067","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 10 CM",50,"CTN",107.25,0,5362.50,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-068","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 13 CM",50,"CTN",88.00,0,4400.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-069","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SAT BAG",50,"CTN",290.00,0,14500.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-070","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",75.00,0,3750.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-071","18-Jun-2026","12034047","AGSAN TIBA","Reorder","Plain Items","BUNDLE 5K",212,"CTN",140.00,0,29680.00,"20-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-072","10-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","PAPER CUP 12",50,"CTN",190.00,0,9500.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-073","10-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-074","01-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Paper Bags","SOS BAG",68,"CTN",187.50,0,12750.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-075","10-Jun-2026","12034078","EMBOSS BURGER","New Order","Printed Boxes","BOX WITH LID",5000,"PCS",2.70,0,13500.00,"14-Jun-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-076","10-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","BUNDLE 5K",121,"CTN",140.00,0,16940.00,"15-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-077","14-Jun-2026","12034065","HAMBANA","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",64.00,0,3200.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-078","22-Jun-2026","12034054","BHAR & NAR","New Order","Printed Boxes","BROASTED BOX",100000,"PCS",0.31,0,31000.00,"15-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
-["ORD-079","14-Jun-2026","12034070","44X","Reorder","Printed Napkins","NAPKIN 2PLY",300,"CTN",39.00,0,11700.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-080","06-Jun-2026","12034070","44X","Reorder","Printed Cups","PAPER CUP 4oz",50,"CTN",75.00,0,3750.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-081","06-Jun-2026","12034070","44X","Reorder","Printed Paper Bags","POUCH",120000,"PCS",0.055,0,6600.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-082","06-Jun-2026","12034070","44X","New Order","Printed Paper Bags","SOS BAG",120000,"PCS",0.090,0,10800.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
-["ORD-083","04-Jun-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",35.00,0,7000.00,"05-Jun-2026","Completed","Invoiced","Not Shipped","",0,0],
-["ORD-084","01-May-2026","12034070","44X","Reorder","Printed Paper Bags","POUCH BAG",120000,"PCS",0.055,0,6600.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-085","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Cups","PAPER CUP WITH LID",111,"CTN",247.50,0,27472.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-086","10-Apr-2026","12034070","44X","Reorder","Printed Napkins","NAPKIN 2PLY",300,"CTN",39.00,0,11700.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-087","01-May-2026","12034039","DANAT TIBA","Reorder","Plain Items","4oz PAPER CUP",650,"CTN",23.00,0,14950.00,"03-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-088","01-May-2026","12034039","DANAT TIBA","Reorder","Plain Items","2oz PAPER CUP",650,"CTN",19.00,0,12350.00,"03-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-089","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Paper Bags","SOS BAG",42000,"PCS",0.25,0,10500.00,"05-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-090","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Sheet","SHEET 35*35",50,"CTN",95.00,0,4750.00,"05-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-091","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Sheet","SHEET 35*35",50,"CTN",95.00,0,4750.00,"05-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-092","20-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",70,"CTN",63.00,0,4410.00,"01-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-093","14-Apr-2026","12044079","WADI AL ATTA","Reorder","Plain Items","AUTO CUT",200,"CTN",54.00,0,10800.00,"16-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-094","15-Jan-2026","12034070","44X","New Order","Printed Cups","PAPER CUP",201,"CTN",95.00,0,19095.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-095","15-Jan-2026","12034070","44X","Reorder","Printed Paper Bags","SOS BAG",167,"CTN",70.00,0,11690.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-096","25-Jan-2026","12034074","TAMMAZ","Reorder","Printed Cups","PAPER CUP 9OZ DOUBLE",90,"CTN",157.50,0,14175.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-097","25-Jan-2026","12034074","LINU","New Order","Printed Cups","PAPER CUP 9OZ DOUBLE",46,"CTN",157.50,0,7245.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-098","10-Jan-2026","12034061","AL BASHEER","Reorder","Printed Boxes","LAREG BROASTED BOX",991,"CTN",34.50,0,34189.50,"25-Apr-2026","Completed","Invoiced","Fully Delivered","68",1,1],
-["ORD-099","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",86,"CTN",143.00,0,12298.00,"15-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-100","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","SOS BAG",530,"KILO",9.00,0,4770.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-101","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","TH BAG",12500,"PCS",0.71,0,8875.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-102","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",50,"CTN",135.00,0,6750.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-103","10-Feb-2026","12034064","CHEF","New Order","Printed Boxes","BURGER BOX",490,"PCS",90.00,0,44100.00,"20-Mar-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-104","11-Mar-2026","12034085","WHA","New Order","Printed Paper Bags","TH BAG",11500,"PCS",0.41,750.00,5465.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-105","10-Mar-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",75.00,0,3750.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-106","10-Mar-2026","12034068","CLUX","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",29,"CTN",200.00,0,5800.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-107","10-Mar-2026","12034068","CLUX","Reorder","Printed Paper Bags","SOS BAG",54,"CTN",104.00,0,5616.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-108","24-Mar-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","PAPER CUP 12OZ",49,"CTN",190.00,0,9310.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-109","26-Mar-2026","12034070","44x","Reorder","Printed Napkins","NAPKIN 2PLY",350,"CTN",36.00,0,12600.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-110","27-Mar-2026","NEW","AJOL","New Order","Printed Paper Bags","BROWN SOS",40000,"PCS",0.31,750,13150.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-111","27-Mar-2026","NEW","AJOL","New Order","Printed Napkins","NAPKIN 1 PLY",50,"CTN",65.00,0,3250.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-112","28-Mar-2026","12034070","44x","Reorder","Plain Items","MAXI ROLL 800G",350,"CTN",35.00,0,12250.00,"05-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-113","26-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","4oz PAPER CUP",1200,"CTN",24.00,0,28800.00,"02-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-114","24-Mar-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",20,"CTN",75.00,0,1500.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-115","26-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",540,"CTN",36.00,0,19440.00,"02-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-116","03-Apr-2026","12034047","AGSAN TIBA","Reorder","Plain Items","AUTO CUT",220,"CTN",58.00,0,12760.00,"04-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-117","03-Apr-2026","12034047","AGSAN TIBA","Reorder","Plain Items","BLUE ROLL",240,"CTN",110.00,0,26400.00,"04-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-118","25-Mar-2026","12034065","HAMBANA","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",58.00,0,2900.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-119","25-Mar-2026","12034065","SALAH","Reorder","Printed Sheet","SHEET 25*35",50000,"CTN",0.07,0,3500.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-120","25-Mar-2026","12034088","FATTBOY","New Order","Printed Boxes","CHICKEN FRIES BOX",33600,"PCS",0.45,500,15620.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-121","25-Mar-2026","12034061","AL BASHEER","Reorder","Printed Boxes","SMALL BROASTED BOX",75,"PCS",87.00,0,6525.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-122","30-Mar-2026","12034094","CHICK IN","New Order","Printed Paper Bags","POUCH BAG WITH GP",30000,"PCS",0.18,600,6000.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-123","01-Apr-2026","12034085","SHISHITO","Reorder","Printed Boxes","BURGER BOX",8000,"PCS",0.45,0,3600.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-124","01-Apr-2026","12034085","SHISHITO","Reorder","Printed Boxes","TRAY BOX",8000,"PCS",0.45,0,3600.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-125","01-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Paper Bags","SOS BAG",158,"CTN",92.00,0,14536.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-126","10-Apr-2026","12034060","YOUR BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",66.00,0,3300.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-127","10-Apr-2026","12034060","FLAG","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",66.00,0,3300.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-128","08-Apr-2026","12034085","BUNZOS","New Order","Printed Boxes","FRIES BOX",10250,"PCS",0.73,0,7482.50,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-129","08-Apr-2026","12034085","BUNZOS","New Order","Printed Paper Bags","SOS BAG",48,"CTN",156.00,1300,8788.00,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-130","08-Apr-2026","12034060","YOUR BURGER","New Order","Printed Sheet","SHEET 35*35",50000,"PCS",0.09,450,4700.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-131","08-Apr-2026","12034070","44X","New Order","Printed Sheet","SHEET 25*35",100000,"PCS",0.075,0,7500.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,0],
-["ORD-132","01-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Cups","PAPER CUP 9OZ SINGLE",109,"CTN",130.00,0,14170.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
-["ORD-133","24-Mar-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-134","15-Jan-2026","12034090","CHOMP","New Order","Printed Boxes","FAMILY BOX",6400,"PCS",2.15,0,13760.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-135","15-Jan-2026","12034090","CHOMP","New Order","Printed Paper Bags","LAREG SOS BAG",620,"KILO",7.50,0,4650.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-136","15-Jan-2026","12034090","CHOMP","New Order","Printed Paper Bags","SMALL SOS BAG",620,"KILO",7.50,0,4650.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-137","02-Feb-2026","12034091","HIPPO","New Order","Printed Boxes","SANDWICH HOLDER",54000,"PCS",0.10,0,5400.00,"05-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-138","02-Feb-2026","12034060","FLAG","Reorder","Printed Paper Bags","SOS BAG",72,"CTN",130.00,0,9360.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-139","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Paper Bags","SOS BAG",146,"CTN",80.00,0,11680.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-140","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Sheet","ALU SHEET",22,"CTN",594.00,0,13068.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-141","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",58.00,0,2900.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-142","09-Feb-2026","12034075","FRY BUZZ","Reorder","Printed Boxes","LARGE BROASTED BOX",10050,"PCS",0.35,0,3517.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-143","01-Feb-2026","12034092","LIYLA","New Order","Printed Paper Bags","SAT BAG",48000,"PCS",0.17,0,8160.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-144","01-Feb-2026","12034092","LIYLA","New Order","Printed Paper Bags","POUCH BAG",15000,"PCS",0.11,0,1650.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-145","01-Feb-2026","12034092","LIYLA","New Order","Printed Sheet","WRAPPING SHEET",50000,"PCS",0.07,0,3500.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-146","01-Feb-2026","12034092","LIYLA","New Order","Printed Boxes","SHAWRMA BOX",18750,"PCS",0.78,0,14625.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-147","10-Feb-2026","12034091","LOOMI","New Order","Printed Paper Bags","SOS BAG",60,"CTN",100.00,0,6000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-148","10-Feb-2026","12034091","LOOMI","New Order","Printed Sheet","WRAPPING SHEET",57000,"PCS",0.07,0,3705.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-149","10-Feb-2026","12034091","LOOMI","New Order","Printed Boxes","SANDWICH BOX - 700 PCS",21700,"PCS",0.47,0,10199.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-150","25-Feb-2026","12034088","FATTBOY","New Order","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-151","25-Feb-2026","12034089","JOMIER","New Order","Printed Napkins","NAPKIN |30×30| 1PLY BROWN",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-152","25-Feb-2026","12034088","CUV","New Order","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-153","01-Mar-2026","12034088","FATTBOY","New Order","Printed Sheet","WRAPPING SHEET",250,"CTN",90.00,2500.00,25000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-154","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Paper Bags","SAT BAG",10,"CTN",135.00,0,1350.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-155","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Cups","PAPER CUP",3,"CTN",80.00,0,240.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-156","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Boxes","BOXES",5,"CTN",50.00,0,250.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-157","04-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","COFFE CUP HOLDER 2 PLACES",200,"CTN",28.00,0,5600.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-158","12-Mar-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",35.00,0,7000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-159","11-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","MAXI ROLL BANDLE 3.5K",324,"CTN",102.00,0,33048.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-160","11-Mar-2026","12034056","AL GOLAF","Reorder","Plain Items","MAXI ROLL BANDLE 3K",150,"CTN",90.00,0,13500.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-161","11-Mar-2026","12034056","AL GOLAF","Reorder","Plain Items","AUTO CUT",100,"CTN",57.00,0,5700.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-162","16-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","MAXI ROLL BANDLE 5K",216,"CTN",138.00,0,29808.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-163","16-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","4oz PAPER CUP",1176,"CTN",25.00,0,29400.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
-["ORD-164","16-Mar-2026","12033194","MSARAT AL MADINA","Reorder","Plain Items","MAXI ROLL BANDLE 5K",108,"CTN",137.00,0,14796.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1]
+["ORD-001","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Sheet","ALU SHEET",63,"CTN",126.50,0,7969.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-002","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 13 CM",100,"CTN",88.00,0,8800.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-003","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 10 CM",128,"CTN",107.25,0,13728.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-004","07-Apr-2026","12034091","HIPPO","New Order","Printed Paper Bags","TH BAG",11250,"PCS",0.63,2000,9087.50,"29-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-005","07-Apr-2026","12034091","HIPPO","New Order","Printed Sheet","SHEET 25*35",50000,"PCS",0.095,400,5150.00,"29-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-006","14-Apr-2026","12034088","FATTBOY","Reorder","Printed Paper Bags","SOS BAG",103,"CTN",118.50,0,12205.50,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-007","14-Apr-2026","12034088","FATTBOY","Reorder","Printed Boxes","LARGE FRIES BOX",30000,"PCS",0.18,0,5400.00,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-008","14-Apr-2026","12034088","FATTBOY","New Order","Printed Boxes","NASHFEL BOX",16100,"PCS",0.46,0,7406.00,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-009","14-Apr-2026","12034089","JOMIER","Reorder","Printed Paper Bags","SOS BAG",117,"CTN",118.50,0,13864.50,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-010","14-Apr-2026","12034089","JOMIER","New Order","Printed Boxes","FRIES BOX",26000,"PCS",0.43,0,11180.00,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-011","14-Apr-2026","12034089","JOMIER","Reorder","Printed Cups","PAPER CUP 7oz",45000,"PCS",0.14,0,6300.00,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-012","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SAT BAG",71,"CTN",290.00,0,20590.00,"14-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-013","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Cups","9oz PAPER CUP WITH LID",210,"CTN",137.50,0,28875.00,"14-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-014","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Napkins","NAPKIN 2PLY",200,"CTN",75.00,0,15000.00,"14-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-015","10-Apr-2026","12034060","FLAG","Reorder","Printed Boxes","FRIES BOX",11730,"PCS",0.94,0,11026.20,"10-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-016","20-Apr-2026","12034060","YOUR BURGER","New Order","Printed Boxes","BURGER BOX",10000,"PCS",0.60,0,6000.00,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-017","10-May-2026","12034060","YOUR BURGER","New Order","Printed Paper Bags","TH BAG BASE 18",10000,"PCS",0.69,1000.00,7900.00,"25-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-018","28-Apr-2026","12034039","DANAT TIBA","Reorder","Plain Items","BROWN PAPER #8",1200,"CTN",22.00,0,26400.00,"05-May-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-019","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Paper Bags","SOS BAG",146,"CTN",92.00,2300.00,15732.00,"10-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-020","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Paper Bags","TWISTED HANDLE BAG",72,"CTN",97.50,2850.00,9870.00,"10-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-021","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Cups","PAPER CUP 9oz",104,"CTN",130.00,1200.00,14720.00,"10-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-022","14-Jun-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",70,"CTN",63.00,0,4410.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-023","30-May-2026","12034068","OLD BS GOLD","Reorder","Printed Sheet","ALU SHEET",120000,"PCS",0.12,0,14256.00,"15-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-024","19-Apr-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",105.00,0,5250.00,"20-May-2026","Completed","Not Invoiced","Not Shipped"],
+["ORD-025","19-Apr-2026","12034073","CLASH BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",70.00,0,3500.00,"20-May-2026","Completed","Not Invoiced","Not Shipped"],
+["ORD-026","23-May-2026","12034084","HALIM","New Order","Printed Sheet","PTD SHEET 25×35",50,"CTN",70.00,0,3500.00,"16-May-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-027","02-Jun-2026","12034084","TOLIMA","New Order","Printed Paper Bags","PTD POUCH",20000,"PCS",0.16,800.00,4000.00,"25-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-028","23-May-2026","12034084","TOLIMA","New Order","Printed Sheet","PTD SHEET 25×35",50,"CTN",70.00,0,3500.00,"16-May-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-029","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","AUTOCUT 800",200,"CTN",48.00,0,9600.00,"22-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-030","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","MAXI ROLL 700",240,"CTN",35.00,0,8400.00,"22-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-031","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","BLUE ROLL 31*25",240,"CTN",78.00,0,18720.00,"22-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-032","12-May-2026","12034010","AMJAD ALFALAH","Reorder","Plain Items","AUTOCUT",1000,"CTN",52.00,0,52000.00,"15-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-033","12-May-2026","12034048","ROKN AL KAFLA","Reorder","Plain Items","BLUE ROLL 475 SHEET CGC",80,"CTN",100.00,0,8000.00,"15-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-034","09-May-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","12oz PAPER CUP",51,"PCS",190.00,0,9690.00,"10-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-035","09-May-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"10-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-036","07-May-2026","12034079","WADI AL ATTA","Reorder","Plain Items","HUTU PAPER CUP",135,"CTN",61.00,0,8235.00,"15-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-037","10-May-2026","12034041","ASAWER EL HEGAZ","Reorder","Plain Items","PTD PLAIN ITEMS",1,"CTN",14076.00,0,14076.00,"12-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-038","11-May-2026","12034081","AYED","Reorder","Printed Napkins","NAPKIN 1PLY",500,"CTN",55.00,0,27500.00,"01-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-039","01-Jun-2026","12034084","BARBRA","New Order","Printed Napkins","NAPKIN 2PLY",50,"CTN",65.00,0,3250.00,"20-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-040","11-May-2026","12034084","SPANICH","Reorder","Printed Paper Bags","PTD TH BAG",22200,"PCS",0.48,0,10656.00,"01-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-041","19-May-2026","12034051","SALAH","Reorder","Printed Sheet","PTD SHEET 25×35",47,"CTN",77.00,0,3619.00,"05-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-042","17-May-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",36.00,0,7200.00,"19-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-043","19-May-2026","12034047","AGSAN TIBA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",180,"CTN",37.00,0,6660.00,"19-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-044","19-May-2026","12034047","AGSAN TIBA","Reorder","Plain Items","AUTO CUT",200,"CTN",54.00,0,10800.00,"19-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-045","01-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","AUTO CUT PRO",100,"CTN",54.00,0,5400.00,"02-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-046","01-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",50,"CTN",33.00,0,1650.00,"02-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-047","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 600G",840,"CTN",30.00,0,25200.00,"25-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-048","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 700G",300,"CTN",33.00,0,9900.00,"25-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-049","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 800G",300,"CTN",36.00,0,10800.00,"25-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-050","19-May-2026","12034070","44X","Reorder","Plain Items","GLAVES TRANS",50,"CTN",65.00,0,3250.00,"19-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-051","19-May-2026","12034070","44X","Reorder","Plain Items","GLAVES BLACK",70,"CTN",72.00,0,5040.00,"19-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-052","21-May-2026","12034052","MATAJER AL JAZEERA","Reorder","Plain Items","ALU FOIL 45",50,"CTN",153.00,0,7650.00,"21-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-053","21-May-2026","12034052","MATAJER AL JAZEERA","Reorder","Plain Items","ALU FOIL 30",100,"CTN",105.00,0,10500.00,"21-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-054","10-May-2026","12034070","44X","New Order","Printed Cups","PAPER CUP 4oz",50,"CTN",75.00,0,3750.00,"25-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-055","10-Jun-2026","12034060","FLAG","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",162.50,0,8125.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-056","10-Jun-2026","12034060","YOUR BURGER","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",156.00,0,7800.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-057","10-Jun-2026","12034066","COOKIE LOVERS","New Order","Printed Paper Bags","TH BAG",15000,"PCS",0.48,800.00,8000.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-058","10-Jun-2026","12034066","COOKIE LOVERS","New Order","Printed Paper Bags","SOS BAG",30000,"PCS",0.17,2100.00,7200.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-059","04-Jun-2026","12034085","JAAJ","New Order","Printed Boxes","BROASTED BOX",20000,"PCS",0.39,0,7800.00,"15-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-060","06-Jun-2026","12034083","BIG Z","New Order","Printed Paper Bags","TH BAG",10000,"PCS",0.50,1640.00,6640.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-061","06-Jun-2026","12034083","BIG Z","New Order","Printed Paper Bags","SOS BAG",500,"KILO",9.50,850.00,5600.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-062","06-Jun-2026","12034083","BIG Z","New Order","Printed Cups","PAPER CUP 9oz",20,"CTN",170.00,0,3400.00,"25-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-063","07-Jun-2026","12034076","SHRIMP NATION","Reorder","Printed Paper Bags","SAT BAG",10,"CTN",145.00,0,1450.00,"08-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-064","07-Jun-2026","12034076","SHRIMP NATION","Reorder","Printed Napkins","NAPKIN",50,"CTN",50.00,0,2500.00,"08-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-065","18-Jun-2026","12034085","HOTSPOT","New Order","Printed Boxes","PTD FBB BOX",20000,"PCS",0.40,0,8000.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-066","18-Jun-2026","12034085","HOTSPOT","New Order","Printed Boxes","PTD FBB BOX",10000,"PCS",0.43,0,4300.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-067","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 10 CM",50,"CTN",107.25,0,5362.50,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-068","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 13 CM",50,"CTN",88.00,0,4400.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-069","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SAT BAG",50,"CTN",290.00,0,14500.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-070","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",75.00,0,3750.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-071","18-Jun-2026","12034047","AGSAN TIBA","Reorder","Plain Items","BUNDLE 5K",212,"CTN",140.00,0,29680.00,"20-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-072","10-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","PAPER CUP 12",50,"CTN",190.00,0,9500.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-073","10-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-074","01-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Paper Bags","SOS BAG",68,"CTN",187.50,0,12750.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-075","10-Jun-2026","12034078","EMBOSS BURGER","New Order","Printed Boxes","BOX WITH LID",5000,"PCS",2.70,0,13500.00,"14-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-076","10-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","BUNDLE 5K",121,"CTN",140.00,0,16940.00,"15-Jun-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-077","14-Jun-2026","12034065","HAMBANA","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",64.00,0,3200.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-078","22-Jun-2026","12034054","BHAR & NAR","New Order","Printed Boxes","BROASTED BOX",100000,"PCS",0.31,0,31000.00,"15-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-079","14-Jun-2026","12034070","44X","Reorder","Printed Napkins","NAPKIN 2PLY",300,"CTN",39.00,0,11700.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-080","06-Jun-2026","12034070","44X","Reorder","Printed Cups","PAPER CUP 4oz",50,"CTN",75.00,0,3750.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-081","06-Jun-2026","12034070","44X","Reorder","Printed Paper Bags","POUCH",120000,"PCS",0.055,0,6600.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-082","06-Jun-2026","12034070","44X","New Order","Printed Paper Bags","SOS BAG",120000,"PCS",0.090,0,10800.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped"],
+["ORD-083","04-Jun-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",35.00,0,7000.00,"05-Jun-2026","Completed","Invoiced","Not Shipped"],
+["ORD-084","01-May-2026","12034070","44X","Reorder","Printed Paper Bags","POUCH BAG",120000,"PCS",0.055,0,6600.00,"20-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-085","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Cups","PAPER CUP WITH LID",111,"CTN",247.50,0,27472.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-086","10-Apr-2026","12034070","44X","Reorder","Printed Napkins","NAPKIN 2PLY",300,"CTN",39.00,0,11700.00,"15-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-087","01-May-2026","12034039","DANAT TIBA","Reorder","Plain Items","4oz PAPER CUP",650,"CTN",23.00,0,14950.00,"03-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-088","01-May-2026","12034039","DANAT TIBA","Reorder","Plain Items","2oz PAPER CUP",650,"CTN",19.00,0,12350.00,"03-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-089","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Paper Bags","SOS BAG",42000,"PCS",0.25,0,10500.00,"05-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-090","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Sheet","SHEET 35*35",50,"CTN",95.00,0,4750.00,"05-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-091","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Sheet","SHEET 35*35",50,"CTN",95.00,0,4750.00,"05-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-092","20-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",70,"CTN",63.00,0,4410.00,"01-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-093","14-Apr-2026","12044079","WADI AL ATTA","Reorder","Plain Items","AUTO CUT",200,"CTN",54.00,0,10800.00,"16-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-094","15-Jan-2026","12034070","44X","New Order","Printed Cups","PAPER CUP",201,"CTN",95.00,0,19095.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-095","15-Jan-2026","12034070","44X","Reorder","Printed Paper Bags","SOS BAG",167,"CTN",70.00,0,11690.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-096","25-Jan-2026","12034074","TAMMAZ","Reorder","Printed Cups","PAPER CUP 9OZ DOUBLE",90,"CTN",157.50,0,14175.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-097","25-Jan-2026","12034074","LINU","New Order","Printed Cups","PAPER CUP 9OZ DOUBLE",46,"CTN",157.50,0,7245.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-098","10-Jan-2026","12034061","AL BASHEER","Reorder","Printed Boxes","LAREG BROASTED BOX",991,"CTN",34.50,0,34189.50,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-099","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",86,"CTN",143.00,0,12298.00,"15-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-100","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","SOS BAG",530,"KILO",9.00,0,4770.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-101","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","TH BAG",12500,"PCS",0.71,0,8875.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-102","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",50,"CTN",135.00,0,6750.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-103","10-Feb-2026","12034064","CHEF","New Order","Printed Boxes","BURGER BOX",490,"PCS",90.00,0,44100.00,"20-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-104","11-Mar-2026","12034085","WHA","New Order","Printed Paper Bags","TH BAG",11500,"PCS",0.41,750.00,5465.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-105","10-Mar-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",75.00,0,3750.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-106","10-Mar-2026","12034068","CLUX","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",29,"CTN",200.00,0,5800.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-107","10-Mar-2026","12034068","CLUX","Reorder","Printed Paper Bags","SOS BAG",54,"CTN",104.00,0,5616.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-108","24-Mar-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","PAPER CUP 12OZ",49,"CTN",190.00,0,9310.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-109","26-Mar-2026","12034070","44x","Reorder","Printed Napkins","NAPKIN 2PLY",350,"CTN",36.00,0,12600.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-110","27-Mar-2026","NEW","AJOL","New Order","Printed Paper Bags","BROWN SOS",40000,"PCS",0.31,750,13150.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-111","27-Mar-2026","NEW","AJOL","New Order","Printed Napkins","NAPKIN 1 PLY",50,"CTN",65.00,0,3250.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-112","28-Mar-2026","12034070","44x","Reorder","Plain Items","MAXI ROLL 800G",350,"CTN",35.00,0,12250.00,"05-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-113","26-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","4oz PAPER CUP",1200,"CTN",24.00,0,28800.00,"02-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-114","24-Mar-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",20,"CTN",75.00,0,1500.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-115","26-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",540,"CTN",36.00,0,19440.00,"02-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-116","03-Apr-2026","12034047","AGSAN TIBA","Reorder","Plain Items","AUTO CUT",220,"CTN",58.00,0,12760.00,"04-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-117","03-Apr-2026","12034047","AGSAN TIBA","Reorder","Plain Items","BLUE ROLL",240,"CTN",110.00,0,26400.00,"04-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-118","25-Mar-2026","12034065","HAMBANA","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",58.00,0,2900.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-119","25-Mar-2026","12034065","SALAH","Reorder","Printed Sheet","SHEET 25*35",50000,"CTN",0.07,0,3500.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-120","25-Mar-2026","12034088","FATTBOY","New Order","Printed Boxes","CHICKEN FRIES BOX",33600,"PCS",0.45,500,15620.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-121","25-Mar-2026","12034061","AL BASHEER","Reorder","Printed Boxes","SMALL BROASTED BOX",75,"PCS",87.00,0,6525.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-122","30-Mar-2026","12034094","CHICK IN","New Order","Printed Paper Bags","POUCH BAG WITH GP",30000,"PCS",0.18,600,6000.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-123","01-Apr-2026","12034085","SHISHITO","Reorder","Printed Boxes","BURGER BOX",8000,"PCS",0.45,0,3600.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-124","01-Apr-2026","12034085","SHISHITO","Reorder","Printed Boxes","TRAY BOX",8000,"PCS",0.45,0,3600.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-125","01-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Paper Bags","SOS BAG",158,"CTN",92.00,0,14536.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-126","10-Apr-2026","12034060","YOUR BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",66.00,0,3300.00,"10-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-127","10-Apr-2026","12034060","FLAG","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",66.00,0,3300.00,"10-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-128","08-Apr-2026","12034085","BUNZOS","New Order","Printed Boxes","FRIES BOX",10250,"PCS",0.73,0,7482.50,"29-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-129","08-Apr-2026","12034085","BUNZOS","New Order","Printed Paper Bags","SOS BAG",48,"CTN",156.00,1300,8788.00,"29-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-130","08-Apr-2026","12034060","YOUR BURGER","New Order","Printed Sheet","SHEET 35*35",50000,"PCS",0.09,450,4700.00,"10-May-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-131","08-Apr-2026","12034070","44X","New Order","Printed Sheet","SHEET 25*35",100000,"PCS",0.075,0,7500.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-132","01-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Cups","PAPER CUP 9OZ SINGLE",109,"CTN",130.00,0,14170.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-133","24-Mar-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-134","15-Jan-2026","12034090","CHOMP","New Order","Printed Boxes","FAMILY BOX",6400,"PCS",2.15,0,13760.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-135","15-Jan-2026","12034090","CHOMP","New Order","Printed Paper Bags","LAREG SOS BAG",620,"KILO",7.50,0,4650.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-136","15-Jan-2026","12034090","CHOMP","New Order","Printed Paper Bags","SMALL SOS BAG",620,"KILO",7.50,0,4650.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-137","02-Feb-2026","12034091","HIPPO","New Order","Printed Boxes","SANDWICH HOLDER",54000,"PCS",0.10,0,5400.00,"05-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-138","02-Feb-2026","12034060","FLAG","Reorder","Printed Paper Bags","SOS BAG",72,"CTN",130.00,0,9360.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-139","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Paper Bags","SOS BAG",146,"CTN",80.00,0,11680.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-140","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Sheet","ALU SHEET",22,"CTN",594.00,0,13068.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-141","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",58.00,0,2900.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-142","09-Feb-2026","12034075","FRY BUZZ","Reorder","Printed Boxes","LARGE BROASTED BOX",10050,"PCS",0.35,0,3517.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-143","01-Feb-2026","12034092","LIYLA","New Order","Printed Paper Bags","SAT BAG",48000,"PCS",0.17,0,8160.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-144","01-Feb-2026","12034092","LIYLA","New Order","Printed Paper Bags","POUCH BAG",15000,"PCS",0.11,0,1650.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-145","01-Feb-2026","12034092","LIYLA","New Order","Printed Sheet","WRAPPING SHEET",50000,"PCS",0.07,0,3500.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-146","01-Feb-2026","12034092","LIYLA","New Order","Printed Boxes","SHAWRMA BOX",18750,"PCS",0.78,0,14625.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-147","10-Feb-2026","12034091","LOOMI","New Order","Printed Paper Bags","SOS BAG",60,"CTN",100.00,0,6000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-148","10-Feb-2026","12034091","LOOMI","New Order","Printed Sheet","WRAPPING SHEET",57000,"PCS",0.07,0,3705.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-149","10-Feb-2026","12034091","LOOMI","New Order","Printed Boxes","SANDWICH BOX - 700 PCS",21700,"PCS",0.47,0,10199.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-150","25-Feb-2026","12034088","FATTBOY","New Order","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-151","25-Feb-2026","12034089","JOMIER","New Order","Printed Napkins","NAPKIN |30×30| 1PLY BROWN",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-152","25-Feb-2026","12034088","CUV","New Order","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-153","01-Mar-2026","12034088","FATTBOY","New Order","Printed Sheet","WRAPPING SHEET",250,"CTN",90.00,2500.00,25000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-154","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Paper Bags","SAT BAG",10,"CTN",135.00,0,1350.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-155","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Cups","PAPER CUP",3,"CTN",80.00,0,240.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-156","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Boxes","BOXES",5,"CTN",50.00,0,250.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-157","04-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","COFFE CUP HOLDER 2 PLACES",200,"CTN",28.00,0,5600.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-158","12-Mar-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",35.00,0,7000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-159","11-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","MAXI ROLL BANDLE 3.5K",324,"CTN",102.00,0,33048.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-160","11-Mar-2026","12034056","AL GOLAF","Reorder","Plain Items","MAXI ROLL BANDLE 3K",150,"CTN",90.00,0,13500.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-161","11-Mar-2026","12034056","AL GOLAF","Reorder","Plain Items","AUTO CUT",100,"CTN",57.00,0,5700.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-162","16-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","MAXI ROLL BANDLE 5K",216,"CTN",138.00,0,29808.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-163","16-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","4oz PAPER CUP",1176,"CTN",25.00,0,29400.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"],
+["ORD-164","16-Mar-2026","12033194","MSARAT AL MADINA","Reorder","Plain Items","MAXI ROLL BANDLE 5K",108,"CTN",137.00,0,14796.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered"]
 ]}
 
 var data=[];
@@ -533,7 +507,7 @@ function onSearchInput(){clearTimeout(searchTimer);searchTimer=setTimeout(applyF
 function debouncedSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveData,500)}
 function debouncedDash(){clearTimeout(dashTimer);dashTimer=setTimeout(updateDashboard,300)}
 
-var STORE_KEY='cg_orders_v6';
+var STORE_KEY='cg_orders_v7';
 function saveData(){try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){}}
 function loadData(){
   try{
@@ -581,16 +555,9 @@ function renderRow(r,idx){
     var v=r[c.k];
     var tdClass = c.k === 'cliche' ? ' class="cliche-col"' : '';
     
-    // FIX 5: Add color classes to Invoice Status column
-    if (c.k === 'invStatus') {
-      tdClass = v === 'Invoiced' ? ' class="inv-status-paid"' : ' class="inv-status-unpaid"';
-    }
-    
     h+='<td'+tdClass+'>';
     if(c.t==='auto'){
       h+='<span class="auto-cell">'+fmt(r.total)+'</span>';
-    }else if(c.t==='payauto'){
-      h+='<span class="auto-cell payment">'+payLabel(paySum(r))+'</span>';
     }else if(c.t==='checkbox'){
       h+='<div class="cb-wrap"><input type="checkbox" data-f="'+c.k+'" data-ri="'+idx+'" '+(v?'checked':'')+' onchange="handleCheck(this)"></div>';
     }else if(c.t==='select'){
@@ -633,7 +600,7 @@ function applyFilters(){
     if(q){var s=(r.id+' '+r.custNo+' '+r.custName+' '+r.desc+' '+r.orderType+' '+r.productType).toLowerCase();if(s.indexOf(q)===-1)continue}
     if(fp&&r.productType!==fp)continue;
     if(fs&&r.prodStatus!==fs)continue;
-    if(finv&&paySum(r)!==finv)continue;
+    if(finv&&r.invStatus!==finv)continue;
     filtered.push(i);
   }
   if(sortCol>=0)doSortFiltered();
@@ -671,8 +638,6 @@ function handleInput(el){
   if(f==='qty'||f==='price'||f==='cliche'){
     data[fi][f]=safeNum(el.value);
     data[fi].total=calcTotal(data[fi]);
-  }else if(f==='remQty'){
-    data[fi][f]=el.value===''?'':safeNum(el.value);
   }else{
     data[fi][f]=el.value;
   }
@@ -689,7 +654,6 @@ function handleCheck(el){
   debouncedSave();debouncedDash();
 }
 
-// FIX 3: Ensure new order goes to bottom and scroll targets it correctly
 function addRow(){
   var n=data.length+1;
   var id='ORD-'+String(n).padStart(3,'0');
@@ -701,17 +665,16 @@ function addRow(){
   data.push({
     id:id,date:dateStr,custNo:'',custName:'',orderType:'New Order',productType:'Plain Items',
     desc:'',qty:0,unit:'CTN',price:0,cliche:0,total:0,deadline:'',
-    prodStatus:'In Progress',invStatus:'Not Invoiced',delStatus:'Not Shipped',
-    remQty:'',advance:false,fullPay:false
+    prodStatus:'In Progress',invStatus:'Not Invoiced',delStatus:'Not Shipped'
   });
   newRowIdx=data.length-1;
-  sortCol = -1; sortDir = 1; // Clear sort so it naturally stays at the bottom
+  sortCol = -1; sortDir = 1;
   saveData();applyFilters();updateDashboard();
   toast('Order '+id+' added','success');
   
   setTimeout(function() {
     var wrap = document.getElementById('tableWrap');
-    void wrap.offsetHeight; // Force DOM reflow to calculate correct scroll height on iOS
+    void wrap.offsetHeight; 
     wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'smooth' });
   }, 100);
 }
@@ -816,7 +779,6 @@ function exportCSV() {
         var c = COLS[i];
         if (c.t === 'delete') continue;
         var v = row[c.k];
-        if (c.t === 'payauto') v = paySum(row) === PAY_FULL ? 'Fully Paid' : paySum(row) === PAY_ADV ? '50% Advance' : 'No Payment';
         if (c.t === 'checkbox') v = v ? 'Yes' : 'No';
         v = String(v == null ? '' : v);
         if (v.indexOf(',') >= 0 || v.indexOf('"') >= 0 || v.indexOf('\n') >= 0) { v = '"' + v.replace(/"/g, '""') + '"'; }
