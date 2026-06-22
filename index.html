@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<title>Century Gate — Order Tracker</title>
+
+<!-- iOS Meta Tags for App Icon & Fullscreen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Century Gate">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231e40af'/%3E%3Cstop offset='1' stop-color='%230f172a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='115' fill='url(%23g)'/%3E%3Ccircle cx='256' cy='256' r='120' opacity='0.3' fill='none' stroke='%2360a5fa' stroke-width='12'/%3E%3Cpath d='M176 256 L256 176 L336 256 L256 336 Z' stroke='%2393c5fd' stroke-width='8' fill='none' opacity='0.6'/%3E%3Ctext x='256' y='310' font-family='system-ui, sans-serif' font-size='180' font-weight='800' fill='%23ffffff' text-anchor='middle'%3ECG%3C/text%3E%3C/svg%3E">
+
+<!-- jsPDF and AutoTable for PDF Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;--surface3:#f1f5f9;
+  --border:#cbd5e1;--border-light:#e2e8f0;
+  --text:#0f172a;--text-dim:#334155;--text-muted:#64748b;
+  --accent:#1d4ed8;--accent-light:#3b82f6;--accent-bg:rgba(37,99,235,.08);--accent-border:rgba(37,99,235,.3);
+  --green:#059669;--green-bg:rgba(5,150,105,.08);--green-border:rgba(5,150,105,.25);--green-text:#047857;
+  --amber:#d97706;--amber-bg:rgba(217,119,6,.08);--amber-border:rgba(217,119,6,.25);--amber-text:#b45309;
+  --red:#dc2626;--red-bg:rgba(220,38,38,.06);--red-border:rgba(220,38,38,.2);--red-text:#b91c1c;
+  --blue:#2563eb;--blue-bg:rgba(37,99,235,.07);--blue-border:rgba(37,99,235,.2);--blue-text:#1d4ed8;
+  --radius:6px;--radius-lg:8px;
+}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;height:100vh;overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+::selection{background:var(--accent);color:#fff}
+.table-wrap{scrollbar-width:thin;scrollbar-color:var(--border) var(--surface2)}
+.table-wrap::-webkit-scrollbar{width:6px;height:6px}
+.table-wrap::-webkit-scrollbar-track{background:var(--surface2)}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* Header */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;letter-spacing:-.5px;box-shadow:0 2px 4px rgba(37,99,235,.3)}
+.header h1{font-size:15px;font-weight:700;letter-spacing:.2px;color:var(--text)}
+.header h1 span{color:var(--accent)}
+.header-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.header-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;min-height:36px}
+.btn:hover{background:var(--surface3);color:var(--text);border-color:var(--text-muted)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-accent:hover{background:var(--accent-light);border-color:var(--accent-light)}
+.btn-danger{color:var(--red);border-color:var(--red-border)}
+.btn-danger:hover{background:var(--red-bg);border-color:var(--red)}
+.btn-sm{padding:4px 8px;font-size:11px}
+
+/* Dashboard */
+#dashboardArea{max-height:600px;transition:max-height .3s ease;overflow:hidden;flex-shrink:0}
+#dashboardArea.hidden{max-height:0 !important}
+.dash-inner{padding:12px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;background:var(--surface);border-bottom:1px solid var(--border)}
+.dash-card{background:var(--surface2);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:12px 14px;border-left:4px solid var(--border-light)}
+.dash-card.gold{border-left-color:var(--accent)}
+.dash-card.green{border-left-color:var(--green)}
+.dash-card.blue{border-left-color:var(--blue)}
+.dash-card.amber{border-left-color:var(--amber)}
+.dash-card.red{border-left-color:var(--red)}
+.dash-label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);font-weight:700;margin-bottom:5px}
+.dash-value{font-size:20px;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+.dash-card.gold .dash-value{color:var(--accent)}
+.dash-card.green .dash-value{color:var(--green-text)}
+.dash-card.blue .dash-value{color:var(--blue-text)}
+.dash-card.amber .dash-value{color:var(--amber-text)}
+.dash-card.red .dash-value{color:var(--red-text)}
+.dash-sub{font-size:9.5px;color:var(--text-muted);margin-top:2px}
+
+/* Top Customers */
+.top-cust-section{padding:10px 20px 12px;background:var(--surface);border-bottom:1px solid var(--border)}
+.top-cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
+.top-cust-row{display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border-light);border-radius:var(--radius)}
+.top-cust-rank{font-size:10px;font-weight:800;color:var(--accent);width:16px;text-align:center}
+.top-cust-name{flex:1;font-size:11.5px;font-weight:600}
+.top-cust-sub{font-size:9.5px;color:var(--text-muted);font-weight:400}
+.top-cust-val{font-size:11px;font-weight:700;color:var(--accent);text-align:right}
+.top-cust-ord{font-size:9.5px;color:var(--text-muted);font-weight:400}
+
+/* Toolbar */
+.toolbar{padding:8px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.search-box{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--radius);padding:0 10px;flex:1;min-width:180px;max-width:320px;background:var(--surface)}
+.search-box svg{width:14px;height:14px;color:var(--text-muted);flex-shrink:0}
+.search-box input{background:none;border:none;color:var(--text);font-size:12px;padding:8px 0;outline:none;width:100%}
+.filter-select{border:1px solid var(--border);border-radius:var(--radius);color:var(--text-dim);font-size:11.5px;padding:8px 24px 8px 8px;background:var(--surface);outline:none;cursor:pointer;min-width:120px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
+.toolbar-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.row-count{font-size:11px;color:var(--text-muted);font-weight:600;background:var(--surface2);padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border-light)}
+
+/* Table Container */
+.table-wrap{flex:1;overflow:auto;min-height:0;background:var(--surface);-webkit-overflow-scrolling:touch}
+
+table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
+caption{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+
+/* Enhanced Header Styling */
+thead th{position:sticky;top:0;z-index:50;background:#f8fafc;border-bottom:2px solid var(--border);padding:10px 8px;font-size:13px;font-weight:800;color:#0f172a;text-align:left;white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s,background .15s;border-right:1px solid var(--border);border-top:1px solid var(--border)}
+thead th:first-child{border-left:1px solid var(--border)}
+thead th:last-child{border-right:1px solid var(--border)}
+thead th:hover{background:#e2e8f0;color:var(--text-dim)}
+thead th.sorted{color:var(--accent);background:#eff6ff}
+thead th .sort-arrow{margin-left:4px;font-size:10px;opacity:.4}
+thead th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+thead th.no-sort{cursor:default}
+thead th.no-sort:hover{background:#f8fafc;cursor:default}
+
+/* Light Blue Striped Rows & Visible Borders */
+tbody tr:nth-child(odd){background:#ffffff}
+tbody tr:nth-child(even){background:#eff6ff} /* Made much lighter */
+tbody tr:hover{background:#dbeafe !important} /* Made much lighter */
+tbody tr.in-progress{border-left:3px solid var(--amber)}
+tbody tr.completed{border-left:3px solid var(--green)}
+tbody tr.new-row{animation:fadeSlideIn .3s ease}
+
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+td{padding:1px 2px;vertical-align:middle;white-space:nowrap;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+td:first-child{border-left:1px solid var(--border)}
+
+/* Input styling */
+td input,td select{background:transparent;border:1px solid transparent;border-radius:4px;color:var(--text);font-size:12px;padding:6px 6px;width:100%;outline:none;transition:border-color .15s,background .15s;font-family:inherit}
+td input:focus,td select:focus{border-color:var(--accent-border);background:#eff6ff;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+td input[type="number"]{text-align:right}
+td input[type="date"]{color:var(--text-dim)}
+
+/* Remove Arrows from Number Inputs */
+td input[type=number]::-webkit-inner-spin-button, 
+td input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+td input[type=number] { -moz-appearance: textfield; }
+
+/* Cliché Column Font Color (Sharp/Borders unchanged) */
+td.cliche-col input, th.cliche-col {
+  color: #1d4ed8; /* Dark Blue Font */
+  font-weight: 700;
+}
+
+.auto-cell{background:var(--accent-bg);border-radius:4px;padding:4px 6px;font-weight:700;font-size:12px;text-align:right;color:var(--accent);min-width:60px;display:block;border:1px solid var(--accent-border)}
+.auto-cell.payment{font-weight:600;text-align:center;font-size:11px}
+
+.badge{display:inline-block;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.badge-green{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.badge-blue{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border)}
+.badge-muted{background:var(--surface3);color:var(--text-muted);border:1px solid var(--border)}
+
+.cb-wrap{display:flex;align-items:center;justify-content:center;height:32px}
+.cb-wrap input[type="checkbox"]{appearance:none;width:18px;height:18px;border:2px solid var(--border);border-radius:4px;cursor:pointer;transition:all .15s;position:relative;flex-shrink:0}
+.cb-wrap input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent)}
+.cb-wrap input[type="checkbox"]:checked::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;font-weight:900;color:#fff}
+
+.del-btn{width:24px;height:24px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;opacity:0}
+tr:hover .del-btn{opacity:1}
+.del-btn:hover{background:var(--red-bg);color:var(--red)}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14px;border:none !important}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;max-width:400px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+.modal-box p{font-size:14px;font-weight:500;color:var(--text);margin-bottom:20px;line-height:1.6}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+.toast-container{position:fixed;bottom:16px;right:16px;z-index:9998;display:flex;flex-direction:column;gap:6px}
+.toast{padding:10px 16px;border-radius:var(--radius);font-size:12px;font-weight:600;color:#fff;animation:toastIn .25s ease,toastOut .25s ease 2.5s forwards;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.toast-success{background:var(--green)}
+.toast-error{background:var(--red)}
+.toast-info{background:var(--blue)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+
+/* iPhone 16 Pro Max Compatibility */
+@media (max-width: 430px) {
+  html { font-size: 15px; }
+  .header { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 16px; }
+  .header-left { justify-content: center; }
+  .header h1 { font-size: 16px; text-align: center; }
+  .header-sub { text-align: center; }
+  .header-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; width: 100%; }
+  .btn { width: 100%; justify-content: center; padding: 10px 4px; font-size: 11px; }
+  
+  .dash-inner { padding: 10px 12px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .top-cust-section { padding: 10px 12px; }
+  
+  .toolbar { padding: 8px 12px; gap: 6px; }
+  .search-box { min-width: 100%; max-width: none; order: 1; }
+  .filter-select { flex: 1 1 45%; min-width: 45%; }
+  .toolbar-right { width: 100%; justify-content: space-between; order: 3; margin-left: 0; }
+  .row-count { flex: 1; text-align: center; }
+  .btn-accent { flex: 1.5; }
+  
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  thead th { padding: 8px 6px; font-size: 11px; }
+  td input, td select { padding: 8px 4px; font-size: 13px; }
+  .cb-wrap input[type="checkbox"] { width: 20px; height: 20px; }
+  
+  .toast-container { left: 16px; right: 16px; bottom: 20px; }
+  .toast { width: 100%; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo">CG</div>
+    <div>
+      <h1><span>Century Gate</span> Company Ltd</h1>
+      <div class="header-sub">Order Tracking & Management System</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="toggleDashboard()" id="dashToggleBtn">Hide Dashboard</button>
+    <button class="btn" onclick="exportPDF()" id="exportPdfBtn">Export PDF</button>
+    <button class="btn" onclick="exportCSV()" id="exportBtn">Export CSV</button>
+    <button class="btn btn-danger" onclick="resetData()" id="resetBtn">Reset Data</button>
+  </div>
+</header>
+
+<main style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+  <div id="dashboardArea">
+    <div class="dash-inner" id="dashCards"></div>
+    <div class="top-cust-section">
+      <div class="sales-title" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:8px">Top 20 Customers by Total Sales</div>
+      <div class="top-cust-grid" id="topCusts"></div>
+    </div>
+  </div>
+
+  <nav class="toolbar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search orders, customers, items..." oninput="onSearchInput()" autocomplete="off">
+    </div>
+    <select class="filter-select" id="filterProduct" onchange="applyFilters()">
+      <option value="">All Products</option>
+      <option>Plain Items</option>
+      <option>Printed Paper Bags</option>
+      <option>Printed Boxes</option>
+      <option>Printed Cups</option>
+      <option>Printed Napkins</option>
+      <option>Printed Sheet</option>
+    </select>
+    <select class="filter-select" id="filterProdStatus" onchange="applyFilters()">
+      <option value="">All Statuses</option>
+      <option>In Progress</option>
+      <option>Completed</option>
+    </select>
+    <select class="filter-select" id="filterPayment" onchange="applyFilters()">
+      <option value="">All Payments</option>
+      <option value="none">No Payment</option>
+      <option value="advance">50% Advance</option>
+      <option value="full">Fully Paid</option>
+    </select>
+    <div class="toolbar-right">
+      <span class="row-count" id="rowCount"></span>
+      <button class="btn btn-accent" onclick="addRow()">+ Add Order</button>
+    </div>
+  </nav>
+
+  <div class="table-wrap" id="tableWrap" role="region" tabindex="0">
+    <table>
+      <caption>Century Gate order tracking table</caption>
+      <colgroup>
+        <col style="width:80px"><col style="width:130px"><col style="width:88px"><col style="width:115px">
+        <col style="width:90px"><col style="width:125px"><col style="width:155px">
+        <col style="width:72px"><col style="width:60px"><col style="width:85px"><col style="width:95px"><col style="width:95px">
+        <col style="width:130px"><col style="width:95px"><col style="width:90px"><col style="width:100px">
+        <col style="width:65px"><col style="width:40px"><col style="width:42px"><col style="width:135px">
+        <col style="width:28px">
+      </colgroup>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn">Confirm Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+var PAY_NONE = 'none', PAY_ADV = 'advance', PAY_FULL = 'full';
+
+var COLS=[
+  {k:'id',l:'Order ID',t:'text',sortable:true},
+  {k:'date',l:'Order Date',t:'date',sortable:true},
+  {k:'custNo',l:'Cust. No.',t:'text',sortable:true},
+  {k:'custName',l:'Customer Name',t:'text',sortable:true},
+  {k:'orderType',l:'Order Type',t:'select',o:['New Order','Reorder'],sortable:true},
+  {k:'productType',l:'Product Type',t:'select',o:['Plain Items','Printed Paper Bags','Printed Boxes','Printed Cups','Printed Napkins','Printed Sheet'],sortable:true},
+  {k:'desc',l:'Description',t:'text',sortable:true},
+  {k:'qty',l:'Quantity',t:'number',sortable:false},
+  {k:'unit',l:'Unit',t:'select',o:['CTN','PCS','KILO'],sortable:true},
+  {k:'price',l:'Unit Price',t:'number',sortable:false},
+  {k:'cliche',l:'Cliche',t:'number',sortable:false},
+  {k:'total',l:'Total Value',t:'auto',sortable:true},
+  {k:'deadline',l:'Deadline',t:'date',sortable:true},
+  {k:'prodStatus',l:'Production',t:'select',o:['In Progress','Completed'],sortable:true},
+  {k:'invStatus',l:'Invoice',t:'select',o:['Invoiced','Not Invoiced'],sortable:true},
+  {k:'delStatus',l:'Delivery',t:'select',o:['Fully Delivered','Not Shipped'],sortable:true},
+  {k:'remQty',l:'Rem. Qty',t:'number',sortable:false},
+  {k:'advance',l:'50%',t:'checkbox',sortable:true},
+  {k:'fullPay',l:'Full',t:'checkbox',sortable:true},
+  {k:'paySum',l:'Payment Summary',t:'payauto',sortable:true},
+  {k:'_del',l:'',t:'delete',sortable:false}
+];
+
+function safeNum(v){var n=parseFloat(v);return(isFinite(n)&&n>=0)?n:0}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\//g,'&#47;')}
+function fmt(n){if(n==null||n==='')return'';return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtInt(n){if(n==null||n==='')return'';return Number(n).toLocaleString('en-US')}
+function calcTotal(r){return safeNum(r.qty)*safeNum(r.price)+safeNum(r.cliche)}
+function paySum(r){if(r.fullPay)return PAY_FULL;if(r.advance)return PAY_ADV;return PAY_NONE}
+function payLabel(s){
+  if(s===PAY_FULL)return'<span class="badge badge-green">&#10003; Fully Paid</span>';
+  if(s===PAY_ADV)return'<span class="badge badge-blue">&#9679; 50% Advance Paid</span>';
+  return'<span class="badge badge-muted">&#10007; No Payment</span>';
+}
+
+function parseDate(str) {
+  if (!str) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  var months = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'};
+  var p = str.split('-');
+  if (p.length === 3 && months[p[1]]) {
+    var day = p[0].length < 2 ? '0' + p[0] : p[0];
+    return p[2] + '-' + months[p[1]] + '-' + day;
+  }
+  return '';
+}
+
+function toast(msg,type){
+  var c=document.getElementById('toasts'),d=document.createElement('div');
+  d.className='toast toast-'+(type||'info');d.textContent=msg;c.appendChild(d);
+  setTimeout(function(){if(d.parentNode)d.remove()},3000);
+}
+
+function arrToObj(a){return{id:a[0],date:parseDate(a[1]),custNo:a[2],custName:a[3],orderType:a[4],productType:a[5],desc:a[6],qty:a[7],unit:a[8],price:a[9],cliche:a[10],total:a[11],deadline:parseDate(a[12]),prodStatus:a[13],invStatus:a[14],delStatus:a[15],remQty:a[16],advance:!!a[17],fullPay:!!a[18]}}
+
+function getInitialData(){return[
+["ORD-001","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Sheet","ALU SHEET",63,"CTN",126.50,0,7969.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-002","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 13 CM",100,"CTN",88.00,0,8800.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,1],
+["ORD-003","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 10 CM",128,"CTN",107.25,0,13728.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-004","07-Apr-2026","12034091","HIPPO","New Order","Printed Paper Bags","TH BAG",11250,"PCS",0.63,2000,9087.50,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-005","07-Apr-2026","12034091","HIPPO","New Order","Printed Sheet","SHEET 25*35",50000,"PCS",0.095,400,5150.00,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-006","14-Apr-2026","12034088","FATTBOY","Reorder","Printed Paper Bags","SOS BAG",103,"CTN",118.50,0,12205.50,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-007","14-Apr-2026","12034088","FATTBOY","Reorder","Printed Boxes","LARGE FRIES BOX",30000,"PCS",0.18,0,5400.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-008","14-Apr-2026","12034088","FATTBOY","New Order","Printed Boxes","NASHFEL BOX",16100,"PCS",0.46,0,7406.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-009","14-Apr-2026","12034089","JOMIER","Reorder","Printed Paper Bags","SOS BAG",117,"CTN",118.50,0,13864.50,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-010","14-Apr-2026","12034089","JOMIER","New Order","Printed Boxes","FRIES BOX",26000,"PCS",0.43,0,11180.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-011","14-Apr-2026","12034089","JOMIER","Reorder","Printed Cups","PAPER CUP 7oz",45000,"PCS",0.14,0,6300.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-012","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SAT BAG",71,"CTN",290.00,0,20590.00,"14-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-013","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Cups","9oz PAPER CUP WITH LID",210,"CTN",137.50,0,28875.00,"14-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-014","14-Apr-2026","12034057","MESHRAQ","Reorder","Printed Napkins","NAPKIN 2PLY",200,"CTN",75.00,0,15000.00,"14-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-015","10-Apr-2026","12034060","FLAG","Reorder","Printed Boxes","FRIES BOX",11730,"PCS",0.94,0,11026.20,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-016","20-Apr-2026","12034060","YOUR BURGER","New Order","Printed Boxes","BURGER BOX",10000,"PCS",0.60,0,6000.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-017","10-May-2026","12034060","YOUR BURGER","New Order","Printed Paper Bags","TH BAG BASE 18",10000,"PCS",0.69,1000.00,7900.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-018","28-Apr-2026","12034039","DANAT TIBA","Reorder","Plain Items","BROWN PAPER #8",1200,"CTN",22.00,0,26400.00,"05-May-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-019","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Paper Bags","SOS BAG",146,"CTN",92.00,2300.00,15732.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-020","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Paper Bags","TWISTED HANDLE BAG",72,"CTN",97.50,2850.00,9870.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-021","20-Apr-2026","12034068","OLD BS GOLD","New Order","Printed Cups","PAPER CUP 9oz",104,"CTN",130.00,1200.00,14720.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-022","14-Jun-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",70,"CTN",63.00,0,4410.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-023","30-May-2026","12034068","OLD BS GOLD","Reorder","Printed Sheet","ALU SHEET",120000,"PCS",0.12,0,14256.00,"15-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-024","19-Apr-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",105.00,0,5250.00,"20-May-2026","Completed","Not Invoiced","Not Shipped","",0,0],
+["ORD-025","19-Apr-2026","12034073","CLASH BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",70.00,0,3500.00,"20-May-2026","Completed","Not Invoiced","Not Shipped","",0,0],
+["ORD-026","23-May-2026","12034084","HALIM","New Order","Printed Sheet","PTD SHEET 25×35",50,"CTN",70.00,0,3500.00,"16-May-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-027","02-Jun-2026","12034084","TOLIMA","New Order","Printed Paper Bags","PTD POUCH",20000,"PCS",0.16,800.00,4000.00,"25-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-028","23-May-2026","12034084","TOLIMA","New Order","Printed Sheet","PTD SHEET 25×35",50,"CTN",70.00,0,3500.00,"16-May-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-029","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","AUTOCUT 800",200,"CTN",48.00,0,9600.00,"22-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-030","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","MAXI ROLL 700",240,"CTN",35.00,0,8400.00,"22-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-031","07-May-2026","12034056","ELGOLAF","New Order","Plain Items","BLUE ROLL 31*25",240,"CTN",78.00,0,18720.00,"22-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-032","12-May-2026","12034010","AMJAD ALFALAH","Reorder","Plain Items","AUTOCUT",1000,"CTN",52.00,0,52000.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-033","12-May-2026","12034048","ROKN AL KAFLA","Reorder","Plain Items","BLUE ROLL 475 SHEET CGC",80,"CTN",100.00,0,8000.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-034","09-May-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","12oz PAPER CUP",51,"PCS",190.00,0,9690.00,"10-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-035","09-May-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"10-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-036","07-May-2026","12034079","WADI AL ATTA","Reorder","Plain Items","HUTU PAPER CUP",135,"CTN",61.00,0,8235.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-037","10-May-2026","12034041","ASAWER EL HEGAZ","Reorder","Plain Items","PTD PLAIN ITEMS",1,"CTN",14076.00,0,14076.00,"12-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-038","11-May-2026","12034081","AYED","Reorder","Printed Napkins","NAPKIN 1PLY",500,"CTN",55.00,0,27500.00,"01-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-039","01-Jun-2026","12034084","BARBRA","New Order","Printed Napkins","NAPKIN 2PLY",50,"CTN",65.00,0,3250.00,"20-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-040","11-May-2026","12034084","SPANICH","Reorder","Printed Paper Bags","PTD TH BAG",22200,"PCS",0.48,0,10656.00,"01-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-041","19-May-2026","12034051","SALAH","Reorder","Printed Sheet","PTD SHEET 25×35",47,"CTN",77.00,0,3619.00,"05-Jun-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-042","17-May-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",36.00,0,7200.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-043","19-May-2026","12034047","AGSAN TIBA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",180,"CTN",37.00,0,6660.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-044","19-May-2026","12034047","AGSAN TIBA","Reorder","Plain Items","AUTO CUT",200,"CTN",54.00,0,10800.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-045","01-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","AUTO CUT PRO",100,"CTN",54.00,0,5400.00,"02-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-046","01-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",50,"CTN",33.00,0,1650.00,"02-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-047","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 600G",840,"CTN",30.00,0,25200.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-048","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 700G",300,"CTN",33.00,0,9900.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-049","19-May-2026","12034052","MATAJER AL JAZEERA","New Order","Plain Items","PTD MAXI ROLL 800G",300,"CTN",36.00,0,10800.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-050","19-May-2026","12034070","44X","Reorder","Plain Items","GLAVES TRANS",50,"CTN",65.00,0,3250.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-051","19-May-2026","12034070","44X","Reorder","Plain Items","GLAVES BLACK",70,"CTN",72.00,0,5040.00,"19-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-052","21-May-2026","12034052","MATAJER AL JAZEERA","Reorder","Plain Items","ALU FOIL 45",50,"CTN",153.00,0,7650.00,"21-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-053","21-May-2026","12034052","MATAJER AL JAZEERA","Reorder","Plain Items","ALU FOIL 30",100,"CTN",105.00,0,10500.00,"21-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-054","10-May-2026","12034070","44X","New Order","Printed Cups","PAPER CUP 4oz",50,"CTN",75.00,0,3750.00,"25-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-055","10-Jun-2026","12034060","FLAG","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",162.50,0,8125.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-056","10-Jun-2026","12034060","YOUR BURGER","Reorder","Printed Paper Bags","SOS BAG",50,"CTN",156.00,0,7800.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-057","10-Jun-2026","12034066","COOKIE LOVERS","New Order","Printed Paper Bags","TH BAG",15000,"PCS",0.48,800.00,8000.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-058","10-Jun-2026","12034066","COOKIE LOVERS","New Order","Printed Paper Bags","SOS BAG",30000,"PCS",0.17,2100.00,7200.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-059","04-Jun-2026","12034085","JAAJ","New Order","Printed Boxes","BROASTED BOX",20000,"PCS",0.39,0,7800.00,"15-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-060","06-Jun-2026","12034083","BIG Z","New Order","Printed Paper Bags","TH BAG",10000,"PCS",0.50,1640.00,6640.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-061","06-Jun-2026","12034083","BIG Z","New Order","Printed Paper Bags","SOS BAG",500,"KILO",9.50,850.00,5600.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-062","06-Jun-2026","12034083","BIG Z","New Order","Printed Cups","PAPER CUP 9oz",20,"CTN",170.00,0,3400.00,"25-Jun-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-063","07-Jun-2026","12034076","SHRIMP NATION","Reorder","Printed Paper Bags","SAT BAG",10,"CTN",145.00,0,1450.00,"08-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-064","07-Jun-2026","12034076","SHRIMP NATION","Reorder","Printed Napkins","NAPKIN",50,"CTN",50.00,0,2500.00,"08-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-065","18-Jun-2026","12034085","HOTSPOT","New Order","Printed Boxes","PTD FBB BOX",20000,"PCS",0.40,0,8000.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-066","18-Jun-2026","12034085","HOTSPOT","New Order","Printed Boxes","PTD FBB BOX",10000,"PCS",0.43,0,4300.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-067","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 10 CM",50,"CTN",107.25,0,5362.50,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-068","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SOS BAG BASE 13 CM",50,"CTN",88.00,0,4400.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-069","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Paper Bags","SAT BAG",50,"CTN",290.00,0,14500.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-070","20-Jun-2026","12034057","MESHRAQ","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",75.00,0,3750.00,"30-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-071","18-Jun-2026","12034047","AGSAN TIBA","Reorder","Plain Items","BUNDLE 5K",212,"CTN",140.00,0,29680.00,"20-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-072","10-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","PAPER CUP 12",50,"CTN",190.00,0,9500.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-073","10-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"10-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-074","01-Jun-2026","12034078","EMBOSS BURGER","Reorder","Printed Paper Bags","SOS BAG",68,"CTN",187.50,0,12750.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-075","10-Jun-2026","12034078","EMBOSS BURGER","New Order","Printed Boxes","BOX WITH LID",5000,"PCS",2.70,0,13500.00,"14-Jun-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-076","10-Jun-2026","12034079","WADI AL ATTA","Reorder","Plain Items","BUNDLE 5K",121,"CTN",140.00,0,16940.00,"15-Jun-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-077","14-Jun-2026","12034065","HAMBANA","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",64.00,0,3200.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-078","22-Jun-2026","12034054","BHAR & NAR","New Order","Printed Boxes","BROASTED BOX",100000,"PCS",0.31,0,31000.00,"15-Jul-2026","In Progress","Not Invoiced","Not Shipped","",1,0],
+["ORD-079","14-Jun-2026","12034070","44X","Reorder","Printed Napkins","NAPKIN 2PLY",300,"CTN",39.00,0,11700.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-080","06-Jun-2026","12034070","44X","Reorder","Printed Cups","PAPER CUP 4oz",50,"CTN",75.00,0,3750.00,"01-Jul-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-081","06-Jun-2026","12034070","44X","Reorder","Printed Paper Bags","POUCH",120000,"PCS",0.055,0,6600.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-082","06-Jun-2026","12034070","44X","New Order","Printed Paper Bags","SOS BAG",120000,"PCS",0.090,0,10800.00,"25-Jun-2026","In Progress","Not Invoiced","Not Shipped","",0,0],
+["ORD-083","04-Jun-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",35.00,0,7000.00,"05-Jun-2026","Completed","Invoiced","Not Shipped","",0,0],
+["ORD-084","01-May-2026","12034070","44X","Reorder","Printed Paper Bags","POUCH BAG",120000,"PCS",0.055,0,6600.00,"20-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-085","28-Jan-2026","12034057","MESHRAQ","Reorder","Printed Cups","PAPER CUP WITH LID",111,"CTN",247.50,0,27472.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-086","10-Apr-2026","12034070","44X","Reorder","Printed Napkins","NAPKIN 2PLY",300,"CTN",39.00,0,11700.00,"15-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-087","01-May-2026","12034039","DANAT TIBA","Reorder","Plain Items","4oz PAPER CUP",650,"CTN",23.00,0,14950.00,"03-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-088","01-May-2026","12034039","DANAT TIBA","Reorder","Plain Items","2oz PAPER CUP",650,"CTN",19.00,0,12350.00,"03-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-089","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Paper Bags","SOS BAG",42000,"PCS",0.25,0,10500.00,"05-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-090","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Sheet","SHEET 35*35",50,"CTN",95.00,0,4750.00,"05-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-091","19-Apr-2026","12034078","EMBOSS BURGER","Reorder","Printed Sheet","SHEET 35*35",50,"CTN",95.00,0,4750.00,"05-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-092","20-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",70,"CTN",63.00,0,4410.00,"01-May-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-093","14-Apr-2026","12044079","WADI AL ATTA","Reorder","Plain Items","AUTO CUT",200,"CTN",54.00,0,10800.00,"16-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-094","15-Jan-2026","12034070","44X","New Order","Printed Cups","PAPER CUP",201,"CTN",95.00,0,19095.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-095","15-Jan-2026","12034070","44X","Reorder","Printed Paper Bags","SOS BAG",167,"CTN",70.00,0,11690.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-096","25-Jan-2026","12034074","TAMMAZ","Reorder","Printed Cups","PAPER CUP 9OZ DOUBLE",90,"CTN",157.50,0,14175.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-097","25-Jan-2026","12034074","LINU","New Order","Printed Cups","PAPER CUP 9OZ DOUBLE",46,"CTN",157.50,0,7245.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-098","10-Jan-2026","12034061","AL BASHEER","Reorder","Printed Boxes","LAREG BROASTED BOX",991,"CTN",34.50,0,34189.50,"25-Apr-2026","Completed","Invoiced","Fully Delivered","68",1,1],
+["ORD-099","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",86,"CTN",143.00,0,12298.00,"15-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-100","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","SOS BAG",530,"KILO",9.00,0,4770.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-101","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Paper Bags","TH BAG",12500,"PCS",0.71,0,8875.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-102","10-Feb-2026","12034073","CLASH BURGER","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",50,"CTN",135.00,0,6750.00,"27-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-103","10-Feb-2026","12034064","CHEF","New Order","Printed Boxes","BURGER BOX",490,"PCS",90.00,0,44100.00,"20-Mar-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-104","11-Mar-2026","12034085","WHA","New Order","Printed Paper Bags","TH BAG",11500,"PCS",0.41,750.00,5465.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-105","10-Mar-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",75.00,0,3750.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-106","10-Mar-2026","12034068","CLUX","Reorder","Printed Cups","PAPER CUP 8OZ SINGLE",29,"CTN",200.00,0,5800.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-107","10-Mar-2026","12034068","CLUX","Reorder","Printed Paper Bags","SOS BAG",54,"CTN",104.00,0,5616.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-108","24-Mar-2026","12034078","EMBOSS BURGER","Reorder","Printed Cups","PAPER CUP 12OZ",49,"CTN",190.00,0,9310.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-109","26-Mar-2026","12034070","44x","Reorder","Printed Napkins","NAPKIN 2PLY",350,"CTN",36.00,0,12600.00,"10-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-110","27-Mar-2026","NEW","AJOL","New Order","Printed Paper Bags","BROWN SOS",40000,"PCS",0.31,750,13150.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-111","27-Mar-2026","NEW","AJOL","New Order","Printed Napkins","NAPKIN 1 PLY",50,"CTN",65.00,0,3250.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-112","28-Mar-2026","12034070","44x","Reorder","Plain Items","MAXI ROLL 800G",350,"CTN",35.00,0,12250.00,"05-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-113","26-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","4oz PAPER CUP",1200,"CTN",24.00,0,28800.00,"02-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-114","24-Mar-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN 1PLY",20,"CTN",75.00,0,1500.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-115","26-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","7OZ PAPER CUP W/O HANDLE",540,"CTN",36.00,0,19440.00,"02-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-116","03-Apr-2026","12034047","AGSAN TIBA","Reorder","Plain Items","AUTO CUT",220,"CTN",58.00,0,12760.00,"04-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-117","03-Apr-2026","12034047","AGSAN TIBA","Reorder","Plain Items","BLUE ROLL",240,"CTN",110.00,0,26400.00,"04-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-118","25-Mar-2026","12034065","HAMBANA","Reorder","Printed Napkins","NAPKIN 2PLY",50,"CTN",58.00,0,2900.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-119","25-Mar-2026","12034065","SALAH","Reorder","Printed Sheet","SHEET 25*35",50000,"CTN",0.07,0,3500.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-120","25-Mar-2026","12034088","FATTBOY","New Order","Printed Boxes","CHICKEN FRIES BOX",33600,"PCS",0.45,500,15620.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-121","25-Mar-2026","12034061","AL BASHEER","Reorder","Printed Boxes","SMALL BROASTED BOX",75,"PCS",87.00,0,6525.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-122","30-Mar-2026","12034094","CHICK IN","New Order","Printed Paper Bags","POUCH BAG WITH GP",30000,"PCS",0.18,600,6000.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-123","01-Apr-2026","12034085","SHISHITO","Reorder","Printed Boxes","BURGER BOX",8000,"PCS",0.45,0,3600.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-124","01-Apr-2026","12034085","SHISHITO","Reorder","Printed Boxes","TRAY BOX",8000,"PCS",0.45,0,3600.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-125","01-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Paper Bags","SOS BAG",158,"CTN",92.00,0,14536.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-126","10-Apr-2026","12034060","YOUR BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",66.00,0,3300.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-127","10-Apr-2026","12034060","FLAG","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",66.00,0,3300.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-128","08-Apr-2026","12034085","BUNZOS","New Order","Printed Boxes","FRIES BOX",10250,"PCS",0.73,0,7482.50,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-129","08-Apr-2026","12034085","BUNZOS","New Order","Printed Paper Bags","SOS BAG",48,"CTN",156.00,1300,8788.00,"29-Apr-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-130","08-Apr-2026","12034060","YOUR BURGER","New Order","Printed Sheet","SHEET 35*35",50000,"PCS",0.09,450,4700.00,"10-May-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-131","08-Apr-2026","12034070","44X","New Order","Printed Sheet","SHEET 25*35",100000,"PCS",0.075,0,7500.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",1,0],
+["ORD-132","01-Apr-2026","12034068","OLD BS GOLD","Reorder","Printed Cups","PAPER CUP 9OZ SINGLE",109,"CTN",130.00,0,14170.00,"25-Apr-2026","Completed","Invoiced","Fully Delivered","",0,0],
+["ORD-133","24-Mar-2026","12034078","EMBOSS BURGER","Reorder","Printed Napkins","NAPKIN 1PLY",50,"CTN",63.00,0,3150.00,"20-Apr-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-134","15-Jan-2026","12034090","CHOMP","New Order","Printed Boxes","FAMILY BOX",6400,"PCS",2.15,0,13760.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-135","15-Jan-2026","12034090","CHOMP","New Order","Printed Paper Bags","LAREG SOS BAG",620,"KILO",7.50,0,4650.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-136","15-Jan-2026","12034090","CHOMP","New Order","Printed Paper Bags","SMALL SOS BAG",620,"KILO",7.50,0,4650.00,"01-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-137","02-Feb-2026","12034091","HIPPO","New Order","Printed Boxes","SANDWICH HOLDER",54000,"PCS",0.10,0,5400.00,"05-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-138","02-Feb-2026","12034060","FLAG","Reorder","Printed Paper Bags","SOS BAG",72,"CTN",130.00,0,9360.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-139","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Paper Bags","SOS BAG",146,"CTN",80.00,0,11680.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-140","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Sheet","ALU SHEET",22,"CTN",594.00,0,13068.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-141","09-Feb-2026","12034068","OLD BS GOLD","Reorder","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",58.00,0,2900.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-142","09-Feb-2026","12034075","FRY BUZZ","Reorder","Printed Boxes","LARGE BROASTED BOX",10050,"PCS",0.35,0,3517.50,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-143","01-Feb-2026","12034092","LIYLA","New Order","Printed Paper Bags","SAT BAG",48000,"PCS",0.17,0,8160.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-144","01-Feb-2026","12034092","LIYLA","New Order","Printed Paper Bags","POUCH BAG",15000,"PCS",0.11,0,1650.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-145","01-Feb-2026","12034092","LIYLA","New Order","Printed Sheet","WRAPPING SHEET",50000,"PCS",0.07,0,3500.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-146","01-Feb-2026","12034092","LIYLA","New Order","Printed Boxes","SHAWRMA BOX",18750,"PCS",0.78,0,14625.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-147","10-Feb-2026","12034091","LOOMI","New Order","Printed Paper Bags","SOS BAG",60,"CTN",100.00,0,6000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-148","10-Feb-2026","12034091","LOOMI","New Order","Printed Sheet","WRAPPING SHEET",57000,"PCS",0.07,0,3705.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-149","10-Feb-2026","12034091","LOOMI","New Order","Printed Boxes","SANDWICH BOX - 700 PCS",21700,"PCS",0.47,0,10199.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-150","25-Feb-2026","12034088","FATTBOY","New Order","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-151","25-Feb-2026","12034089","JOMIER","New Order","Printed Napkins","NAPKIN |30×30| 1PLY BROWN",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-152","25-Feb-2026","12034088","CUV","New Order","Printed Napkins","NAPKIN |30×30| 1PLY WHITE",50,"CTN",60.00,0,3000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-153","01-Mar-2026","12034088","FATTBOY","New Order","Printed Sheet","WRAPPING SHEET",250,"CTN",90.00,2500.00,25000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-154","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Paper Bags","SAT BAG",10,"CTN",135.00,0,1350.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-155","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Cups","PAPER CUP",3,"CTN",80.00,0,240.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-156","04-Mar-2026","12034076","SHRIMP NATION","Reorder","Printed Boxes","BOXES",5,"CTN",50.00,0,250.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-157","04-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","COFFE CUP HOLDER 2 PLACES",200,"CTN",28.00,0,5600.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-158","12-Mar-2026","12034070","44X","Reorder","Plain Items","MAXI ROLL 800G",200,"CTN",35.00,0,7000.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-159","11-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","MAXI ROLL BANDLE 3.5K",324,"CTN",102.00,0,33048.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-160","11-Mar-2026","12034056","AL GOLAF","Reorder","Plain Items","MAXI ROLL BANDLE 3K",150,"CTN",90.00,0,13500.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-161","11-Mar-2026","12034056","AL GOLAF","Reorder","Plain Items","AUTO CUT",100,"CTN",57.00,0,5700.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-162","16-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","MAXI ROLL BANDLE 5K",216,"CTN",138.00,0,29808.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-163","16-Mar-2026","12034047","AGSAN TIBA","Reorder","Plain Items","4oz PAPER CUP",1176,"CTN",25.00,0,29400.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1],
+["ORD-164","16-Mar-2026","12033194","MSARAT AL MADINA","Reorder","Plain Items","MAXI ROLL BANDLE 5K",108,"CTN",137.00,0,14796.00,"15-Mar-2026","Completed","Invoiced","Fully Delivered","",1,1]
+]}
+
+var data=[];
+var filtered=[];
+var sortCol=-1, sortDir=1;
+var dashVisible=true;
+var newRowIdx=-1;
+
+var searchTimer=null, saveTimer=null, dashTimer=null;
+function onSearchInput(){clearTimeout(searchTimer);searchTimer=setTimeout(applyFilters,150)}
+function debouncedSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveData,500)}
+function debouncedDash(){clearTimeout(dashTimer);dashTimer=setTimeout(updateDashboard,300)}
+
+var STORE_KEY='cg_orders_v6';
+function saveData(){try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){}}
+function loadData(){
+  try{
+    var s=localStorage.getItem(STORE_KEY);
+    if(s){
+      var d=JSON.parse(s);
+      if(Array.isArray(d)&&d.length>0){
+        if(Array.isArray(d[0])){data=d.map(arrToObj);saveData()}
+        else{data=d}
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+
+function renderThead(){
+  var h='<tr>';
+  for(var i=0;i<COLS.length;i++){
+    var c=COLS[i];
+    if(c.t==='delete'){h+='<th></th>';continue}
+    var sorted=sortCol===i;
+    var arrow=sorted?(sortDir===1?' &#9650;':' &#9660;'):'';
+    var sortAttr=sorted?(sortDir===1?' aria-sort="ascending"':' aria-sort="descending"'):' aria-sort="none"';
+    var noSortClass = c.sortable === false ? ' no-sort' : '';
+    var clicheClass = c.k === 'cliche' ? ' cliche-col' : '';
+    var clickAttr = c.sortable === false ? '' : ' onclick="doSort('+i+')"';
+    h+='<th'+sortAttr+' class="'+(sorted?'sorted':'')+noSortClass+clicheClass+'"'+clickAttr+'>'+c.l+'<span class="sort-arrow">'+arrow+'</span></th>';
+  }
+  h+='</tr>';
+  document.getElementById('thead').innerHTML=h;
+}
+
+function renderRow(r,idx){
+  var ps=r.prodStatus==='Completed'?'completed':'in-progress';
+  var isNew=idx===newRowIdx;
+  var h='<tr class="'+ps+(isNew?' new-row':'')+'" data-ri="'+idx+'">';
+  var oid=esc(r.id)||'new';
+  for(var ci=0;ci<COLS.length;ci++){
+    var c=COLS[ci];
+    if(c.t==='delete'){
+      h+='<td><button class="del-btn" onclick="deleteRow('+idx+')" title="Delete order '+oid+'">&#10005;</button></td>';
+      continue;
+    }
+    var v=r[c.k];
+    var tdClass = c.k === 'cliche' ? ' class="cliche-col"' : '';
+    h+='<td'+tdClass+'>';
+    if(c.t==='auto'){
+      h+='<span class="auto-cell">'+fmt(r.total)+'</span>';
+    }else if(c.t==='payauto'){
+      h+='<span class="auto-cell payment">'+payLabel(paySum(r))+'</span>';
+    }else if(c.t==='checkbox'){
+      h+='<div class="cb-wrap"><input type="checkbox" data-f="'+c.k+'" data-ri="'+idx+'" '+(v?'checked':'')+' onchange="handleCheck(this)"></div>';
+    }else if(c.t==='select'){
+      h+='<select data-f="'+c.k+'" data-ri="'+idx+'" onchange="handleSelect(this)">';
+      for(var j=0;j<c.o.length;j++){h+='<option'+(v===c.o[j]?' selected':'')+'>'+c.o[j]+'</option>'}
+      h+='</select>';
+    }else if(c.t==='number'){
+      h+='<input type="number" step="any" data-f="'+c.k+'" data-ri="'+idx+'" value="'+(v!=null&&v!==''?v:'')+'" oninput="handleInput(this)">';
+    }else if(c.t==='date'){
+      h+='<input type="date" data-f="'+c.k+'" data-ri="'+idx+'" value="'+esc(v)+'" oninput="handleInput(this)">';
+    }else{
+      h+='<input type="text" data-f="'+c.k+'" data-ri="'+idx+'" value="'+esc(v)+'" placeholder="'+(c.ph||'')+'" oninput="handleInput(this)">';
+    }
+    h+='</td>';
+  }
+  h+='</tr>';
+  return h;
+}
+
+function renderBody(){
+  var h='';
+  if(filtered.length===0){
+    h='<tr><td colspan="'+COLS.length+'" class="empty-state">No orders match your filters. <button class="btn btn-sm" onclick="clearFilters()">Clear Filters</button></td></tr>';
+  }else{
+    for(var i=0;i<filtered.length;i++){h+=renderRow(data[filtered[i]],filtered[i])}
+  }
+  document.getElementById('tbody').innerHTML=h;
+  document.getElementById('rowCount').textContent=filtered.length+' of '+data.length+' orders';
+  newRowIdx=-1;
+}
+
+function applyFilters(){
+  var q=document.getElementById('searchInput').value.toLowerCase().trim();
+  var fp=document.getElementById('filterProduct').value;
+  var fs=document.getElementById('filterProdStatus').value;
+  var fpay=document.getElementById('filterPayment').value;
+  filtered=[];
+  for(var i=0;i<data.length;i++){
+    var r=data[i];
+    if(q){var s=(r.id+' '+r.custNo+' '+r.custName+' '+r.desc+' '+r.orderType+' '+r.productType).toLowerCase();if(s.indexOf(q)===-1)continue}
+    if(fp&&r.productType!==fp)continue;
+    if(fs&&r.prodStatus!==fs)continue;
+    if(fpay&&paySum(r)!==fpay)continue;
+    filtered.push(i);
+  }
+  if(sortCol>=0)doSortFiltered();
+  renderBody();
+}
+
+function clearFilters(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('filterProduct').value='';
+  document.getElementById('filterProdStatus').value='';
+  document.getElementById('filterPayment').value='';
+  applyFilters();
+}
+
+function doSort(ci){
+  var c=COLS[ci];
+  if(!c || c.sortable === false) return;
+  if(sortCol===ci){sortDir*=-1}else{sortCol=ci;sortDir=1}
+  doSortFiltered();renderThead();renderBody();
+}
+function doSortFiltered(){
+  var c=COLS[sortCol];if(!c||c.t==='delete'||c.sortable===false)return;
+  var k=c.k,isNum=(c.t==='number'||c.t==='auto'),isCb=(c.t==='checkbox');
+  filtered.sort(function(a,b){
+    var va=data[a][k],vb=data[b][k];
+    if(isNum){va=safeNum(va);vb=safeNum(vb)}
+    else if(isCb){va=va?1:0;vb=vb?1:0}
+    else{va=String(va||'').toLowerCase();vb=String(vb||'').toLowerCase()}
+    if(va<vb)return -sortDir;if(va>vb)return sortDir;return 0;
+  });
+}
+
+function handleInput(el){
+  var fi=parseInt(el.dataset.ri),f=el.dataset.f;
+  if(f==='qty'||f==='price'||f==='cliche'){
+    data[fi][f]=safeNum(el.value);
+    data[fi].total=calcTotal(data[fi]);
+  }else if(f==='remQty'){
+    data[fi][f]=el.value===''?'':safeNum(el.value);
+  }else{
+    data[fi][f]=el.value;
+  }
+  debouncedSave();debouncedDash();
+}
+function handleSelect(el){
+  var fi=parseInt(el.dataset.ri),f=el.dataset.f;
+  data[fi][f]=el.value;
+  debouncedSave();debouncedDash();
+}
+function handleCheck(el){
+  var fi=parseInt(el.dataset.ri),f=el.dataset.f;
+  data[fi][f]=el.checked;
+  debouncedSave();debouncedDash();
+}
+
+function addRow(){
+  var n=data.length+1;
+  var id='ORD-'+String(n).padStart(3,'0');
+  while(data.some(function(r){return r.id===id})){n++;id='ORD-'+String(n).padStart(3,'0')}
+  
+  var today = new Date();
+  var dateStr = today.toISOString().split('T')[0];
+  
+  data.push({
+    id:id,date:dateStr,custNo:'',custName:'',orderType:'New Order',productType:'Plain Items',
+    desc:'',qty:0,unit:'CTN',price:0,cliche:0,total:0,deadline:'',
+    prodStatus:'In Progress',invStatus:'Not Invoiced',delStatus:'Not Shipped',
+    remQty:'',advance:false,fullPay:false
+  });
+  newRowIdx=data.length-1;
+  saveData();applyFilters();updateDashboard();
+  toast('Order '+id+' added','success');
+  
+  setTimeout(function() {
+    var wrap = document.getElementById('tableWrap');
+    wrap.scrollTop = wrap.scrollHeight;
+  }, 50);
+}
+
+function deleteRow(fi){
+  if(fi<0||fi>=data.length)return;
+  var id=data[fi].id;
+  data.splice(fi,1);
+  saveData();applyFilters();updateDashboard();
+  toast('Order '+id+' deleted','error');
+}
+
+function resetData(){
+  document.getElementById('confirmMsg').innerHTML='This will <strong>erase all your changes</strong> and restore the original orders. Are you sure?';
+  document.getElementById('confirmModal').classList.add('active');
+  document.getElementById('confirmBtn').onclick=function(){
+    closeConfirm();
+    data=getInitialData().map(arrToObj);
+    sortCol=-1;sortDir=1;
+    clearFilters();
+    localStorage.removeItem(STORE_KEY);
+    saveData();applyFilters();updateDashboard();
+    toast('Data reset to original','info');
+  };
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('active')}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    if(document.getElementById('confirmModal').classList.contains('active')){closeConfirm();return}
+    clearFilters();return;
+  }
+});
+document.getElementById('confirmModal').addEventListener('click',function(e){if(e.target===this)closeConfirm()});
+
+/* ===== PDF EXPORT LOGIC (Fixed for local file & iOS) ===== */
+function exportPDF() {
+  try {
+    if (filtered.length === 0) {
+      toast('No orders to export', 'error');
+      return;
+    }
+    
+    if (typeof window.jspdf === 'undefined') {
+      toast('PDF Library failed to load. Check connection.', 'error');
+      return;
+    }
+    
+    toast('Generating PDF...', 'info');
+
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    
+    var categories = ['Plain Items', 'Printed Paper Bags', 'Printed Napkins', 'Printed Sheet', 'Printed Boxes', 'Printed Cups'];
+    var finalY = 15;
+    var pageHeight = doc.internal.pageSize.getHeight();
+    var margin = 14;
+
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont(undefined, 'bold');
+    doc.text('Century Gate Order Tracker', margin, 15);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont(undefined, 'normal');
+    doc.text('Executive Export - ' + new Date().toLocaleDateString(), margin, 21);
+    finalY = 28;
+
+    for (var c = 0; c < categories.length; c++) {
+      var cat = categories[c];
+      var rows = [];
+      for (var i = 0; i < filtered.length; i++) {
+        if (data[filtered[i]].productType === cat) {
+          rows.push(data[filtered[i]]);
+        }
+      }
+      if (rows.length === 0) continue;
+
+      var estHeight = (rows.length * 8) + 20;
+      if (finalY + estHeight > pageHeight - margin) {
+        doc.addPage();
+        finalY = 15;
+      }
+
+      doc.setFontSize(13);
+      doc.setTextColor(29, 78, 216);
+      doc.setFont(undefined, 'bold');
+      doc.text(cat, margin, finalY);
+      finalY += 3;
+
+      var head = [['Order ID', 'Date', 'Customer', 'Description', 'Qty', 'Unit', 'Price', 'Cliche', 'Total', 'Deadline']];
+      var body = [];
+      for (var r = 0; r < rows.length; r++) {
+        var row = rows[r];
+        body.push([
+          row.id, row.date, row.custName, row.desc, row.qty, row.unit, fmt(row.price), fmt(row.cliche), fmt(row.total), row.deadline
+        ]);
+      }
+
+      doc.autoTable({
+        head: head,
+        body: body,
+        startY: finalY,
+        margin: { left: margin, right: margin },
+        theme: 'grid',
+        headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, textColor: [51, 65, 85] },
+        alternateRowStyles: { fillColor: [241, 245, 249] },
+        columnStyles: {
+          4: { halign: 'right' },
+          6: { halign: 'right' },
+          7: { halign: 'right', fillColor: [254, 249, 195] }, 
+          8: { halign: 'right', fontStyle: 'bold', textColor: [29, 78, 216] }
+        }
+      });
+
+      finalY = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Fixes download issue on local file:// and iOS by opening blob URL in new window
+    var blobUrl = doc.output('bloburl');
+    window.open(blobUrl, '_blank');
+    toast('PDF exported successfully!', 'success');
+  } catch (err) {
+    console.error('PDF Export Error:', err);
+    toast('PDF export failed. Please try again.', 'error');
+  }
+}
+
+/* ===== CSV EXPORT LOGIC (Fixed for local file & iOS) ===== */
+function exportCSV() {
+  try {
+    var headers = [];
+    for (var i = 0; i < COLS.length; i++) {
+      if (COLS[i].t !== 'delete') headers.push(COLS[i].l);
+    }
+    var csv = headers.join(',') + '\n';
+    for (var r = 0; r < data.length; r++) {
+      var row = data[r], cells = [];
+      for (var i = 0; i < COLS.length; i++) {
+        var c = COLS[i];
+        if (c.t === 'delete') continue;
+        var v = row[c.k];
+        if (c.t === 'payauto') v = paySum(row) === PAY_FULL ? 'Fully Paid' : paySum(row) === PAY_ADV ? '50% Advance' : 'No Payment';
+        if (c.t === 'checkbox') v = v ? 'Yes' : 'No';
+        v = String(v == null ? '' : v);
+        if (v.indexOf(',') >= 0 || v.indexOf('"') >= 0 || v.indexOf('\n') >= 0) {
+          v = '"' + v.replace(/"/g, '""') + '"';
+        }
+        cells.push(v);
+      }
+      csv += cells.join(',') + '\n';
+    }
+
+    var BOM = '\uFEFF';
+    // Fixes download issue on local file:// and iOS by using Data URI
+    var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csv);
+    var link = document.createElement('a');
+    link.href = dataUri;
+    link.download = 'century_gate_orders.csv';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast('CSV downloaded successfully', 'success');
+  } catch (e) {
+    console.error('CSV Export Error:', e);
+    // Fallback to opening raw data in new tab if anchor fails
+    window.open('data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csv), '_blank');
+    toast('CSV export fallback triggered.', 'info');
+  }
+}
+
+function updateDashboard(){
+  var total=data.length,totalVal=0,newOrders=0,totalCliche=0,inProgress=0,completed=0,notShipped=0,fullyDelivered=0,notInvoiced=0,invoiced=0;
+  for(var i=0;i<data.length;i++){
+    var r=data[i];
+    totalVal+=safeNum(r.total);totalCliche+=safeNum(r.cliche);
+    if(r.orderType==='New Order')newOrders++;
+    if(r.prodStatus==='In Progress')inProgress++;else completed++;
+    if(r.delStatus==='Not Shipped')notShipped++;else fullyDelivered++;
+    if(r.invStatus==='Not Invoiced')notInvoiced++;else invoiced++;
+  }
+  document.getElementById('dashCards').innerHTML=
+    '<div class="dash-card gold"><div class="dash-label">Total Orders</div><div class="dash-value">'+fmtInt(total)+'</div></div>'+
+    '<div class="dash-card gold"><div class="dash-label">Total Value (SAR)</div><div class="dash-value">'+fmt(totalVal)+'</div></div>'+
+    '<div class="dash-card blue"><div class="dash-label">New / Reorder</div><div class="dash-value">'+newOrders+' <span style="font-size:12px;color:var(--text-muted)">/</span> '+(total-newOrders)+'</div></div>'+
+    '<div class="dash-card red"><div class="dash-label">Total Cliche (SAR)</div><div class="dash-value">'+fmt(totalCliche)+'</div></div>'+
+    '<div class="dash-card green"><div class="dash-label">Completed</div><div class="dash-value">'+completed+'</div></div>'+
+    '<div class="dash-card amber"><div class="dash-label">In Progress</div><div class="dash-value">'+inProgress+'</div></div>'+
+    '<div class="dash-card green"><div class="dash-label">Delivered</div><div class="dash-value">'+fullyDelivered+'</div></div>'+
+    '<div class="dash-card blue"><div class="dash-label">Invoiced</div><div class="dash-value">'+invoiced+'</div></div>';
+  
+  var custMap={};
+  for(var i=0;i<data.length;i++){
+    var r=data[i],key=r.custName||'Unknown';
+    if(!custMap[key])custMap[key]={name:key,no:r.custNo,orders:0,val:0};
+    custMap[key].orders++;custMap[key].val+=safeNum(r.total);
+  }
+  var custArr=[];for(var k in custMap)custArr.push(custMap[k]);
+  custArr.sort(function(a,b){return b.val-a.val});
+  
+  var topCusts=custArr.slice(0,20),custHtml='';
+  for(var i=0;i<topCusts.length;i++){
+    var c=topCusts[i];
+    custHtml+='<div class="top-cust-row"><div class="top-cust-rank">'+(i+1)+'</div><div class="top-cust-name">'+esc(c.name)+' <span class="top-cust-sub">'+esc(c.no)+'</span></div><div class="top-cust-val">'+fmt(c.val)+' <span class="top-cust-ord">('+c.orders+')</span></div></div>';
+  }
+  document.getElementById('topCusts').innerHTML=custHtml;
+}
+
+function toggleDashboard(){
+  dashVisible=!dashVisible;
+  var area=document.getElementById('dashboardArea');
+  if(dashVisible)area.classList.remove('hidden');else area.classList.add('hidden');
+  document.getElementById('dashToggleBtn').textContent=dashVisible?'Hide Dashboard':'Show Dashboard';
+}
+
+function init(){
+  if(!loadData()){data=getInitialData().map(arrToObj)}
+  renderThead();applyFilters();updateDashboard();
+}
+init();
+</script>
+</body>
+</html>
