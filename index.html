@@ -63,7 +63,7 @@ body{
 .btn-sm{padding:4px 8px;font-size:11px}
 
 /* ── Dashboard ───────────────────────────────────────────── */
-#dashboardArea{overflow:hidden;transition:max-height .3s ease;flex-shrink:0;max-height:none}
+#dashboardArea{overflow:hidden;transition:max-height .35s ease;flex-shrink:0;max-height:500px}
 #dashboardArea.hidden{max-height:0 !important;overflow:hidden}
 .dash-inner{padding:12px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;background:var(--surface);border-bottom:1px solid var(--border)}
 .dash-card{background:var(--surface2);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:12px 14px;border-left:4px solid var(--border-light)}
@@ -130,10 +130,11 @@ body{
    ─────────────────────────────────────────────────────────────────── */
 
 .scroll-outer{
-  flex:1;
+  flex:1 1 0;
   overflow-y:auto;
   overflow-x:hidden;
   min-height:0;
+  height:0;
   -webkit-overflow-scrolling:touch;
   touch-action:pan-y;
 }
@@ -366,7 +367,7 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
   .toolbar-right{width:100%;justify-content:space-between;order:3;margin-left:0}
   .row-count{flex:1;text-align:center}
   .btn-accent{flex:1.5}
-  .scroll-outer{-webkit-overflow-scrolling:touch;overflow-y:auto;overflow-x:hidden;touch-action:pan-y}
+  .scroll-outer{-webkit-overflow-scrolling:touch;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;flex:1 1 0;min-height:0;height:0}
   .table-wrap{overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;touch-action:pan-x}
   thead th{padding:8px 6px;font-size:11px}
   .search-box input{font-size:16px}
