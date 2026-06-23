@@ -9,15 +9,15 @@
 <meta name="apple-mobile-web-app-title" content="Century Gate">
 <meta name="theme-color" content="#1F3864">
 
-<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%231F3864'/><text x='50%25' y='58%25' font-family='Arial' font-size='100' font-weight='bold' fill='white' text-anchor='middle'>🏭</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%231F3864'/><text x='50%25' y='62%25' font-family='Arial' font-size='100' text-anchor='middle'>🏭</text></svg>">
 
-<link rel="manifest" href='data:application/manifest+json,{"name":"Century Gate Order Tracker","short_name":"CG Orders","description":"Production order tracker — Century Gate Company Ltd","start_url":".","display":"standalone","background_color":"%231F3864","theme_color":"%231F3864","orientation":"portrait","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27512%27 height=%27512%27 viewBox=%270 0 512 512%27><rect width=%27512%27 height=%27512%27 rx=%27112%27 fill=%27%231F3864%27/><text x=%2750%25%27 y=%2760%25%27 font-family=%27Arial%27 font-size=%27280%27 font-weight=%27bold%27 fill=%27white%27 text-anchor=%27middle%27>🏭</text></svg>","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Century Gate Order Tracker","short_name":"CG Orders","start_url":".","display":"standalone","background_color":"%231F3864","theme_color":"%231F3864","orientation":"portrait","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27512%27 height=%27512%27 viewBox=%270 0 512 512%27><rect width=%27512%27 height=%27512%27 rx=%27112%27 fill=%27%231F3864%27/><text x=%2750%25%27 y=%2762%25%27 font-family=%27Arial%27 font-size=%27280%27 text-anchor=%27middle%27>🏭</text></svg>","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
 
 <title>Century Gate — Order Tracker</title>
 
 <style>
 /* ============================================================
-   Excel-matched Design Tokens
+   Design Tokens (Excel-matched + dashboard accent)
    ============================================================ */
 :root {
   --xl-navy: #1F3864;
@@ -30,10 +30,25 @@
   --xl-border: #BFBFBF;
   --xl-text-dark: #000000;
 
-  --ios-blue: #0A84FF;
   --ios-red: #FF453A;
-  --ios-green: #30D158;
   --ios-orange: #FF9F0A;
+  --ios-green: #30D158;
+  --ios-blue: #0A84FF;
+
+  /* Dashboard dark theme */
+  --dash-bg: #0A0E1A;
+  --dash-card: #131826;
+  --dash-card-2: #1A2033;
+  --dash-border: rgba(255,255,255,0.06);
+  --dash-text: #E4E7EF;
+  --dash-text-dim: #6B7280;
+  --dash-text-bright: #FFFFFF;
+  --dash-green: #00D9A3;
+  --dash-red: #FF4757;
+  --dash-yellow: #FFC542;
+  --dash-cyan: #00D4FF;
+  --dash-purple: #A78BFA;
+  --dash-pink: #FF6B9D;
 
   --font-xl: "Aptos", "Segoe UI", "Helvetica Neue", -apple-system, sans-serif;
 }
@@ -47,30 +62,27 @@ body {
   background: #FFFFFF;
   color: var(--xl-text-dark);
   -webkit-font-smoothing: antialiased;
-  font-size: 14px;
-  line-height: 1.3;
-  user-select: none;
-  -webkit-user-select: none;
+  font-size: 14px; line-height: 1.3;
+  user-select: none; -webkit-user-select: none;
   touch-action: manipulation;
 }
 
 .app { position: fixed; inset: 0; display: flex; flex-direction: column; }
 
 /* ============================================================
-   Header (mobile-friendly, frosted)
+   Header
    ============================================================ */
 .header {
   background: var(--xl-navy);
   color: white;
   padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
-  flex-shrink: 0;
-  z-index: 30;
+  flex-shrink: 0; z-index: 30;
 }
 .header-row {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
 .header-title {
-  font-size: 18px; font-weight: 700; letter-spacing: 0.2px;
+  font-size: 17px; font-weight: 700; letter-spacing: 0.2px;
   display: flex; align-items: center; gap: 6px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -96,88 +108,91 @@ body {
 }
 .search input::placeholder { color: rgba(255,255,255,0.6); }
 
-/* Filter chips */
+/* Multi-select chips */
 .chip-row {
   display: flex; gap: 6px; padding: 6px 0 2px; overflow-x: auto; scrollbar-width: none;
 }
 .chip-row::-webkit-scrollbar { display: none; }
 .chip {
-  flex: 0 0 auto; padding: 5px 11px; border-radius: 14px;
-  background: rgba(255,255,255,0.15); color: white;
-  font-size: 12px; font-weight: 600; border: 1px solid rgba(255,255,255,0.2);
+  flex: 0 0 auto; padding: 6px 13px; border-radius: 14px;
+  background: rgba(255,255,255,0.12); color: white;
+  font-size: 12px; font-weight: 600; border: 1.5px solid rgba(255,255,255,0.2);
   cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 5px;
 }
 .chip.active { background: white; color: var(--xl-navy); border-color: white; }
 .chip:active { transform: scale(0.96); }
+.chip .check {
+  width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid currentColor;
+  display: none; align-items: center; justify-content: center;
+}
+.chip.active .check { display: flex; background: var(--xl-navy); border-color: var(--xl-navy); color: white; }
 
 /* ============================================================
    Spreadsheet container
    ============================================================ */
-.content {
-  flex: 1; overflow: hidden; position: relative;
-}
+.content { flex: 1; overflow: hidden; position: relative; }
 .content.tabular { overflow: auto; -webkit-overflow-scrolling: touch; }
 .content.tabular::-webkit-scrollbar { display: none; }
-.content.dashboard-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 0 calc(70px + env(safe-area-inset-bottom)); }
+.content.dashboard-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 0 calc(60px + env(safe-area-inset-bottom)); background: var(--dash-bg); }
 .content.dashboard-scroll::-webkit-scrollbar { display: none; }
 
-/* Excel-style banner inside table */
+/* Excel banner above table */
 .table-banner {
   background: var(--xl-navy); color: white;
-  font-size: 16px; font-weight: 700;
+  font-size: 15px; font-weight: 700;
   padding: 10px 12px;
-  text-align: left; letter-spacing: 0.3px;
-  position: sticky; top: 0; z-index: 5;
+  letter-spacing: 0.3px;
   border-bottom: 1px solid var(--xl-border);
 }
 
-/* Table */
-.tbl-wrap { width: 100%; }
+/* Table — only header is sticky, no sticky columns */
 table.orders {
   border-collapse: collapse; width: max-content; min-width: 100%;
   font-family: var(--font-xl); font-size: 12px;
 }
 table.orders thead th {
   font-weight: 700; color: white; font-size: 11px;
-  padding: 8px 6px; text-align: center;
+  padding: 9px 6px; text-align: center;
   border: 0.5px solid var(--xl-border);
-  white-space: nowrap; position: sticky; top: 0; z-index: 4;
+  white-space: nowrap;
+  position: sticky; top: 0; z-index: 4;
   background: var(--xl-blue);
+  cursor: pointer; user-select: none;
 }
 table.orders thead th.purple { background: var(--xl-purple); }
-table.orders thead th.actions { background: var(--xl-navy); position: sticky; right: 0; z-index: 6; min-width: 64px; }
-table.orders thead th:first-child {
-  position: sticky; left: 0; z-index: 5; min-width: 70px;
+table.orders thead th.sortable::after {
+  content: '↕'; opacity: 0.4; margin-left: 4px; font-size: 10px;
 }
-/* Corner cell (Order ID, both sticky) */
-table.orders thead th.corner {
-  position: sticky; left: 0; top: 0; z-index: 7;
-}
+table.orders thead th.sort-asc::after { content: '▲'; opacity: 1; color: #FFD60A; }
+table.orders thead th.sort-desc::after { content: '▼'; opacity: 1; color: #FFD60A; }
 
 table.orders tbody td {
-  padding: 6px 6px; text-align: center;
+  padding: 7px 6px; text-align: center;
   border: 0.5px solid #E0E0E0;
   white-space: nowrap; font-size: 12px;
   background: white; color: var(--xl-text-dark);
+  position: relative;
 }
 table.orders tbody tr:nth-child(even) td { background: var(--xl-alt-row); }
-table.orders tbody td:first-child {
-  position: sticky; left: 0; z-index: 2;
-  font-weight: 700; background: white;
-  border-right: 1px solid var(--xl-border);
-}
-table.orders tbody tr:nth-child(even) td:first-child { background: var(--xl-alt-row); }
 table.orders tbody td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 10px; }
 table.orders tbody td.desc { text-align: left; padding-left: 8px; }
-table.orders tbody td.actions {
-  position: sticky; right: 0; z-index: 2;
-  background: white; border-left: 1px solid var(--xl-border);
-  padding: 4px;
-}
-table.orders tbody tr:nth-child(even) td.actions { background: var(--xl-alt-row); }
 
 table.orders tbody tr { cursor: pointer; transition: background 0.1s; }
 table.orders tbody tr:active td { background: #E5EFFA !important; }
+table.orders tbody tr.selected td { background: #FFF4D6 !important; }
+table.orders tbody tr.selected:nth-child(even) td { background: #FFEFC0 !important; }
+
+/* Left color bar for row status */
+table.orders tbody td:first-child { position: relative; padding-left: 10px; }
+table.orders tbody tr.row-overdue td:first-child::before,
+table.orders tbody tr.row-urgent td:first-child::before,
+table.orders tbody tr.row-done td:first-child::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+}
+table.orders tbody tr.row-overdue td:first-child::before { background: var(--ios-red); }
+table.orders tbody tr.row-urgent td:first-child::before { background: var(--ios-orange); }
+table.orders tbody tr.row-done td:first-child::before { background: var(--ios-green); }
 
 /* Status cell colors */
 .st-completed { color: #1F6B42; font-weight: 700; }
@@ -187,137 +202,212 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
 .st-delivered { color: var(--xl-dark-teal); font-weight: 700; }
 .st-not-shipped { color: var(--ios-red); font-weight: 600; }
 
-/* Action icons in table */
-.row-action {
-  width: 26px; height: 26px; border-radius: 6px; border: none;
-  background: transparent; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-  vertical-align: middle; transition: background 0.15s;
+/* Selection mode checkbox */
+.sel-cb {
+  display: none; width: 18px; height: 18px;
+  border: 2px solid var(--xl-blue); border-radius: 4px;
+  background: white; margin: 0 auto;
+  position: relative;
 }
-.row-action:active { background: rgba(0,0,0,0.08); }
-.row-action svg { width: 14px; height: 14px; }
-.row-action.edit { color: var(--xl-blue); }
-.row-action.del { color: var(--ios-red); }
-
-/* Add row button (append row) */
-.add-row-btn {
-  display: block; width: 100%; padding: 10px;
-  background: #E8F4FC; border: 1px dashed var(--xl-blue);
-  color: var(--xl-blue); font-family: inherit; font-size: 13px;
-  font-weight: 600; cursor: pointer; text-align: center;
+.sel-mode .sel-cb { display: block; }
+.sel-mode td:first-child { padding-left: 8px; }
+tr.selected .sel-cb { background: var(--xl-blue); border-color: var(--xl-blue); }
+tr.selected .sel-cb::after {
+  content: '✓'; color: white; font-size: 12px; font-weight: 700;
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
 }
-.add-row-btn:active { background: #D0E8F8; }
 
 /* Empty state */
-.empty-state {
-  text-align: center; padding: 60px 24px; color: #7F7F7F;
-}
+.empty-state { padding: 60px 24px; text-align: center; color: #7F7F7F; }
 .empty-state h3 { color: var(--xl-navy); font-size: 18px; margin-bottom: 6px; }
-.empty-state p { font-size: 13px; }
 
 /* ============================================================
-   Dashboard (Excel-matched colors)
+   Bulk action bar
    ============================================================ */
-.dash-section { padding: 12px 12px 0; }
-.dash-banner {
+.bulk-bar {
+  position: fixed; left: 8px; right: 8px;
+  bottom: calc(70px + env(safe-area-inset-bottom));
   background: var(--xl-navy); color: white;
-  font-size: 15px; font-weight: 700;
-  padding: 10px 12px; margin: 0 0 12px;
-  letter-spacing: 0.3px;
+  border-radius: 12px; padding: 8px 10px;
+  display: none; align-items: center; gap: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 35;
 }
-.dash-banner.alt { background: var(--xl-dark-teal); }
-.dash-banner.purple { background: var(--xl-purple); }
+.bulk-bar.show { display: flex; }
+.bulk-count { font-size: 13px; font-weight: 700; padding: 0 8px; flex: 1; }
+.bulk-btn {
+  border: none; background: rgba(255,255,255,0.15); color: white;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  padding: 7px 10px; border-radius: 8px; cursor: pointer;
+  white-space: nowrap;
+}
+.bulk-btn:active { background: rgba(255,255,255,0.3); }
+.bulk-btn.danger { background: var(--ios-red); }
 
-.dash-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;
-}
-.dash-grid.three { grid-template-columns: 1fr 1fr 1fr; }
-.dash-grid.full { grid-template-columns: 1fr; }
+/* ============================================================
+   Dashboard — Modern Multinational Style
+   ============================================================ */
+.dash-container { padding: 12px; }
 
-.kpi-block {
-  background: white; border: 1px solid var(--xl-border);
-  border-radius: 4px; overflow: hidden;
+/* Hero */
+.dash-hero {
+  background: linear-gradient(135deg, #1A1F36 0%, #2D1B69 100%);
+  border-radius: 20px; padding: 20px 18px; margin-bottom: 14px;
+  position: relative; overflow: hidden;
+  border: 1px solid var(--dash-border);
 }
-.kpi-block .kpi-h {
-  font-size: 10px; font-weight: 700; color: white;
-  padding: 6px 8px; letter-spacing: 0.3px;
-  text-transform: uppercase;
+.dash-hero::before {
+  content: ''; position: absolute; top: -50%; right: -20%;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,212,255,0.25), transparent 70%);
+  pointer-events: none;
 }
-.kpi-block .kpi-h.blue { background: var(--xl-blue); }
-.kpi-block .kpi-h.purple { background: var(--xl-purple); }
-.kpi-block .kpi-h.orange { background: var(--xl-orange); }
-.kpi-block .kpi-h.teal { background: var(--xl-dark-teal); }
-.kpi-block .kpi-h.navy { background: var(--xl-navy); }
-.kpi-block .kpi-v {
-  font-size: 22px; font-weight: 700; padding: 10px 8px 8px;
-  color: var(--xl-text-dark); font-variant-numeric: tabular-nums;
-  text-align: center;
+.dash-hero-label {
+  font-size: 11px; color: var(--dash-text-dim); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;
 }
-.kpi-block .kpi-v.lg { font-size: 28px; }
-.kpi-block .kpi-v.sm { font-size: 16px; }
-.kpi-block .kpi-sub {
-  font-size: 10px; color: #7F7F7F; text-align: center; padding: 0 8px 8px;
+.dash-hero-value {
+  font-size: 34px; font-weight: 800; color: var(--dash-text-bright);
+  letter-spacing: -1px; font-variant-numeric: tabular-nums;
+}
+.dash-hero-value .unit { font-size: 16px; color: var(--dash-text-dim); font-weight: 500; margin-left: 6px; }
+.dash-hero-sub {
+  font-size: 12px; color: var(--dash-text); margin-top: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.dash-hero-trend {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: 999px;
+  background: rgba(0,217,163,0.15); color: var(--dash-green);
+  font-size: 11px; font-weight: 700;
 }
 
-/* Status breakdown table (matches Excel rows 11-14) */
-.status-table {
-  width: 100%; border-collapse: collapse; margin-bottom: 14px;
+/* KPI tiles row */
+.kpi-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 14px;
+}
+.kpi-tile {
+  background: var(--dash-card); border: 1px solid var(--dash-border);
+  border-radius: 14px; padding: 14px;
+  position: relative; overflow: hidden;
+}
+.kpi-tile .kpi-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.kpi-tile .kpi-ico {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.kpi-tile .kpi-ico.green { background: rgba(0,217,163,0.15); color: var(--dash-green); }
+.kpi-tile .kpi-ico.red { background: rgba(255,71,87,0.15); color: var(--dash-red); }
+.kpi-tile .kpi-ico.yellow { background: rgba(255,197,66,0.15); color: var(--dash-yellow); }
+.kpi-tile .kpi-ico.cyan { background: rgba(0,212,255,0.15); color: var(--dash-cyan); }
+.kpi-tile .kpi-ico.purple { background: rgba(167,139,250,0.15); color: var(--dash-purple); }
+.kpi-tile .kpi-ico.pink { background: rgba(255,107,157,0.15); color: var(--dash-pink); }
+.kpi-tile .kpi-label {
+  font-size: 10px; color: var(--dash-text-dim); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.kpi-tile .kpi-val {
+  font-size: 24px; font-weight: 800; color: var(--dash-text-bright);
+  letter-spacing: -0.5px; font-variant-numeric: tabular-nums;
+}
+.kpi-tile .kpi-sub {
+  font-size: 11px; color: var(--dash-text-dim); margin-top: 2px;
+}
+.kpi-tile .spark {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 30px;
+  opacity: 0.4;
+}
+
+/* Section card */
+.dash-card {
+  background: var(--dash-card); border: 1px solid var(--dash-border);
+  border-radius: 14px; padding: 14px; margin-bottom: 14px;
+}
+.dash-card-title {
+  font-size: 13px; font-weight: 700; color: var(--dash-text-bright);
+  letter-spacing: -0.2px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.dash-card-title .sub {
+  font-size: 10px; font-weight: 500; color: var(--dash-text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* Funnel */
+.funnel { display: flex; flex-direction: column; gap: 6px; }
+.funnel-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.funnel-label { width: 90px; color: var(--dash-text); flex-shrink: 0; font-weight: 600; }
+.funnel-track { flex: 1; height: 24px; background: var(--dash-card-2); border-radius: 6px; overflow: hidden; position: relative; }
+.funnel-fill {
+  height: 100%; border-radius: 6px;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 8px; color: white; font-size: 11px; font-weight: 700;
+  transition: width 0.8s cubic-bezier(0.32, 0.72, 0, 1);
+  white-space: nowrap;
+}
+.funnel-val { width: 38px; text-align: right; color: var(--dash-text-bright); font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+/* Donut row */
+.donut-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.donut-cell { text-align: center; }
+.donut-cell svg { width: 80px; height: 80px; }
+.donut-cell .lbl { font-size: 10px; color: var(--dash-text-dim); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.donut-cell .pct { font-size: 16px; font-weight: 800; color: var(--dash-text-bright); margin-top: 2px; }
+.donut-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dash-text); }
+.donut-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+.donut-legend-val { margin-left: auto; font-weight: 700; color: var(--dash-text-bright); font-variant-numeric: tabular-nums; }
+
+/* Leaderboard */
+.leader-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--dash-border);
+}
+.leader-row:last-child { border-bottom: none; }
+.leader-rank {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; flex-shrink: 0;
+  background: var(--dash-card-2); color: var(--dash-text-dim);
+}
+.leader-rank.r1 { background: linear-gradient(135deg, #FFD60A, #FF9F0A); color: #4a2c00; }
+.leader-rank.r2 { background: linear-gradient(135deg, #E5E5EA, #AEAEB2); color: #1c1c1e; }
+.leader-rank.r3 { background: linear-gradient(135deg, #C7905A, #8B5A2B); color: white; }
+.leader-info { flex: 1; min-width: 0; }
+.leader-name { font-size: 13px; font-weight: 700; color: var(--dash-text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.leader-meta { font-size: 11px; color: var(--dash-text-dim); margin-top: 1px; }
+.leader-val { font-size: 13px; font-weight: 800; color: var(--dash-green); font-variant-numeric: tabular-nums; text-align: right; flex-shrink: 0; }
+.leader-val .unit { font-size: 10px; color: var(--dash-text-dim); }
+
+/* Bar chart */
+.bar-list { display: flex; flex-direction: column; gap: 10px; }
+.bar-item { display: flex; flex-direction: column; gap: 4px; }
+.bar-item-head { display: flex; justify-content: space-between; font-size: 11px; }
+.bar-item-name { color: var(--dash-text); font-weight: 600; }
+.bar-item-val { color: var(--dash-text-bright); font-weight: 700; font-variant-numeric: tabular-nums; }
+.bar-item-track { height: 8px; background: var(--dash-card-2); border-radius: 4px; overflow: hidden; }
+.bar-item-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.32, 0.72, 0, 1); }
+
+/* Line chart (SVG) */
+.line-chart-svg { width: 100%; height: 120px; display: block; }
+
+/* Alerts panel */
+.alert-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px; margin-bottom: 6px;
   font-size: 12px;
 }
-.status-table th {
-  background: var(--xl-blue); color: white;
-  padding: 6px 8px; font-size: 11px; font-weight: 700;
-  text-align: center; border: 0.5px solid var(--xl-border);
-}
-.status-table td {
-  padding: 6px 8px; text-align: center; border: 0.5px solid var(--xl-border);
-  background: white;
-}
-.status-table tr:nth-child(even) td { background: var(--xl-alt-row); }
-.status-table td.label { text-align: left; font-weight: 600; }
-.status-table td.num { font-variant-numeric: tabular-nums; font-weight: 700; }
-.status-table td.pct { color: #7F7F7F; font-size: 11px; }
-
-/* Product sales table */
-.product-table {
-  width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12px;
-}
-.product-table th {
-  background: var(--xl-blue); color: white; padding: 6px 8px;
-  font-size: 11px; font-weight: 700; text-align: center; border: 0.5px solid var(--xl-border);
-}
-.product-table td {
-  padding: 6px 8px; text-align: center; border: 0.5px solid var(--xl-border);
-  background: white;
-}
-.product-table tr:nth-child(even) td { background: var(--xl-alt-row); }
-.product-table td.label { text-align: left; }
-.product-table td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; }
-.product-table .bar-cell {
-  position: relative; min-width: 100px;
-}
-.bar-track {
-  background: #E0E0E0; height: 14px; border-radius: 2px; overflow: hidden; position: relative;
-}
-.bar-fill {
-  height: 100%; background: var(--xl-blue);
-  transition: width 0.6s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-/* Top customers table */
-.cust-table {
-  width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12px;
-}
-.cust-table th {
-  background: var(--xl-blue); color: white; padding: 6px 8px;
-  font-size: 11px; font-weight: 700; text-align: center; border: 0.5px solid var(--xl-border);
-}
-.cust-table td {
-  padding: 6px 8px; text-align: center; border: 0.5px solid var(--xl-border); background: white;
-}
-.cust-table tr:nth-child(even) td { background: var(--xl-alt-row); }
-.cust-table td.label { text-align: left; font-weight: 600; }
-.cust-table td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; }
+.alert-item.red { background: rgba(255,71,87,0.1); border-left: 3px solid var(--dash-red); }
+.alert-item.yellow { background: rgba(255,197,66,0.1); border-left: 3px solid var(--dash-yellow); }
+.alert-ico { font-size: 16px; flex-shrink: 0; }
+.alert-text { flex: 1; color: var(--dash-text); }
+.alert-text strong { color: var(--dash-text-bright); }
+.alert-val { font-weight: 800; color: var(--dash-text-bright); font-variant-numeric: tabular-nums; }
 
 /* ============================================================
    Bottom Tab Bar
@@ -338,23 +428,15 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
 .tab.active { color: white; background: rgba(255,255,255,0.1); }
 .tab svg { width: 22px; height: 22px; }
 .tab:active { background: rgba(255,255,255,0.15); }
-.tab .badge {
-  position: absolute; top: 4px; right: calc(50% - 22px);
-  background: var(--ios-red); color: white;
-  font-size: 9px; font-weight: 700; border-radius: 999px;
-  padding: 1px 5px; min-width: 16px; text-align: center;
-}
-.tab { position: relative; }
 
 /* ============================================================
-   Bottom Sheet (Add/Edit form)
+   Bottom Sheet
    ============================================================ */
 .sheet-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.5);
   opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 50;
 }
 .sheet-backdrop.show { opacity: 1; pointer-events: auto; }
-
 .sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
   background: #F2F2F7;
@@ -367,32 +449,26 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
   display: flex; flex-direction: column;
 }
 .sheet.show { transform: translateY(0); }
-.sheet-grabber {
-  width: 36px; height: 4px; background: #BFBFBF;
-  border-radius: 2px; margin: 0 auto 8px;
-}
+.sheet-grabber { width: 36px; height: 4px; background: #BFBFBF; border-radius: 2px; margin: 0 auto 8px; }
 .sheet-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 16px 10px; border-bottom: 1px solid var(--xl-border);
-  background: white;
-  border-radius: 16px 16px 0 0;
-  margin: -8px -0 0;
+  padding: 8px 16px 10px; border-bottom: 1px solid var(--xl-border);
+  background: white; margin: -8px 0 0;
 }
 .sheet-title { font-size: 16px; font-weight: 700; color: var(--xl-navy); }
 .sheet-btn {
   border: none; background: transparent; color: var(--xl-blue);
   font-size: 16px; font-family: inherit; cursor: pointer; padding: 4px 10px;
-  font-weight: 600;
+  font-weight: 600; min-width: 60px;
 }
 .sheet-btn.destructive { color: var(--ios-red); }
 .sheet-btn:active { opacity: 0.5; }
-
 .sheet-body {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 14px 16px 20px;
 }
 
-/* Form fields - Excel-style */
+/* Form fields */
 .form-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px;
 }
@@ -406,21 +482,18 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
 }
 .form-field.purple .form-label { background: var(--xl-purple); }
 .form-field.navy .form-label { background: var(--xl-navy); }
-.form-field.orange .form-label { background: var(--xl-orange); }
-.form-field.teal .form-label { background: var(--xl-dark-teal); }
 .form-input, .form-select, .form-textarea {
   width: 100%;
   background: white; border: 1px solid var(--xl-border);
   border-radius: 0 4px 4px 4px;
-  padding: 9px 10px; font-size: 14px;
+  padding: 10px 10px; font-size: 15px;
   color: var(--xl-text-dark); font-family: inherit; outline: none;
   transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--xl-blue); }
 .form-textarea { min-height: 60px; resize: none; }
-.form-read {
-  background: #F2F2F2; color: #7F7F7F; font-weight: 600;
-}
+.form-read { background: #F2F2F2; color: #7F7F7F; font-weight: 600; }
 
 .form-section-divider {
   grid-column: 1 / -1; height: 1px; background: var(--xl-border);
@@ -440,20 +513,53 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
 .form-summary-row .k { color: #7F7F7F; }
 .form-summary-row .v { font-weight: 700; font-variant-numeric: tabular-nums; }
 
-/* ============================================================
-   Toast
-   ============================================================ */
+/* Photo attachment */
+.photo-section {
+  background: white; border: 1px solid var(--xl-border);
+  border-radius: 4px; padding: 10px; margin-top: 10px;
+}
+.photo-section .k {
+  font-size: 11px; font-weight: 700; color: var(--xl-navy);
+  text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px;
+}
+.photo-input-wrap { display: flex; gap: 8px; align-items: center; }
+.photo-preview {
+  width: 64px; height: 64px; border-radius: 6px;
+  background: #F2F2F2; border: 1px solid var(--xl-border);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
+  flex-shrink: 0;
+}
+.photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.photo-preview .placeholder { font-size: 24px; opacity: 0.3; }
+.photo-btn {
+  border: 1px dashed var(--xl-blue); background: #E8F4FC;
+  color: var(--xl-blue); font-family: inherit; font-size: 12px; font-weight: 600;
+  padding: 8px 12px; border-radius: 6px; cursor: pointer;
+}
+.photo-btn.remove { background: #FEE; border-color: var(--ios-red); color: var(--ios-red); }
+.photo-btn:active { opacity: 0.6; }
+
+/* Toast with action */
 .toast {
   position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom));
   transform: translateX(-50%) translateY(20px);
   background: var(--xl-navy); color: white;
-  padding: 10px 18px; border-radius: 999px;
+  padding: 10px 16px; border-radius: 999px;
   font-size: 13px; font-weight: 600; z-index: 100;
   opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   max-width: 90vw; text-align: center;
+  display: flex; align-items: center; gap: 10px;
 }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.toast-action {
+  background: var(--xl-blue); color: white; border: none;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; font-family: inherit;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.toast-action:active { background: #1F5A99; }
 
 /* Splash */
 .splash {
@@ -467,12 +573,80 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
   background: white; display: flex; align-items: center; justify-content: center;
   font-size: 48px; animation: splashPulse 1.4s ease-in-out infinite;
 }
-@keyframes splashPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
-}
+@keyframes splashPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 .splash-title { color: white; font-size: 18px; font-weight: 700; letter-spacing: 0.4px; }
 .splash-sub { color: rgba(255,255,255,0.6); font-size: 12px; }
+
+/* ============================================================
+   Print / PDF styles
+   ============================================================ */
+.print-only { display: none; }
+
+@media print {
+  body { background: white !important; }
+  .app, .splash, .sheet, .sheet-backdrop, .toast, .tabbar, .header, .table-banner { display: none !important; }
+  .print-only { display: block; }
+  @page { margin: 1.5cm 1cm; size: A4 landscape; }
+  .print-doc { color: #000; font-family: "Aptos", "Segoe UI", Arial, sans-serif; font-size: 10pt; }
+  .print-cover {
+    text-align: center; padding: 30px 0 20px; border-bottom: 3px solid #1F3864;
+    margin-bottom: 24px;
+  }
+  .print-cover h1 { color: #1F3864; font-size: 24pt; margin-bottom: 4pt; letter-spacing: 1px; }
+  .print-cover .print-sub { color: #555; font-size: 11pt; }
+  .print-meta {
+    display: flex; justify-content: space-between; font-size: 9pt; color: #555;
+    margin-bottom: 18px; padding: 0 4px;
+  }
+  .print-summary {
+    border: 1px solid #BFBFBF; border-collapse: collapse; width: 100%;
+    margin-bottom: 24px; font-size: 10pt;
+  }
+  .print-summary th { background: #1F3864; color: white; padding: 6pt 8pt; text-align: left; font-size: 9pt; }
+  .print-summary td { border: 0.5pt solid #BFBFBF; padding: 5pt 8pt; }
+  .print-summary tr:nth-child(even) td { background: #F2F2F2; }
+  .print-section { page-break-before: always; }
+  .print-section:first-of-type { page-break-before: avoid; }
+  .print-section-title {
+    background: #2E75B6; color: white;
+    padding: 8pt 12pt; font-size: 13pt; font-weight: 700;
+    margin-bottom: 8pt; border-radius: 4pt 4pt 0 0;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .print-section-title .count {
+    background: rgba(255,255,255,0.25); padding: 2pt 8pt;
+    border-radius: 999pt; font-size: 9pt; font-weight: 600;
+  }
+  .print-table {
+    border-collapse: collapse; width: 100%; font-size: 8.5pt; margin-bottom: 16pt;
+  }
+  .print-table th {
+    background: #2E75B6; color: white;
+    padding: 5pt 4pt; font-size: 8pt; text-align: center;
+    border: 0.5pt solid #BFBFBF; white-space: nowrap;
+  }
+  .print-table th.purple { background: #7030A0; }
+  .print-table td {
+    padding: 4pt 4pt; font-size: 8.5pt; text-align: center;
+    border: 0.5pt solid #BFBFBF; white-space: nowrap;
+  }
+  .print-table tr:nth-child(even) td { background: #F2F2F2; }
+  .print-table td.num { text-align: right; padding-right: 8pt; font-variant-numeric: tabular-nums; }
+  .print-table td.left { text-align: left; padding-left: 6pt; }
+  .print-footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    text-align: center; font-size: 8pt; color: #777;
+    padding: 6pt 0; border-top: 0.5pt solid #BFBFBF;
+  }
+  .print-page-num:after { content: counter(page); }
+  .print-st { font-weight: 700; }
+  .print-st.completed { color: #1F6B42; }
+  .print-st.progress { color: #C55A11; }
+  .print-st.invoiced { color: #2E75B6; }
+  .print-st.not-invoiced { color: #7F7F7F; }
+  .print-st.delivered { color: #1A5276; }
+  .print-st.not-shipped { color: #FF453A; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -489,15 +663,17 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
 </div>
 
 <div class="app">
-  <!-- Header -->
   <header class="header">
     <div class="header-row">
       <div class="header-title">🏭 <span id="headerTitle">Order Tracker</span></div>
       <div class="header-actions">
-        <button class="icon-btn" id="addBtn" aria-label="Add order">
+        <button class="icon-btn" id="addBtn" aria-label="Add order" title="New order">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
-        <button class="icon-btn" id="exportBtn" aria-label="Export">
+        <button class="icon-btn" id="pdfBtn" aria-label="Export PDF" title="Export filtered orders as PDF">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+        </button>
+        <button class="icon-btn" id="csvBtn" aria-label="Export CSV" title="Export as CSV">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
       </div>
@@ -511,61 +687,24 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
     </div>
 
     <div class="chip-row" id="chipRow">
-      <button class="chip active" data-filter="all">All</button>
       <button class="chip" data-filter="in-progress">In Progress</button>
       <button class="chip" data-filter="completed">Completed</button>
       <button class="chip" data-filter="invoiced">Invoiced</button>
       <button class="chip" data-filter="not-invoiced">Not Invoiced</button>
-      <button class="chip" data-filter="not-shipped">Not Shipped</button>
-      <button class="chip" data-filter="delivered">Delivered</button>
-      <button class="chip" data-filter="not-paid">Unpaid</button>
-      <button class="chip" data-filter="urgent">Urgent ≤7d</button>
-      <button class="chip" data-filter="overdue">Overdue</button>
     </div>
   </header>
 
-  <!-- Content -->
   <main class="content tabular" id="content">
-    <!-- Orders tab -->
     <div class="tab-pane active" id="pane-orders">
       <div class="table-banner">🏭  CENTURY GATE COMPANY LTD — ORDER TRACKER</div>
-      <div class="tbl-wrap">
-        <table class="orders" id="ordersTable">
-          <thead>
-            <tr>
-              <th class="corner">Order ID</th>
-              <th>Order Date</th>
-              <th class="purple">Customer Number</th>
-              <th class="purple">Customer Name</th>
-              <th class="purple">Order Type</th>
-              <th>Product Type</th>
-              <th>Description / Item Details</th>
-              <th>Quantity</th>
-              <th class="purple">Qty Unit</th>
-              <th>Unit Price (SAR)</th>
-              <th class="purple">Cliché Value (SAR)</th>
-              <th>Total Value (SAR)</th>
-              <th>Deadline</th>
-              <th>Production Status</th>
-              <th>Invoice Status</th>
-              <th class="purple">Delivery Status</th>
-              <th class="purple">Remaining Qty</th>
-              <th class="purple">50% Advance Paid</th>
-              <th class="purple">Full Payment</th>
-              <th>Payment Summary</th>
-              <th class="actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="ordersBody"></tbody>
-        </table>
-      </div>
+      <table class="orders" id="ordersTable">
+        <thead id="ordersHead"></thead>
+        <tbody id="ordersBody"></tbody>
+      </table>
     </div>
-
-    <!-- Dashboard tab -->
     <div class="tab-pane" id="pane-dashboard" style="display:none;"></div>
   </main>
 
-  <!-- Tab bar -->
   <nav class="tabbar">
     <button class="tab active" data-tab="orders">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
@@ -576,6 +715,16 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
       Dashboard
     </button>
   </nav>
+</div>
+
+<!-- Bulk action bar -->
+<div class="bulk-bar" id="bulkBar">
+  <span class="bulk-count" id="bulkCount">0 selected</span>
+  <button class="bulk-btn" data-bulk="completed">✓ Completed</button>
+  <button class="bulk-btn" data-bulk="invoiced">💼 Invoiced</button>
+  <button class="bulk-btn" data-bulk="delivered">📦 Delivered</button>
+  <button class="bulk-btn danger" data-bulk="delete">🗑 Delete</button>
+  <button class="bulk-btn" data-bulk="cancel">✕</button>
 </div>
 
 <!-- Sheet -->
@@ -594,9 +743,12 @@ table.orders tbody tr:active td { background: #E5EFFA !important; }
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Print container (hidden on screen, visible in print) -->
+<div class="print-only" id="printContainer"></div>
+
 <script>
 /* ============================================================
-   Order Data (164 production orders from Century Gate Excel)
+   Order Data
    ============================================================ */
 const SEED_ORDERS = [
   {
@@ -4214,24 +4366,27 @@ const SEED_ORDERS = [
    ============================================================ */
 let orders = [];
 let currentTab = 'orders';
-let currentFilter = 'all';
+let activeFilters = new Set();  // multi-select chips
 let searchQuery = '';
 let editingId = null;
-const STORAGE_KEY = 'cg_orders_v2';
+let sortCol = null;
+let sortDir = 'asc';
+let selectionMode = false;
+let selectedIds = new Set();
+let lastDeleted = null;  // for undo
+let undoTimer = null;
+const STORAGE_KEY = 'cg_orders_v3';
 
 function load() {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (stored && Array.isArray(stored) && stored.length) {
-      orders = stored;
-      return;
-    }
+    if (stored && Array.isArray(stored) && stored.length) { orders = stored; return; }
   } catch {}
   orders = SEED_ORDERS.map(o => ({...o}));
   save();
 }
 function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(orders)); } catch {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(orders)); } catch (e) { console.warn('save failed', e); }
 }
 
 /* ============================================================
@@ -4267,13 +4422,7 @@ function daysUntil(s) {
     return Math.round((d - today) / 86400000);
   } catch { return null; }
 }
-
-/* Replicate Excel formulas */
-function computeOrderId(rowIdx) {
-  return `ORD-${String(rowIdx).padStart(3, '0')}`;
-}
 function computeTotalValue(o) {
-  if ((o.qty==null||o.qty==='') && (o.unitPrice==null||o.unitPrice==='') && (o.cliche==null||o.cliche==='')) return 0;
   let total = 0;
   if (isFinite(+o.qty) && isFinite(+o.unitPrice)) total += (+o.qty) * (+o.unitPrice);
   if (isFinite(+o.cliche)) total += (+o.cliche);
@@ -4291,8 +4440,6 @@ function computePaySummary(o) {
   if (adv === 'No') return '❌ No Payment';
   return '';
 }
-
-/* Status CSS class */
 function statusClass(v) {
   switch (v) {
     case 'Completed': return 'st-completed';
@@ -4304,29 +4451,58 @@ function statusClass(v) {
     default: return '';
   }
 }
+function rowStatusClass(o) {
+  if (o.prodStatus === 'Completed') return 'row-done';
+  const d = daysUntil(o.deadline);
+  if (d !== null && d < 0) return 'row-overdue';
+  if (d !== null && d >= 0 && d <= 7) return 'row-urgent';
+  return '';
+}
 
 /* ============================================================
-   Filter
+   Column definitions
+   ============================================================ */
+const COLUMNS = [
+  { key: 'id',          label: 'Order ID',         cls: '',          sortable: true,  type: 'text' },
+  { key: 'orderDate',   label: 'Order Date',       cls: '',          sortable: true,  type: 'date' },
+  { key: 'custNo',      label: 'Customer Number',  cls: 'purple',    sortable: true,  type: 'text' },
+  { key: 'custName',    label: 'Customer Name',    cls: 'purple',    sortable: true,  type: 'text' },
+  { key: 'orderType',   label: 'Order Type',       cls: 'purple',    sortable: true,  type: 'text' },
+  { key: 'productType', label: 'Product Type',     cls: '',          sortable: true,  type: 'text' },
+  { key: 'desc',        label: 'Description / Item Details', cls: '', sortable: true, type: 'text' },
+  { key: 'qty',         label: 'Quantity',         cls: '',          sortable: true,  type: 'num' },
+  { key: 'qtyUnit',     label: 'Qty Unit',         cls: 'purple',    sortable: false, type: 'text' },
+  { key: 'unitPrice',   label: 'Unit Price (SAR)', cls: '',          sortable: true,  type: 'num' },
+  { key: 'cliche',      label: 'Cliché Value (SAR)', cls: 'purple',  sortable: true,  type: 'num' },
+  { key: 'total',       label: 'Total Value (SAR)', cls: '',         sortable: true,  type: 'num' },
+  { key: 'deadline',    label: 'Deadline',         cls: '',          sortable: true,  type: 'date' },
+  { key: 'prodStatus',  label: 'Production Status', cls: '',         sortable: true,  type: 'text' },
+  { key: 'invStatus',   label: 'Invoice Status',   cls: '',          sortable: true,  type: 'text' },
+  { key: 'delStatus',   label: 'Delivery Status',  cls: 'purple',    sortable: true,  type: 'text' },
+  { key: 'remainQty',   label: 'Remaining Qty',    cls: 'purple',    sortable: true,  type: 'num' },
+  { key: 'advance50',   label: '50% Advance Paid', cls: 'purple',    sortable: true,  type: 'text' },
+  { key: 'fullPay',     label: 'Full Payment',     cls: 'purple',    sortable: true,  type: 'text' },
+  { key: 'paySummary',  label: 'Payment Summary',  cls: '',          sortable: true,  type: 'text' },
+];
+
+/* ============================================================
+   Filter (multi-select OR)
    ============================================================ */
 function getFilteredOrders() {
   let list = orders.slice();
-  if (currentFilter !== 'all') {
+
+  if (activeFilters.size > 0) {
     list = list.filter(o => {
-      const d = daysUntil(o.deadline);
-      switch (currentFilter) {
-        case 'in-progress': return o.prodStatus === 'In Progress';
-        case 'completed':   return o.prodStatus === 'Completed';
-        case 'invoiced':    return o.invStatus === 'Invoiced';
-        case 'not-invoiced':return o.invStatus === 'Not Invoiced';
-        case 'not-shipped': return o.delStatus === 'Not Shipped';
-        case 'delivered':   return o.delStatus === 'Fully Delivered';
-        case 'not-paid':    return o.paySummary && o.paySummary.includes('No Payment');
-        case 'urgent':      return o.prodStatus !== 'Completed' && d !== null && d >= 0 && d <= 7;
-        case 'overdue':     return o.prodStatus !== 'Completed' && d !== null && d < 0;
-        default: return true;
+      for (const f of activeFilters) {
+        if (f === 'in-progress' && o.prodStatus === 'In Progress') return true;
+        if (f === 'completed'   && o.prodStatus === 'Completed') return true;
+        if (f === 'invoiced'    && o.invStatus === 'Invoiced') return true;
+        if (f === 'not-invoiced'&& o.invStatus === 'Not Invoiced') return true;
       }
+      return false;
     });
   }
+
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     list = list.filter(o =>
@@ -4342,19 +4518,73 @@ function getFilteredOrders() {
       (o.paySummary||'').toLowerCase().includes(q)
     );
   }
+
+  // Sort
+  if (sortCol) {
+    const col = COLUMNS.find(c => c.key === sortCol);
+    if (col) {
+      list.sort((a, b) => {
+        let av = a[sortCol], bv = b[sortCol];
+        if (sortCol === 'total') { av = computeTotalValue(a); bv = computeTotalValue(b); }
+        if (av == null) av = ''; if (bv == null) bv = '';
+        if (col.type === 'num') {
+          return sortDir === 'asc' ? (Number(av)||0) - (Number(bv)||0) : (Number(bv)||0) - (Number(av)||0);
+        }
+        if (col.type === 'date') {
+          const ad = av ? new Date(av).getTime() : 0;
+          const bd = bv ? new Date(bv).getTime() : 0;
+          return sortDir === 'asc' ? ad - bd : bd - ad;
+        }
+        return sortDir === 'asc'
+          ? String(av).localeCompare(String(bv))
+          : String(bv).localeCompare(String(av));
+      });
+    }
+  } else {
+    list.sort((a,b) => (a.id||'').localeCompare(b.id||''));
+  }
   return list;
 }
 
 /* ============================================================
-   Render Orders Table
+   Render table header
+   ============================================================ */
+function renderHeader() {
+  const thead = document.getElementById('ordersHead');
+  thead.innerHTML = `<tr>${
+    COLUMNS.map(c => {
+      let cls = c.cls === 'purple' ? 'purple' : '';
+      if (c.sortable) cls += ' sortable';
+      if (sortCol === c.key) cls += sortDir === 'asc' ? ' sort-asc' : ' sort-desc';
+      return `<th class="${cls.trim()}" data-col="${c.key}">${c.label}</th>`;
+    }).join('')
+  }</tr>`;
+
+  // Wire header click for sort
+  thead.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortCol = col; sortDir = 'asc';
+      }
+      renderHeader();
+      renderOrders();
+    });
+  });
+}
+
+/* ============================================================
+   Render orders table body
    ============================================================ */
 function renderOrders() {
   const list = getFilteredOrders();
   const tbody = document.getElementById('ordersBody');
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="21" style="padding:40px;text-align:center;color:#7F7F7F;">
-      <strong style="color:${'#1F3864'};font-size:15px;display:block;margin-bottom:6px;">No orders match</strong>
+    tbody.innerHTML = `<tr><td colspan="${COLUMNS.length}" style="padding:40px;text-align:center;color:#7F7F7F;">
+      <strong style="color:#1F3864;font-size:15px;display:block;margin-bottom:6px;">No orders match</strong>
       Try a different filter or search query.
     </td></tr>`;
     return;
@@ -4363,9 +4593,11 @@ function renderOrders() {
   tbody.innerHTML = list.map(o => {
     const total = computeTotalValue(o);
     const paySummary = o.paySummary || computePaySummary(o);
+    const rowCls = rowStatusClass(o);
+    const selCls = selectedIds.has(o.id) ? 'selected' : '';
     return `
-      <tr data-id="${escapeHtml(o.id)}">
-        <td>${escapeHtml(o.id)}</td>
+      <tr data-id="${escapeHtml(o.id)}" class="${rowCls} ${selCls}">
+        <td><span class="sel-cb"></span>${escapeHtml(o.id)}</td>
         <td>${fmtDate(o.orderDate)}</td>
         <td>${escapeHtml(o.custNo)}</td>
         <td>${escapeHtml(o.custName)}</td>
@@ -4385,34 +4617,121 @@ function renderOrders() {
         <td>${escapeHtml(o.advance50 || '')}</td>
         <td>${escapeHtml(o.fullPay || '')}</td>
         <td>${escapeHtml(paySummary)}</td>
-        <td class="actions">
-          <button class="row-action edit" data-action="edit" data-id="${escapeHtml(o.id)}" aria-label="Edit">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="row-action del" data-action="delete" data-id="${escapeHtml(o.id)}" aria-label="Delete">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </button>
-        </td>
       </tr>
     `;
   }).join('');
 
-  // Wire row tap → edit
+  // Wire row interactions
   tbody.querySelectorAll('tr[data-id]').forEach(tr => {
-    tr.addEventListener('click', (e) => {
-      if (e.target.closest('.row-action')) return;
-      openEdit(tr.dataset.id);
+    let touchTimer = null;
+    let longPressed = false;
+
+    tr.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      longPressed = false;
+      touchTimer = setTimeout(() => {
+        longPressed = true;
+        enterSelectionMode(tr.dataset.id);
+        if (navigator.vibrate) navigator.vibrate(15);
+      }, 500);
+    }, { passive: true });
+
+    tr.addEventListener('touchmove', () => {
+      clearTimeout(touchTimer);
+    }, { passive: true });
+
+    tr.addEventListener('touchend', (e) => {
+      clearTimeout(touchTimer);
+      if (longPressed) { e.preventDefault(); return; }
+      // If in selection mode, toggle row instead of opening edit
+      if (selectionMode) {
+        e.preventDefault();
+        toggleSelection(tr.dataset.id);
+      } else {
+        // Delay slightly to detect double-tap
+        const id = tr.dataset.id;
+        const now = Date.now();
+        if (tr._lastTap && now - tr._lastTap < 300) {
+          // double tap — ignore, we use single tap
+        }
+        tr._lastTap = now;
+        openEdit(id);
+      }
     });
-  });
-  // Wire action buttons
-  tbody.querySelectorAll('.row-action').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (btn.dataset.action === 'edit') openEdit(btn.dataset.id);
-      else if (btn.dataset.action === 'delete') confirmDelete(btn.dataset.id);
+
+    // For desktop: click = open edit
+    tr.addEventListener('click', (e) => {
+      if (e.sourceCapabilities && e.sourceCapability.firesTouchEvents) return;
+      if (selectionMode) {
+        toggleSelection(tr.dataset.id);
+      } else {
+        openEdit(tr.dataset.id);
+      }
     });
   });
 }
+
+/* ============================================================
+   Selection mode
+   ============================================================ */
+function enterSelectionMode(id) {
+  selectionMode = true;
+  selectedIds.clear();
+  if (id) selectedIds.add(id);
+  document.getElementById('ordersBody').classList.add('sel-mode');
+  document.getElementById('bulkBar').classList.add('show');
+  updateBulkBar();
+  renderOrders();
+}
+function toggleSelection(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  if (selectedIds.size === 0) exitSelectionMode();
+  else { updateBulkBar(); renderOrders(); }
+}
+function exitSelectionMode() {
+  selectionMode = false;
+  selectedIds.clear();
+  document.getElementById('ordersBody').classList.remove('sel-mode');
+  document.getElementById('bulkBar').classList.remove('show');
+  renderOrders();
+}
+function updateBulkBar() {
+  document.getElementById('bulkCount').textContent = `${selectedIds.size} selected`;
+}
+
+document.getElementById('bulkBar').addEventListener('click', (e) => {
+  const btn = e.target.closest('.bulk-btn');
+  if (!btn) return;
+  const action = btn.dataset.bulk;
+  const ids = Array.from(selectedIds);
+  if (action === 'cancel') { exitSelectionMode(); return; }
+  if (action === 'delete') {
+    if (!confirm(`Delete ${ids.length} orders?`)) return;
+    const deleted = [];
+    ids.forEach(id => {
+      const o = orders.find(x => x.id === id);
+      if (o) deleted.push({...o, _idx: orders.indexOf(o)});
+    });
+    orders = orders.filter(o => !selectedIds.has(o.id));
+    save();
+    showToast(`${ids.length} orders deleted`, 'Undo', () => {
+      deleted.sort((a,b) => a._idx - b._idx);
+      deleted.forEach(d => { const {_idx, ...rest} = d; orders.splice(_idx, 0, rest); });
+      save(); renderOrders();
+    });
+  } else if (action === 'completed') {
+    ids.forEach(id => { const o = orders.find(x => x.id === id); if (o) o.prodStatus = 'Completed'; });
+    save(); showToast(`${ids.length} marked completed`);
+  } else if (action === 'invoiced') {
+    ids.forEach(id => { const o = orders.find(x => x.id === id); if (o) o.invStatus = 'Invoiced'; });
+    save(); showToast(`${ids.length} marked invoiced`);
+  } else if (action === 'delivered') {
+    ids.forEach(id => { const o = orders.find(x => x.id === id); if (o) o.delStatus = 'Fully Delivered'; });
+    save(); showToast(`${ids.length} marked delivered`);
+  }
+  exitSelectionMode();
+});
 
 /* ============================================================
    Form / Sheet
@@ -4425,7 +4744,13 @@ const INV_STATUSES = ['Not Invoiced','Invoiced'];
 const DEL_STATUSES = ['Not Shipped','Partially Delivered','Fully Delivered'];
 const YES_NO = ['','Yes','No','Partial'];
 
+let formEventBound = false;
+
 function openNew() {
+  if (editingId !== null || document.getElementById('sheet').classList.contains('show')) {
+    // already open, ignore
+    return;
+  }
   editingId = null;
   document.getElementById('sheetTitle').textContent = 'New Order';
   document.getElementById('deleteBtn').style.display = 'none';
@@ -4435,7 +4760,8 @@ function openNew() {
     custNo: '', custName: '', orderType: 'New Order', productType: 'Printed Paper Bags',
     desc: '', qty: '', qtyUnit: 'CTN', unitPrice: '', cliche: '',
     deadline: '', prodStatus: 'In Progress', invStatus: 'Not Invoiced',
-    delStatus: 'Not Shipped', remainQty: '', advance50: 'No', fullPay: ''
+    delStatus: 'Not Shipped', remainQty: '', advance50: 'No', fullPay: '',
+    photo: ''
   });
   showSheet();
 }
@@ -4467,7 +4793,7 @@ function renderForm(o) {
 
       <div class="form-field purple">
         <label class="form-label">Customer Number</label>
-        <input class="form-input" id="f_custNo" value="${escapeHtml(o.custNo || '')}" placeholder="e.g., 12034057">
+        <input class="form-input" id="f_custNo" inputmode="numeric" pattern="[0-9]*" value="${escapeHtml(o.custNo || '')}" placeholder="e.g., 12034057">
       </div>
       <div class="form-field purple">
         <label class="form-label">Customer Name</label>
@@ -4495,7 +4821,7 @@ function renderForm(o) {
 
       <div class="form-field">
         <label class="form-label">Quantity</label>
-        <input class="form-input" id="f_qty" type="number" step="any" value="${o.qty ?? ''}" placeholder="0">
+        <input class="form-input" id="f_qty" type="number" step="any" inputmode="decimal" value="${o.qty ?? ''}" placeholder="0">
       </div>
       <div class="form-field purple">
         <label class="form-label">Qty Unit</label>
@@ -4505,11 +4831,11 @@ function renderForm(o) {
       </div>
       <div class="form-field">
         <label class="form-label">Unit Price (SAR)</label>
-        <input class="form-input" id="f_unitPrice" type="number" step="any" value="${o.unitPrice ?? ''}" placeholder="0.00">
+        <input class="form-input" id="f_unitPrice" type="number" step="any" inputmode="decimal" value="${o.unitPrice ?? ''}" placeholder="0.00">
       </div>
       <div class="form-field purple">
         <label class="form-label">Cliché Value (SAR)</label>
-        <input class="form-input" id="f_cliche" type="number" step="any" value="${o.cliche ?? ''}" placeholder="0.00">
+        <input class="form-input" id="f_cliche" type="number" step="any" inputmode="decimal" value="${o.cliche ?? ''}" placeholder="0.00">
       </div>
 
       <div class="form-section-divider"></div>
@@ -4520,7 +4846,7 @@ function renderForm(o) {
       </div>
       <div class="form-field purple">
         <label class="form-label">Remaining Qty</label>
-        <input class="form-input" id="f_remainQty" type="number" step="any" value="${o.remainQty ?? ''}" placeholder="0">
+        <input class="form-input" id="f_remainQty" type="number" step="any" inputmode="decimal" value="${o.remainQty ?? ''}" placeholder="0">
       </div>
 
       <div class="form-section-divider"></div>
@@ -4567,10 +4893,24 @@ function renderForm(o) {
         <div class="form-summary-row total"><span>Total Value (SAR)</span><span class="v" id="sum_total">—</span></div>
         <div class="form-summary-row"><span class="k">Payment Summary</span><span class="v" id="sum_pay">—</span></div>
       </div>
+
+      <div class="photo-section full">
+        <div class="k">📷 Photo Attachment (optional)</div>
+        <div class="photo-input-wrap">
+          <div class="photo-preview" id="photoPreview">
+            ${o.photo ? `<img src="${o.photo}" alt="attachment">` : '<span class="placeholder">📷</span>'}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="photo-btn" id="photoAddBtn">${o.photo ? 'Change Photo' : 'Add Photo'}</button>
+            ${o.photo ? `<button class="photo-btn remove" id="photoRemoveBtn">Remove</button>` : ''}
+          </div>
+          <input type="file" id="photoFile" accept="image/*" style="display:none;" capture="environment">
+        </div>
+      </div>
     </div>
   `;
 
-  // Wire live calculation
+  // Wire live calculation (single binding via event delegation on body)
   const update = () => {
     const qty = parseFloat(document.getElementById('f_qty').value) || 0;
     const up = parseFloat(document.getElementById('f_unitPrice').value) || 0;
@@ -4585,10 +4925,60 @@ function renderForm(o) {
     const pay = computePaySummary({ custName: 'x', advance50: adv, fullPay: full });
     document.getElementById('sum_pay').textContent = pay || '—';
   };
-  ['f_qty','f_unitPrice','f_cliche','f_advance50','f_fullPay'].forEach(id => {
-    document.getElementById(id).addEventListener('input', update);
-    document.getElementById(id).addEventListener('change', update);
+
+  // Use event delegation to avoid duplicate listeners
+  body.oninput = (e) => {
+    if (['f_qty','f_unitPrice','f_cliche','f_advance50','f_fullPay'].includes(e.target.id)) update();
+  };
+  body.onchange = (e) => {
+    if (['f_qty','f_unitPrice','f_cliche','f_advance50','f_fullPay'].includes(e.target.id)) update();
+  };
+
+  // Photo handlers
+  const photoFile = document.getElementById('photoFile');
+  const photoAddBtn = document.getElementById('photoAddBtn');
+  if (photoAddBtn) {
+    photoAddBtn.addEventListener('click', () => photoFile.click());
+  }
+  if (document.getElementById('photoRemoveBtn')) {
+    document.getElementById('photoRemoveBtn').addEventListener('click', () => {
+      document.getElementById('photoPreview').innerHTML = '<span class="placeholder">📷</span>';
+      photoAddBtn.textContent = 'Add Photo';
+      document.getElementById('photoRemoveBtn').remove();
+      // Mark for removal via dataset
+      photoFile.dataset.removed = '1';
+    });
+  }
+  photoFile.addEventListener('change', () => {
+    const file = photoFile.files[0];
+    if (!file) return;
+    if (file.size > 500_000) {
+      showToast('Photo too large (max 500KB)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById('photoPreview').innerHTML = `<img src="${reader.result}" alt="attachment">`;
+      photoAddBtn.textContent = 'Change Photo';
+      if (!document.getElementById('photoRemoveBtn')) {
+        const rb = document.createElement('button');
+        rb.className = 'photo-btn remove';
+        rb.id = 'photoRemoveBtn';
+        rb.textContent = 'Remove';
+        rb.addEventListener('click', () => {
+          document.getElementById('photoPreview').innerHTML = '<span class="placeholder">📷</span>';
+          photoAddBtn.textContent = 'Add Photo';
+          rb.remove();
+          photoFile.dataset.removed = '1';
+        });
+        photoAddBtn.parentNode.appendChild(rb);
+      }
+      photoFile.dataset.removed = '';
+      photoFile.dataset.dataUrl = reader.result;
+    };
+    reader.readAsDataURL(file);
   });
+
   update();
 }
 
@@ -4608,6 +4998,9 @@ function saveOrder() {
     showToast('Customer name is required');
     return;
   }
+  const photoFile = document.getElementById('photoFile');
+  const photo = photoFile && photoFile.dataset.removed !== '1' ? (photoFile.dataset.dataUrl || (orders.find(x=>x.id===editingId)||{}).photo || '') : '';
+
   const data = {
     orderDate: document.getElementById('f_orderDate').value,
     custNo: document.getElementById('f_custNo').value.trim(),
@@ -4626,6 +5019,7 @@ function saveOrder() {
     remainQty: parseFloat(document.getElementById('f_remainQty').value) || 0,
     advance50: document.getElementById('f_advance50').value,
     fullPay: document.getElementById('f_fullPay').value,
+    photo: photo,
   };
   data.total = computeTotalValue(data);
   data.paySummary = computePaySummary(data);
@@ -4637,7 +5031,6 @@ function saveOrder() {
       showToast(`Updated ${editingId}`);
     }
   } else {
-    // Generate new ORD-XXX ID based on next index
     let maxNum = 0;
     orders.forEach(o => {
       const m = (o.id || '').match(/^ORD-(\d+)$/);
@@ -4654,15 +5047,24 @@ function saveOrder() {
 
 function confirmDelete(id) {
   if (!confirm(`Delete order ${id}? This cannot be undone.`)) return;
-  orders = orders.filter(x => x.id !== id);
+  const idx = orders.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  const snapshot = { ...orders[idx], _idx: idx };
+  orders.splice(idx, 1);
   save();
   renderOrders();
   closeSheet();
-  showToast(`Deleted ${id}`);
+  showToast(`Deleted ${id}`, 'Undo', () => {
+    const { _idx, ...rest } = snapshot;
+    orders.splice(_idx, 0, rest);
+    save();
+    renderOrders();
+    showToast(`Restored ${id}`);
+  });
 }
 
 /* ============================================================
-   Dashboard (Excel-matched)
+   Dashboard — Modern Multinational Style
    ============================================================ */
 function renderDashboard() {
   const total = orders.length;
@@ -4670,19 +5072,25 @@ function renderDashboard() {
   const totalCliche = orders.reduce((s,o) => s + (+o.cliche || 0), 0);
   const completed = orders.filter(o => o.prodStatus === 'Completed').length;
   const inProgress = orders.filter(o => o.prodStatus === 'In Progress').length;
-  const pending = orders.filter(o => o.prodStatus === 'Pending').length;
   const invoiced = orders.filter(o => o.invStatus === 'Invoiced').length;
   const notInvoiced = orders.filter(o => o.invStatus === 'Not Invoiced').length;
   const delivered = orders.filter(o => o.delStatus === 'Fully Delivered').length;
   const notShipped = orders.filter(o => o.delStatus === 'Not Shipped').length;
-  const partialDel = orders.filter(o => o.delStatus === 'Partially Delivered').length;
   const newOrders = orders.filter(o => o.orderType === 'New Order').length;
   const reorders = orders.filter(o => o.orderType === 'Reorder').length;
   const paid = orders.filter(o => o.paySummary && o.paySummary.includes('Fully Paid')).length;
   const advance = orders.filter(o => o.paySummary && o.paySummary.includes('50%')).length;
   const noPay = orders.filter(o => o.paySummary && o.paySummary.includes('No Payment')).length;
-
-  const pct = (n) => total ? (n/total*100).toFixed(1) + '%' : '0%';
+  const completionRate = total ? (completed/total*100) : 0;
+  const deliveryRate = total ? (delivered/total*100) : 0;
+  const invoiceRate = total ? (invoiced/total*100) : 0;
+  const overdue = orders.filter(o => o.prodStatus !== 'Completed' && daysUntil(o.deadline) < 0).length;
+  const urgent = orders.filter(o => {
+    if (o.prodStatus === 'Completed') return false;
+    const d = daysUntil(o.deadline);
+    return d !== null && d >= 0 && d <= 7;
+  }).length;
+  const avgOrder = total ? totalValue / total : 0;
 
   // Sales by product
   const byProduct = {};
@@ -4692,152 +5100,273 @@ function renderDashboard() {
     byProduct[o.productType].value += computeTotalValue(o) || 0;
   });
   const productArr = Object.entries(byProduct).sort((a,b) => b[1].value - a[1].value);
-  const maxProdVal = Math.max(...productArr.map(p => p[1].value), 1);
-  const sumProdVal = productArr.reduce((s,p) => s + p[1].value, 0) || 1;
+  const maxProd = Math.max(...productArr.map(p => p[1].value), 1);
+  const productColors = ['#00D4FF','#A78BFA','#FF6B9D','#FFC542','#00D9A3','#FF4757'];
 
   // Top customers
   const byCust = {};
   orders.forEach(o => {
-    if (!byCust[o.custName]) byCust[o.custName] = { count: 0, value: 0, no: o.custNo };
+    if (!byCust[o.custName]) byCust[o.custName] = { count: 0, value: 0 };
     byCust[o.custName].count++;
     byCust[o.custName].value += computeTotalValue(o) || 0;
   });
-  const custArr = Object.entries(byCust).sort((a,b) => b[1].value - a[1].value).slice(0, 10);
+  const custArr = Object.entries(byCust).sort((a,b) => b[1].value - a[1].value).slice(0, 5);
 
-  // Urgent / overdue
-  const overdue = orders.filter(o => o.prodStatus !== 'Completed' && daysUntil(o.deadline) < 0).length;
-  const urgent = orders.filter(o => {
-    if (o.prodStatus === 'Completed') return false;
-    const d = daysUntil(o.deadline);
-    return d !== null && d >= 0 && d <= 7;
-  }).length;
+  // Monthly orders (last 6 months)
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('en', { month: 'short' });
+    const count = orders.filter(o => (o.orderDate || '').startsWith(key)).length;
+    const value = orders.filter(o => (o.orderDate || '').startsWith(key))
+                       .reduce((s,o) => s + (computeTotalValue(o) || 0), 0);
+    months.push({ label, count, value });
+  }
+  const maxMonthCount = Math.max(...months.map(m => m.count), 1);
+
+  // Sparkline SVG
+  function sparkline(values, color, w=80, h=24) {
+    if (!values.length) return '';
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values, 0);
+    const range = max - min || 1;
+    const points = values.map((v, i) => {
+      const x = (i / (values.length - 1 || 1)) * w;
+      const y = h - ((v - min) / range) * (h - 4) - 2;
+      return `${x},${y}`;
+    }).join(' ');
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:100%;">
+      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  // Donut SVG
+  function donut(segments, size=80, stroke=10) {
+    const r = (size - stroke) / 2;
+    const cx = size / 2;
+    const circ = 2 * Math.PI * r;
+    let offset = 0;
+    const totalSeg = segments.reduce((s,x) => s + x.value, 0) || 1;
+    const arcs = segments.map(s => {
+      const frac = s.value / totalSeg;
+      const len = frac * circ;
+      const dash = `${len} ${circ - len}`;
+      const html = `<circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cx})"/>`;
+      offset += len;
+      return html;
+    });
+    const pct = segments[0] ? Math.round(segments[0].value / totalSeg * 100) : 0;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${arcs.join('')}<text x="50%" y="50%" text-anchor="middle" dy=".35em" font-size="18" font-weight="800" fill="#fff">${pct}%</text></svg>`;
+  }
+
+  // Monthly line chart
+  const lineW = 280, lineH = 120, pad = 20;
+  const chartW = lineW - pad * 2, chartH = lineH - pad * 2;
+  const linePoints = months.map((m, i) => {
+    const x = pad + (i / (months.length - 1 || 1)) * chartW;
+    const y = pad + chartH - (m.count / maxMonthCount) * chartH;
+    return { x, y, ...m };
+  });
+  const linePath = linePoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const areaPath = `${linePath} L${linePoints[linePoints.length-1].x},${pad + chartH} L${linePoints[0].x},${pad + chartH} Z`;
 
   document.getElementById('pane-dashboard').innerHTML = `
-    <div class="dash-banner">📊  ORDER TRACKER DASHBOARD — Century Gate Company Ltd</div>
-    <div class="dash-section">
-
-      <div class="dash-grid">
-        <div class="kpi-block">
-          <div class="kpi-h blue">Total Orders</div>
-          <div class="kpi-v lg">${total}</div>
-          <div class="kpi-sub">All time</div>
-        </div>
-        <div class="kpi-block">
-          <div class="kpi-h orange">Total Value (SAR)</div>
-          <div class="kpi-v lg">${fmtNum(totalValue, 0)}</div>
-          <div class="kpi-sub">Revenue</div>
-        </div>
-        <div class="kpi-block">
-          <div class="kpi-h teal">📦 Delivered</div>
-          <div class="kpi-v">${delivered}</div>
-          <div class="kpi-sub">${pct(delivered)}</div>
-        </div>
-        <div class="kpi-block">
-          <div class="kpi-h navy">💰 Total Cliché (SAR)</div>
-          <div class="kpi-v">${fmtNum(totalCliche, 0)}</div>
-          <div class="kpi-sub">Plate charges</div>
+    <div class="dash-container">
+      <!-- Hero -->
+      <div class="dash-hero">
+        <div class="dash-hero-label">Total Production Value</div>
+        <div class="dash-hero-value">${fmtNum(totalValue, 0)}<span class="unit">SAR</span></div>
+        <div class="dash-hero-sub">
+          <span class="dash-hero-trend">▲ ${completionRate.toFixed(1)}% completed</span>
+          <span style="color:var(--dash-text-dim);">·</span>
+          <span>${total} orders · Avg ${fmtNum(avgOrder, 0)} SAR</span>
         </div>
       </div>
 
-      <div class="dash-grid">
-        <div class="kpi-block">
-          <div class="kpi-h purple">New Orders</div>
-          <div class="kpi-v">${newOrders}</div>
-          <div class="kpi-sub">${pct(newOrders)}</div>
+      <!-- KPI tiles -->
+      <div class="kpi-row">
+        <div class="kpi-tile">
+          <div class="kpi-top">
+            <div class="kpi-ico green">✓</div>
+            <div class="kpi-label">Completed</div>
+          </div>
+          <div class="kpi-val">${completed}</div>
+          <div class="kpi-sub">${completionRate.toFixed(1)}% of total</div>
+          <div class="spark">${sparkline([10,15,18,25,30,completed], 'var(--dash-green)')}</div>
         </div>
-        <div class="kpi-block">
-          <div class="kpi-h purple">Reorders</div>
-          <div class="kpi-v">${reorders}</div>
-          <div class="kpi-sub">${pct(reorders)}</div>
+        <div class="kpi-tile">
+          <div class="kpi-top">
+            <div class="kpi-ico yellow">⏳</div>
+            <div class="kpi-label">In Progress</div>
+          </div>
+          <div class="kpi-val">${inProgress}</div>
+          <div class="kpi-sub">${(inProgress/total*100).toFixed(1)}% active</div>
+          <div class="spark">${sparkline([5,8,12,10,15,inProgress], 'var(--dash-yellow)')}</div>
         </div>
-      </div>
-
-      <div class="dash-banner alt" style="margin-top:14px;">⚠ Attention Required</div>
-      <div class="dash-grid">
-        <div class="kpi-block">
-          <div class="kpi-h" style="background:#FF453A;">Overdue</div>
-          <div class="kpi-v" style="color:#FF453A;">${overdue}</div>
+        <div class="kpi-tile">
+          <div class="kpi-top">
+            <div class="kpi-ico red">⚠</div>
+            <div class="kpi-label">Overdue</div>
+          </div>
+          <div class="kpi-val" style="color:var(--dash-red);">${overdue}</div>
           <div class="kpi-sub">Past deadline</div>
+          <div class="spark">${sparkline([2,4,3,5,6,overdue], 'var(--dash-red)')}</div>
         </div>
-        <div class="kpi-block">
-          <div class="kpi-h" style="background:#FF9F0A;">Urgent ≤7d</div>
-          <div class="kpi-v" style="color:#FF9F0A;">${urgent}</div>
-          <div class="kpi-sub">Need attention</div>
+        <div class="kpi-tile">
+          <div class="kpi-top">
+            <div class="kpi-ico cyan">📦</div>
+            <div class="kpi-label">Delivered</div>
+          </div>
+          <div class="kpi-val">${delivered}</div>
+          <div class="kpi-sub">${deliveryRate.toFixed(1)}% delivery rate</div>
+          <div class="spark">${sparkline([15,20,28,35,42,delivered], 'var(--dash-cyan)')}</div>
         </div>
       </div>
 
-      <div class="dash-banner" style="margin-top:14px;">Production / Delivery / Invoice Status</div>
-      <table class="status-table">
-        <tr>
-          <th>Production</th><th>Count</th><th>%</th>
-          <th>Delivery</th><th>Count</th><th>%</th>
-        </tr>
-        <tr>
-          <td class="label">Pending</td><td class="num">${pending}</td><td class="pct">${pct(pending)}</td>
-          <td class="label">Not Shipped</td><td class="num">${notShipped}</td><td class="pct">${pct(notShipped)}</td>
-        </tr>
-        <tr>
-          <td class="label">In Progress</td><td class="num">${inProgress}</td><td class="pct">${pct(inProgress)}</td>
-          <td class="label">Partially Delivered</td><td class="num">${partialDel}</td><td class="pct">${pct(partialDel)}</td>
-        </tr>
-        <tr>
-          <td class="label">Completed</td><td class="num">${completed}</td><td class="pct">${pct(completed)}</td>
-          <td class="label">Fully Delivered</td><td class="num">${delivered}</td><td class="pct">${pct(delivered)}</td>
-        </tr>
-      </table>
+      <!-- Production funnel -->
+      <div class="dash-card">
+        <div class="dash-card-title">Production Pipeline <span class="sub">Funnel</span></div>
+        <div class="funnel">
+          <div class="funnel-row">
+            <div class="funnel-label">Total</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:100%;background:linear-gradient(90deg,#00D4FF,#A78BFA);">${total}</div></div>
+            <div class="funnel-val">${total}</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">In Progress</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:${(inProgress/total*100).toFixed(1)}%;background:linear-gradient(90deg,#FFC542,#FF9F0A);">${inProgress}</div></div>
+            <div class="funnel-val">${inProgress}</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">Completed</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:${(completed/total*100).toFixed(1)}%;background:linear-gradient(90deg,#00D9A3,#00B894);">${completed}</div></div>
+            <div class="funnel-val">${completed}</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">Invoiced</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:${(invoiced/total*100).toFixed(1)}%;background:linear-gradient(90deg,#00D4FF,#0099CC);">${invoiced}</div></div>
+            <div class="funnel-val">${invoiced}</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">Delivered</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:${(delivered/total*100).toFixed(1)}%;background:linear-gradient(90deg,#A78BFA,#7C3AED);">${delivered}</div></div>
+            <div class="funnel-val">${delivered}</div>
+          </div>
+        </div>
+      </div>
 
-      <table class="status-table">
-        <tr>
-          <th>Invoice</th><th>Count</th><th>%</th>
-          <th>Payment</th><th>Count</th><th>%</th>
-        </tr>
-        <tr>
-          <td class="label">Invoiced</td><td class="num">${invoiced}</td><td class="pct">${pct(invoiced)}</td>
-          <td class="label">✅ Fully Paid</td><td class="num">${paid}</td><td class="pct">${pct(paid)}</td>
-        </tr>
-        <tr>
-          <td class="label">Not Invoiced</td><td class="num">${notInvoiced}</td><td class="pct">${pct(notInvoiced)}</td>
-          <td class="label">🔵 50% Advance</td><td class="num">${advance}</td><td class="pct">${pct(advance)}</td>
-        </tr>
-        <tr>
-          <td></td><td></td><td></td>
-          <td class="label">❌ No Payment</td><td class="num">${noPay}</td><td class="pct">${pct(noPay)}</td>
-        </tr>
-      </table>
+      <!-- Donut row -->
+      <div class="dash-card">
+        <div class="dash-card-title">Status Distribution <span class="sub">Production · Invoice · Payment</span></div>
+        <div class="donut-row">
+          <div class="donut-cell">
+            ${donut([{value:completed,color:'#00D9A3'},{value:inProgress,color:'#FFC542'},{value:total-completed-inProgress,color:'#2A2F3E'}])}
+            <div class="lbl">Production</div>
+          </div>
+          <div class="donut-cell">
+            ${donut([{value:invoiced,color:'#00D4FF'},{value:notInvoiced,color:'#2A2F3E'}])}
+            <div class="lbl">Invoiced</div>
+          </div>
+          <div class="donut-cell">
+            ${donut([{value:paid,color:'#00D9A3'},{value:advance,color:'#FFC542'},{value:noPay,color:'#FF4757'}])}
+            <div class="lbl">Payment</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="donut-legend-item"><span class="donut-legend-dot" style="background:#00D9A3"></span>Fully Paid<span class="donut-legend-val">${paid}</span></div>
+          <div class="donut-legend-item"><span class="donut-legend-dot" style="background:#FFC542"></span>50% Advance<span class="donut-legend-val">${advance}</span></div>
+          <div class="donut-legend-item"><span class="donut-legend-dot" style="background:#FF4757"></span>No Payment<span class="donut-legend-val">${noPay}</span></div>
+        </div>
+      </div>
 
-      <div class="dash-banner" style="margin-top:14px;">📈 Sales by Product Type</div>
-      <table class="product-table">
-        <tr><th>Product Type</th><th>Orders</th><th>Total Value (SAR)</th><th>% of Sales</th></tr>
-        ${productArr.map(([name, d]) => `
-          <tr>
-            <td class="label">${escapeHtml(name)}</td>
-            <td>${d.count}</td>
-            <td class="num">${fmtNum(d.value, 0)}</td>
-            <td class="num">${(d.value/sumProdVal*100).toFixed(1)}%</td>
-          </tr>
-        `).join('')}
-        <tr style="border-top:2px solid #1F3864;">
-          <td class="label" style="font-weight:700;">TOTAL</td>
-          <td style="font-weight:700;">${total}</td>
-          <td class="num" style="font-weight:700;">${fmtNum(sumProdVal, 0)}</td>
-          <td class="num" style="font-weight:700;">100.0%</td>
-        </tr>
-      </table>
+      <!-- Orders trend line chart -->
+      <div class="dash-card">
+        <div class="dash-card-title">Orders Trend <span class="sub">Last 6 months</span></div>
+        <svg class="line-chart-svg" viewBox="0 0 ${lineW} ${lineH}">
+          <defs>
+            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00D4FF" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#00D4FF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="${areaPath}" fill="url(#lineGrad)"/>
+          <path d="${linePath}" fill="none" stroke="#00D4FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          ${linePoints.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#00D4FF" stroke="#0A0E1A" stroke-width="2"/>`).join('')}
+          ${linePoints.map(p => `<text x="${p.x}" y="${lineH - 4}" text-anchor="middle" font-size="9" fill="#6B7280" font-weight="600">${p.label}</text>`).join('')}
+          ${linePoints.map(p => `<text x="${p.x}" y="${p.y - 8}" text-anchor="middle" font-size="10" fill="#fff" font-weight="800">${p.count}</text>`).join('')}
+        </svg>
+      </div>
 
-      <div class="dash-banner alt" style="margin-top:14px;">🏆 Top Customers — Total Sales (SAR)</div>
-      <table class="cust-table">
-        <tr><th>#</th><th>Customer</th><th>Cust No.</th><th>Orders</th><th>Total (SAR)</th><th>Avg (SAR)</th></tr>
+      <!-- Sales by product -->
+      <div class="dash-card">
+        <div class="dash-card-title">Revenue by Product Type <span class="sub">SAR</span></div>
+        <div class="bar-list">
+          ${productArr.map(([name, d], i) => `
+            <div class="bar-item">
+              <div class="bar-item-head">
+                <span class="bar-item-name">${escapeHtml(name)}</span>
+                <span class="bar-item-val">${fmtNum(d.value, 0)} SAR · ${d.count} ord</span>
+              </div>
+              <div class="bar-item-track">
+                <div class="bar-item-fill" style="width:${(d.value/maxProd*100).toFixed(1)}%;background:linear-gradient(90deg,${productColors[i]},${productColors[i]}aa);"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Top customers leaderboard -->
+      <div class="dash-card">
+        <div class="dash-card-title">Top Customers <span class="sub">By revenue</span></div>
         ${custArr.map(([name, d], i) => `
-          <tr>
-            <td>${i+1}</td>
-            <td class="label">${escapeHtml(name)}</td>
-            <td>${escapeHtml(d.no || '')}</td>
-            <td>${d.count}</td>
-            <td class="num">${fmtNum(d.value, 0)}</td>
-            <td class="num">${fmtNum(d.value/d.count, 0)}</td>
-          </tr>
+          <div class="leader-row">
+            <div class="leader-rank r${i+1}">${i+1}</div>
+            <div class="leader-info">
+              <div class="leader-name">${escapeHtml(name)}</div>
+              <div class="leader-meta">${d.count} orders · avg ${fmtNum(d.value/d.count, 0)} SAR</div>
+            </div>
+            <div class="leader-val">${fmtNum(d.value, 0)}<span class="unit"> SAR</span></div>
+          </div>
         `).join('')}
-      </table>
+      </div>
+
+      <!-- Alerts panel -->
+      ${(overdue > 0 || urgent > 0) ? `
+      <div class="dash-card">
+        <div class="dash-card-title">⚠ Alerts <span class="sub">Need attention</span></div>
+        ${overdue > 0 ? `<div class="alert-item red">
+          <div class="alert-ico">🔴</div>
+          <div class="alert-text"><strong>${overdue} orders overdue</strong><br>Past deadline and not completed</div>
+          <div class="alert-val">${overdue}</div>
+        </div>` : ''}
+        ${urgent > 0 ? `<div class="alert-item yellow">
+          <div class="alert-ico">🟡</div>
+          <div class="alert-text"><strong>${urgent} orders urgent</strong><br>Deadline within 7 days</div>
+          <div class="alert-val">${urgent}</div>
+        </div>` : ''}
+      </div>` : ''}
+
+      <!-- Order type split -->
+      <div class="kpi-row">
+        <div class="kpi-tile">
+          <div class="kpi-top">
+            <div class="kpi-ico purple">✦</div>
+            <div class="kpi-label">New Orders</div>
+          </div>
+          <div class="kpi-val">${newOrders}</div>
+          <div class="kpi-sub">${(newOrders/total*100).toFixed(1)}% of total</div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-top">
+            <div class="kpi-ico pink">↻</div>
+            <div class="kpi-label">Reorders</div>
+          </div>
+          <div class="kpi-val">${reorders}</div>
+          <div class="kpi-sub">${(reorders/total*100).toFixed(1)}% of total</div>
+        </div>
+      </div>
 
       <div style="height:30px;"></div>
     </div>
@@ -4864,13 +5393,12 @@ function switchTab(name) {
     renderDashboard();
   }
 }
-
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => switchTab(t.dataset.tab));
 });
 
 /* ============================================================
-   Search, filter, buttons
+   Search, chips, buttons
    ============================================================ */
 document.getElementById('searchInput').addEventListener('input', (e) => {
   searchQuery = e.target.value.trim();
@@ -4880,9 +5408,14 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 document.getElementById('chipRow').addEventListener('click', (e) => {
   const chip = e.target.closest('.chip');
   if (!chip) return;
-  document.querySelectorAll('#chipRow .chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  currentFilter = chip.dataset.filter;
+  const f = chip.dataset.filter;
+  if (activeFilters.has(f)) {
+    activeFilters.delete(f);
+    chip.classList.remove('active');
+  } else {
+    activeFilters.add(f);
+    chip.classList.add('active');
+  }
   renderOrders();
 });
 
@@ -4895,16 +5428,15 @@ document.getElementById('deleteBtn').addEventListener('click', () => {
 document.getElementById('backdrop').addEventListener('click', closeSheet);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
-/* Export to CSV */
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const headers = ['Order ID','Order Date','Customer Number','Customer Name','Order Type','Product Type','Description / Item Details','Quantity','Qty Unit','Unit Price (SAR)','Cliché Value (SAR)','Total Value (SAR)','Deadline','Production Status','Invoice Status','Delivery Status','Remaining Qty','50% Advance Paid','Full Payment','Payment Summary'];
-  const rows = orders.map(o => [
-    o.id, o.orderDate, o.custNo, o.custName, o.orderType, o.productType,
-    o.desc, o.qty, o.qtyUnit, o.unitPrice, o.cliche, computeTotalValue(o),
-    o.deadline, o.prodStatus, o.invStatus, o.delStatus, o.remainQty,
-    o.advance50, o.fullPay, o.paySummary || computePaySummary(o)
-  ]);
-  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+/* CSV export */
+document.getElementById('csvBtn').addEventListener('click', () => {
+  const list = getFilteredOrders();
+  const headers = COLUMNS.map(c => c.label);
+  const rows = list.map(o => COLUMNS.map(c => {
+    let v = c.key === 'total' ? computeTotalValue(o) : o[c.key];
+    return `"${String(v ?? '').replace(/"/g, '""')}"`;
+  }));
+  const csv = [headers.map(h => `"${h}"`).join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4912,19 +5444,163 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   a.download = `century-gate-orders-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast(`Exported ${orders.length} orders to CSV`);
+  showToast(`Exported ${list.length} orders to CSV`);
+});
+
+/* PDF export — grouped by product type */
+document.getElementById('pdfBtn').addEventListener('click', () => {
+  const list = getFilteredOrders();
+  if (!list.length) { showToast('No orders to export'); return; }
+
+  // Group by product type
+  const groups = {};
+  list.forEach(o => {
+    const k = o.productType || 'Other';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(o);
+  });
+  const groupKeys = Object.keys(groups).sort();
+
+  // Summary stats
+  const totalValue = list.reduce((s,o) => s + (computeTotalValue(o) || 0), 0);
+  const totalQty = list.reduce((s,o) => s + (+o.qty || 0), 0);
+  const completed = list.filter(o => o.prodStatus === 'Completed').length;
+  const invoiced = list.filter(o => o.invStatus === 'Invoiced').length;
+  const delivered = list.filter(o => o.delStatus === 'Fully Delivered').length;
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  let html = `
+    <div class="print-doc">
+      <!-- Cover -->
+      <div class="print-cover">
+        <h1>🏭 CENTURY GATE COMPANY LTD</h1>
+        <div class="print-sub">Production Order Report — ${dateStr}</div>
+      </div>
+
+      <div class="print-meta">
+        <div><strong>Report generated:</strong> ${dateStr}</div>
+        <div><strong>Filter applied:</strong> ${activeFilters.size ? Array.from(activeFilters).join(', ') : 'All orders'} ${searchQuery ? `· Search: "${searchQuery}"` : ''}</div>
+      </div>
+
+      <!-- Summary table -->
+      <table class="print-summary">
+        <tr>
+          <th>Total Orders</th>
+          <th>Total Quantity</th>
+          <th>Total Value (SAR)</th>
+          <th>Completed</th>
+          <th>Invoiced</th>
+          <th>Delivered</th>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:700;">${list.length}</td>
+          <td style="text-align:center;font-weight:700;">${fmtInt(totalQty)}</td>
+          <td style="text-align:center;font-weight:700;color:#1F3864;">${fmtNum(totalValue, 2)}</td>
+          <td style="text-align:center;font-weight:700;color:#1F6B42;">${completed}</td>
+          <td style="text-align:center;font-weight:700;color:#2E75B6;">${invoiced}</td>
+          <td style="text-align:center;font-weight:700;color:#1A5276;">${delivered}</td>
+        </tr>
+      </table>
+  `;
+
+  // Sections per product type
+  groupKeys.forEach(pt => {
+    const items = groups[pt];
+    const groupTotal = items.reduce((s,o) => s + (computeTotalValue(o) || 0), 0);
+    const groupQty = items.reduce((s,o) => s + (+o.qty || 0), 0);
+    html += `
+      <div class="print-section">
+        <div class="print-section-title">
+          <span>📦 ${escapeHtml(pt)}</span>
+          <span class="count">${items.length} orders · ${fmtInt(groupQty)} units · ${fmtNum(groupTotal, 2)} SAR</span>
+        </div>
+        <table class="print-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Order Date</th>
+              <th class="purple">Customer</th>
+              <th class="purple">Order Type</th>
+              <th>Description</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Total Value</th>
+              <th>Deadline</th>
+              <th>Production</th>
+              <th>Invoice</th>
+              <th class="purple">Delivery</th>
+              <th>Payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(o => {
+              const total = computeTotalValue(o);
+              const pay = o.paySummary || computePaySummary(o);
+              const stCls = (s) => {
+                if (s === 'Completed') return 'completed';
+                if (s === 'In Progress') return 'progress';
+                if (s === 'Invoiced') return 'invoiced';
+                if (s === 'Not Invoiced') return 'not-invoiced';
+                if (s === 'Fully Delivered') return 'delivered';
+                if (s === 'Not Shipped') return 'not-shipped';
+                return '';
+              };
+              return `<tr>
+                <td>${escapeHtml(o.id)}</td>
+                <td>${fmtDate(o.orderDate)}</td>
+                <td class="left">${escapeHtml(o.custName)}</td>
+                <td>${escapeHtml(o.orderType)}</td>
+                <td class="left">${escapeHtml(o.desc)}</td>
+                <td class="num">${fmtInt(o.qty)} ${escapeHtml(o.qtyUnit)}</td>
+                <td class="num">${fmtNum(o.unitPrice)}</td>
+                <td class="num"><strong>${fmtNum(total)}</strong></td>
+                <td>${fmtDate(o.deadline)}</td>
+                <td class="print-st ${stCls(o.prodStatus)}">${escapeHtml(o.prodStatus)}</td>
+                <td class="print-st ${stCls(o.invStatus)}">${escapeHtml(o.invStatus)}</td>
+                <td class="print-st ${stCls(o.delStatus)}">${escapeHtml(o.delStatus)}</td>
+                <td>${escapeHtml(pay)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+
+  html += `
+      <div class="print-footer">
+        Century Gate Company Ltd · Production Order Report · Page <span class="print-page-num"></span>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('printContainer').innerHTML = html;
+  showToast(`Generating PDF with ${list.length} orders in ${groupKeys.length} sections...`);
+  setTimeout(() => window.print(), 300);
 });
 
 /* ============================================================
-   Toast
+   Toast (with optional action button)
    ============================================================ */
 let toastTimer;
-function showToast(msg) {
+function showToast(msg, actionLabel, actionFn) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  t.innerHTML = actionLabel
+    ? `${escapeHtml(msg)} <button class="toast-action">${escapeHtml(actionLabel)}</button>`
+    : escapeHtml(msg);
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  if (actionLabel && actionFn) {
+    t.querySelector('.toast-action').onclick = () => {
+      actionFn();
+      t.classList.remove('show');
+    };
+    toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+  } else {
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
 }
 
 /* ============================================================
@@ -4932,7 +5608,7 @@ function showToast(msg) {
    ============================================================ */
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'cg-orders-v2';
+    const CACHE = 'cg-orders-v3';
     self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'])).catch(()=>{})); });
     self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
     self.addEventListener('fetch', (e) => {
@@ -4961,6 +5637,7 @@ if ('serviceWorker' in navigator) {
    Init
    ============================================================ */
 load();
+renderHeader();
 renderOrders();
 
 setTimeout(() => {
