@@ -9,8 +9,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Century Gate">
-<!-- Modern Solid Icon: Deep Blue Background, White CG Text -->
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%231d4ed8'/%3E%3Ctext x='256' y='330' font-family='system-ui, sans-serif' font-size='220' font-weight='900' fill='%23ffffff' text-anchor='middle' letter-spacing='-10'%3ECG%3C/text%3E%3C/svg%3E">
+<!-- MODERN APP ICON (gradient + depth, replaced solid blue version) -->
+<!-- Place app-icon-modern-*.png files in the same directory as this HTML file -->
+<link rel="apple-touch-icon" sizes="180x180" href="app-icon-modern-180.png">
+<link rel="apple-touch-icon" sizes="167x167" href="app-icon-modern-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="app-icon-modern-152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="app-icon-modern-120.png">
+<!-- Fallback: inline SVG (gradient + CG monogram) for single-file deployment -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231e3a8a'/%3E%3Cstop offset='1' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' fill='url(%23g)'/%3E%3Ctext x='256' y='330' font-family='system-ui, sans-serif' font-size='220' font-weight='900' fill='%23ffffff' text-anchor='middle' letter-spacing='-10'%3ECG%3C/text%3E%3C/svg%3E">
+<!-- Modern favicon (browser tab icon) -->
+<link rel="icon" type="image/png" sizes="196x196" href="app-icon-modern-180.png">
 
 <!-- jsPDF and AutoTable for PDF Export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -37,7 +45,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 /* Header */
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .header-left{display:flex;align-items:center;gap:12px}
-.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;letter-spacing:-.5px;box-shadow:0 2px 4px rgba(37,99,235,.3)}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;letter-spacing:-.5px;box-shadow:0 2px 4px rgba(37,99,235,.3),inset 0 1px 0 rgba(255,255,255,.25)}
 .header h1{font-size:15px;font-weight:700;letter-spacing:.2px;color:var(--text)}
 .header h1 span{color:var(--accent)}
 .header-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
@@ -92,6 +100,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
     background: var(--surface);
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    /* ============================================================
+       ISSUE 5 POLISH (video-confirmed): hardware-accelerate the
+       scroll container so iOS Safari composites the table on the
+       GPU. This eliminates the sub-pixel repaint stutter that
+       makes rows appear to "jump" vertically during horizontal
+       momentum scroll. Combined with table-layout:fixed + locked
+       row heights above, the table now scrolls as one rigid,
+       Windows-like unit — matching the reference app's behavior.
+       ============================================================ */
+    will-change: scroll-position;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 /* ============================================================
@@ -108,6 +128,12 @@ table {
     width: max-content;
     min-width: 100%;
     background: var(--surface);
+    /* ISSUE 5 POLISH: promote the whole table to its own GPU layer so
+       iOS Safari scrolls it as a single composited bitmap instead of
+       repainting row-by-row during momentum scroll. */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 caption {
