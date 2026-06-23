@@ -35,10 +35,10 @@ html{font-size:14px;-webkit-text-size-adjust:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.5;
-  height:100vh;height:100dvh;overflow:hidden;
+  height:100dvh;
   display:flex;flex-direction:column;
+  overflow:hidden;
   padding-top:env(safe-area-inset-top);
-  position:fixed;top:0;left:0;width:100%
 }
 ::selection{background:var(--accent);color:#fff}
 
@@ -63,8 +63,8 @@ body{
 .btn-sm{padding:4px 8px;font-size:11px}
 
 /* ── Dashboard ───────────────────────────────────────────── */
-#dashboardArea{max-height:45vh;overflow-y:auto;overflow-x:hidden;transition:max-height .3s ease;flex-shrink:0;-webkit-overflow-scrolling:touch}
-#dashboardArea.hidden{max-height:0 !important}
+#dashboardArea{overflow:hidden;transition:max-height .3s ease;flex-shrink:0;max-height:none}
+#dashboardArea.hidden{max-height:0 !important;overflow:hidden}
 .dash-inner{padding:12px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;background:var(--surface);border-bottom:1px solid var(--border)}
 .dash-card{background:var(--surface2);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:12px 14px;border-left:4px solid var(--border-light)}
 .dash-card.gold{border-left-color:var(--accent)}
@@ -100,6 +100,22 @@ body{
    - overscroll-behavior-x: contain → prevents horizontal swipe
      from triggering browser back/forward navigation.
 */
+/* ── Table Scroll Container ──────────────────────────────────────
+   ARCHITECTURE (matches first code exactly):
+   - body + main are flex columns, overflow:hidden — they never scroll.
+   - .table-wrap is the ONE and ONLY scroll owner for the orders table.
+   - overflow-x:auto  → horizontal scroll (right-swipe to see all columns).
+   - overflow-y:auto  → vertical scroll (down-swipe to see all rows).
+   - touch-action:pan-x pan-y → tells iOS both axes are valid scroll
+     directions on THIS element. iOS then uses the INITIAL gesture angle
+     to lock to one axis — so a mostly-horizontal swipe scrolls columns,
+     a mostly-vertical swipe scrolls rows. No more jumping.
+   - overscroll-behavior-x:contain → prevents a horizontal swipe from
+     triggering browser back/forward navigation.
+   - flex:1 + min-height:0 → table-wrap fills all remaining vertical
+     space after header, dashboard, and toolbar, so it can actually grow
+     tall enough to scroll.
+   ─────────────────────────────────────────────────────────────────── */
 .table-wrap{
   flex:1;
   overflow-x:auto;
@@ -109,8 +125,7 @@ body{
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-x:contain;
   overscroll-behavior-y:auto;
-  will-change:scroll-position;
-  touch-action:pan-x;
+  touch-action:pan-x pan-y;
 }
 
 /* ── Table ───────────────────────────────────────────────── */
@@ -175,7 +190,6 @@ tbody tr{
   min-height:36px;
   max-height:36px;
   line-height:1;
-  touch-action:pan-x;
 }
 tbody tr.new-row{animation:fadeSlideIn .25s ease}
 @keyframes fadeSlideIn{from{opacity:0}to{opacity:1}}
@@ -218,7 +232,6 @@ td input,td select{
   font-family:inherit;
   -webkit-appearance:none;
   appearance:none;
-  touch-action:pan-x;
 }
 td select{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");
@@ -336,7 +349,7 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
   .toolbar-right{width:100%;justify-content:space-between;order:3;margin-left:0}
   .row-count{flex:1;text-align:center}
   .btn-accent{flex:1.5}
-  .table-wrap{-webkit-overflow-scrolling:touch;overflow-y:auto;overscroll-behavior-x:contain;overscroll-behavior-y:auto;touch-action:pan-x}
+  .table-wrap{-webkit-overflow-scrolling:touch;overflow-x:auto;overflow-y:auto;overscroll-behavior-x:contain;overscroll-behavior-y:auto;touch-action:pan-x pan-y}
   thead th{padding:8px 6px;font-size:11px}
   .search-box input{font-size:16px}
   .filter-select{font-size:16px}
@@ -363,7 +376,7 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
   </div>
 </header>
 
-<main style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden" role="main">
+<main style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;" role="main">
   <div id="dashboardArea">
     <div class="dash-inner" id="dashCards"></div>
   </div>
