@@ -96,26 +96,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
     flex: 1;
     overflow-x: auto;
     /* ROOT-CAUSE FIX (row jumping on iPhone right-swipe):
-       When a single container handles BOTH overflow-x and overflow-y,
-       iOS Safari cannot lock the scroll axis when the finger moves at
-       any angle — so a right-swipe with a slight vertical angle causes
-       rows to jump up/down. Setting overflow-y to hidden removes the
-       vertical scroll axis from this container entirely. Vertical
-       scrolling is handled by the outer flex layout (body/main), which
-       is the same pattern used in the reference app. */
-    overflow-y: hidden;
+       We keep overflow-y: auto so all rows remain scrollable vertically.
+       The row-jumping bug is fixed instead by:
+       1. touch-action: pan-x  — tells iOS Safari this container
+          primarily scrolls horizontally. When the user swipes right
+          (even at an angle), the browser locks to the horizontal axis
+          and passes vertical movement up to the page, so rows never jump.
+       2. overscroll-behavior-x: contain — prevents horizontal swipe
+          from triggering browser back/forward navigation.
+       This matches the exact pattern used in the reference app. */
+    overflow-y: auto;
     min-height: 0;
     background: var(--surface);
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
-    overscroll-behavior-y: none;
+    overscroll-behavior-y: auto;
     /* GPU-promote the scroll container only — NOT the table inside it,
        because transforming the table would break position:sticky on thead. */
     will-change: scroll-position;
-    /* Lock the scroll axis to horizontal only on touch devices.
-       This is the key iOS fix: pan-x tells the browser this container
-       only scrolls horizontally, so vertical touch movement is passed
-       up to the page scroller instead of fighting with this container. */
+    /* KEY iOS FIX: pan-x tells the browser this container's primary
+       scroll direction is horizontal. A right-swipe (even with a slight
+       vertical angle) stays locked to horizontal — rows no longer jump. */
     touch-action: pan-x;
 }
 
@@ -392,7 +393,7 @@ tr.pressing td { background: transparent !important; }
   .row-count { flex: 1; text-align: center; }
   .btn-accent { flex: 1.5; }
   
-  .table-wrap { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; overscroll-behavior-y: none; touch-action: pan-x; }
+  .table-wrap { -webkit-overflow-scrolling: touch; overflow-y: auto; overscroll-behavior-x: contain; overscroll-behavior-y: auto; touch-action: pan-x; }
   thead th { padding: 8px 6px; font-size: 11px; }
 
   /* NOTE: td input/select font-size:16px now lives in the base CSS
@@ -1140,15 +1141,7 @@ function addRow(){
   setTimeout(function() {
     var wrap = document.getElementById('tableWrap');
     void wrap.offsetHeight;
-    // table-wrap only scrolls horizontally; scroll to left edge so the
-    // new row's Order ID column is visible, then the user can scroll right.
-    wrap.scrollTo({ left: 0, behavior: 'smooth' });
-    // Scroll the page to the bottom so the new row is visible
-    var tbody = document.getElementById('tbody');
-    if(tbody){
-      var lastRow = tbody.lastElementChild;
-      if(lastRow) lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'smooth' });
   }, 100);
 }
 
