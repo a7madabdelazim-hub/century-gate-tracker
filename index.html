@@ -90,18 +90,48 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .row-count{font-size:11px;color:var(--text-muted);font-weight:600;background:var(--surface2);padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border-light)}
 
 /* =====================================================================
-   TABLE SCROLLING LOGIC — Sticky Header + Locked Rows
+   TABLE SCROLLING LOGIC — Copied from second (good) reference file.
+   CRITICAL FIX: Vertical and horizontal scroll live on TWO DIFFERENT
+   elements. The previous code had both axes on .table-wrap, which
+   caused iOS Safari to scroll the same element in both directions
+   simultaneously during an angled swipe → row geometry recalculated
+   → rows jumped up/down.
+
+   Architecture (matches the good reference file exactly):
+   - .table-scroll-outer : overflow-y: auto  ONLY (vertical scroll)
+   - .table-wrap         : overflow-x: auto  ONLY (horizontal scroll)
+   - touch-action locks each container to its single axis, so once
+     iOS detects a horizontal swipe it LOCKS to horizontal (no vertical
+     jitter), and vice versa. This is the "Windows-like locked-step"
+     behavior the user wants.
+   - overflow-y: clip on .table-wrap ensures it is NOT a vertical
+     scroll container, so the sticky header sticks relative to
+     .table-scroll-outer (the vertical scroller).
    ===================================================================== */
-.table-wrap {
+.table-scroll-outer {
     flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
     min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
     background: var(--surface);
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    /* GPU-promote the scroll container only — NOT the table inside it,
-       because transforming the table would break position:sticky on thead. */
+    /* Lock vertical gestures: vertical pans are handled here,
+       horizontal pans are passed down to .table-wrap. */
+    touch-action: pan-y;
+    will-change: scroll-position;
+}
+
+.table-wrap {
+    /* Horizontal scroll ONLY — NO overflow-y here. This is the fix. */
+    overflow-x: auto;
+    overflow-y: clip;  /* NOT a Y scroll container → sticky header binds to .table-scroll-outer */
+    background: var(--surface);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    /* Lock horizontal gestures: horizontal pans are handled here,
+       vertical pans are passed up to .table-scroll-outer. */
+    touch-action: pan-x;
     will-change: scroll-position;
 }
 
@@ -371,7 +401,10 @@ tr.pressing td { background: transparent !important; }
   .row-count { flex: 1; text-align: center; }
   .btn-accent { flex: 1.5; }
   
-  .table-wrap { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  /* Mobile: keep the same dual-container scroll architecture.
+     .table-scroll-outer handles vertical, .table-wrap handles horizontal. */
+  .table-scroll-outer { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .table-wrap { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
   thead th { padding: 8px 6px; font-size: 11px; }
 
   /* NOTE: td input/select font-size:16px now lives in the base CSS
@@ -506,21 +539,28 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
   <!-- ENHANCEMENT 4: Customer name autocomplete source (kept) -->
   <datalist id="custList"></datalist>
 
-  <div class="table-wrap" id="tableWrap" role="region" aria-label="Orders table" tabindex="0">
-    <table>
-      <caption>Century Gate order tracking table</caption>
-      <colgroup>
-        <!-- NEW DELETE UX: delete column removed.
-             With table-layout:auto these widths are MINIMUMS — columns
-             auto-grow to fit their widest content, so no letters clip. -->
-        <col style="width:80px"><col style="width:130px"><col style="width:88px"><col style="width:115px">
-        <col style="width:90px"><col style="width:125px"><col style="width:155px">
-        <col style="width:72px"><col style="width:60px"><col style="width:85px"><col style="width:95px"><col style="width:95px">
-        <col style="width:130px"><col style="width:95px"><col style="width:100px"><col style="width:100px">
-      </colgroup>
-      <thead id="thead"></thead>
-      <tbody id="tbody"></tbody>
-    </table>
+  <!--
+    SCROLL ARCHITECTURE (matches the good reference file):
+    .table-scroll-outer  → vertical scroll only (touch-action: pan-y)
+      └─ .table-wrap     → horizontal scroll only (touch-action: pan-x)
+           └─ <table>    → sticky header (top:0) binds to .table-scroll-outer
+  -->
+  <div class="table-scroll-outer" id="tableScrollOuter" role="region" aria-label="Orders table scroll area" tabindex="0">
+    <div class="table-wrap" id="tableWrap">
+      <table>
+        <caption>Century Gate order tracking table</caption>
+        <colgroup>
+          <!-- With table-layout:auto these widths are MINIMUMS — columns
+               auto-grow to fit their widest content, so no letters clip. -->
+          <col style="width:80px"><col style="width:130px"><col style="width:88px"><col style="width:115px">
+          <col style="width:90px"><col style="width:125px"><col style="width:155px">
+          <col style="width:72px"><col style="width:60px"><col style="width:85px"><col style="width:95px"><col style="width:95px">
+          <col style="width:130px"><col style="width:95px"><col style="width:100px"><col style="width:100px">
+        </colgroup>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
 </main>
 
@@ -1117,8 +1157,11 @@ function addRow(){
   toast('Order '+id+' added','success');
   
   setTimeout(function() {
-    var wrap = document.getElementById('tableWrap');
-    void wrap.offsetHeight; 
+    // FIX: vertical scroll now lives on .table-scroll-outer, not .table-wrap.
+    // .table-wrap only does horizontal scroll, so scrolling it vertically would no-op.
+    var wrap = document.getElementById('tableScrollOuter') || document.getElementById('tableWrap');
+    if(!wrap) return;
+    void wrap.offsetHeight;
     wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'smooth' });
   }, 100);
 }
