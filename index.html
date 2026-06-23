@@ -244,11 +244,100 @@ tr:hover .del-btn { opacity:1; }
   
   .table-wrap { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   thead th { padding: 8px 6px; font-size: 11px; }
-  td input, td select { padding: 8px 4px; font-size: 13px; }
-  
+
+  /* ============================================================
+     FIX (CRITICAL): Input font-size MUST be >= 16px on mobile.
+     iOS Safari auto-zooms when an input < 16px gains focus, and
+     on certain layouts (position:fixed + overflow:hidden body)
+     it fails to zoom back out on blur, leaving the screen stuck.
+     Setting 16px prevents the auto-zoom from triggering at all.
+     ============================================================ */
+  td input, td select { padding: 8px 4px; font-size: 16px; }
+  .search-box input { font-size: 16px; }
+  .filter-select { font-size: 16px; }
+
   .toast-container { left: 16px; right: 16px; bottom: 20px; }
   .toast { width: 100%; text-align: center; }
 }
+
+/* Visually-hidden helper for accessible labels (sr-only pattern) */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ============================================================
+   ENHANCEMENT 1: Auto-save indicator on rows
+   ============================================================ */
+/* Saving state — subtle amber pulse on left edge */
+tr.saving-row > td { position:relative; }
+tr.saving-row > td:first-child::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--amber);animation:savePulse 1s ease-in-out infinite;
+}
+@keyframes savePulse{0%,100%{opacity:.4}50%{opacity:1}}
+/* Saved state — green checkmark badge that fades after 1.2s */
+tr.saved-row .save-mark{
+  position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  color:var(--green);font-size:14px;font-weight:700;
+  animation:saveFade 1.2s ease forwards;pointer-events:none;
+}
+@keyframes saveFade{0%{opacity:0;transform:translateY(-50%) scale(.5)}20%{opacity:1;transform:translateY(-50%) scale(1.2)}40%{transform:translateY(-50%) scale(1)}100%{opacity:0;transform:translateY(-50%) scale(1)}}
+/* Position-relative TD so absolute badge anchors correctly */
+td.save-cell{position:relative}
+
+/* ============================================================
+   ENHANCEMENT 2: Deadline urgency badges
+   ============================================================ */
+.dl-badge{
+  display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.4px;margin-left:4px;vertical-align:middle;
+  white-space:nowrap;
+}
+.dl-overdue{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.dl-soon   {background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
+.dl-upcoming{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border)}
+.dl-ok     {background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+
+/* ============================================================
+   ENHANCEMENT 3: Bulk-action bar
+   ============================================================ */
+.bulk-bar{
+  display:none;align-items:center;gap:8px;padding:8px 20px;
+  background:linear-gradient(90deg,var(--accent-bg),transparent);
+  border-bottom:1px solid var(--accent-border);flex-shrink:0;
+  animation:bulkSlide .2s ease;
+}
+.bulk-bar.active{display:flex}
+@keyframes bulkSlide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.bulk-count{font-size:12px;font-weight:700;color:var(--accent);margin-right:auto}
+.bulk-bar select,.bulk-bar button{font-size:11.5px}
+.bulk-bar .filter-select{min-width:140px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231d4ed8'/%3E%3C/svg%3E")}
+.bulk-clear{color:var(--text-muted);text-decoration:underline;cursor:pointer;background:none;border:none;font-size:11px;font-weight:600;padding:4px 6px}
+
+/* Bulk-select checkbox column */
+th.bulk-sel-h,td.bulk-sel-c{text-align:center;width:36px;min-width:36px;padding:0}
+td.bulk-sel-c input,th.bulk-sel-h input{width:16px;height:16px;cursor:pointer;margin:0}
+tr.selected-row td{background-color:var(--accent-bg) !important}
+
+/* ============================================================
+   ENHANCEMENT 4: Customer datalist
+   ============================================================ */
+td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 2l4 4 4-4z' fill='%231d4ed8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center}
+
+/* ============================================================
+   ENHANCEMENT 5: Undo toast
+   ============================================================ */
+.toast-undo{background:var(--text);color:#fff;display:flex;align-items:center;gap:12px;width:auto !important;text-align:left !important;animation:toastIn .25s ease !important}
+.toast-undo .toast-msg{flex:1}
+.toast-undo .toast-undo-btn{
+  background:var(--accent);color:#fff;border:none;border-radius:4px;
+  padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;
+}
+.toast-undo .toast-undo-btn:hover{background:var(--accent-light)}
+.toast-undo .toast-progress{
+  position:absolute;left:0;bottom:0;height:2px;background:var(--accent-light);
+  animation:undoProgress 5s linear forwards;
+}
+.toast-undo{position:relative;overflow:hidden}
+@keyframes undoProgress{from{width:100%}to{width:0%}}
 </style>
 </head>
 <body>
@@ -278,11 +367,15 @@ tr:hover .del-btn { opacity:1; }
     </div>
   </div>
 
-  <nav class="toolbar">
+  <nav class="toolbar" aria-label="Filter and search toolbar">
     <div class="search-box">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="searchInput" placeholder="Search orders, customers, items..." oninput="onSearchInput()" autocomplete="off">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <!-- FIX (a11y): Added visually-hidden label and inputmode for better mobile keyboard -->
+      <label for="searchInput" class="sr-only">Search orders</label>
+      <input type="text" id="searchInput" placeholder="Search orders, customers, items..." oninput="onSearchInput()" autocomplete="off" inputmode="search">
     </div>
+    <!-- FIX (a11y): Each select now has a visually-hidden label -->
+    <label for="filterProduct" class="sr-only">Filter by product</label>
     <select class="filter-select" id="filterProduct" onchange="applyFilters()">
       <option value="">All Products</option>
       <option>Plain Items</option>
@@ -292,15 +385,25 @@ tr:hover .del-btn { opacity:1; }
       <option>Printed Napkins</option>
       <option>Printed Sheet</option>
     </select>
+    <label for="filterProdStatus" class="sr-only">Filter by production status</label>
     <select class="filter-select" id="filterProdStatus" onchange="applyFilters()">
       <option value="">All Statuses</option>
       <option>In Progress</option>
       <option>Completed</option>
     </select>
+    <label for="filterInvoice" class="sr-only">Filter by invoice status</label>
     <select class="filter-select" id="filterInvoice" onchange="applyFilters()">
       <option value="">All Invoices Status</option>
       <option value="Invoiced">Invoiced</option>
       <option value="Not Invoiced">Not Invoiced</option>
+    </select>
+    <!-- ENHANCEMENT 2: Deadline urgency filter -->
+    <label for="filterDeadline" class="sr-only">Filter by deadline urgency</label>
+    <select class="filter-select" id="filterDeadline" onchange="applyFilters()">
+      <option value="">All Deadlines</option>
+      <option value="overdue">Overdue</option>
+      <option value="soon">Due ≤ 3 days</option>
+      <option value="upcoming">Due ≤ 14 days</option>
     </select>
     <div class="toolbar-right">
       <span class="row-count" id="rowCount"></span>
@@ -308,10 +411,32 @@ tr:hover .del-btn { opacity:1; }
     </div>
   </nav>
 
-  <div class="table-wrap" id="tableWrap" role="region" tabindex="0">
+  <!-- ENHANCEMENT 3: Bulk action bar (hidden until ≥1 row selected) -->
+  <div class="bulk-bar" id="bulkBar" role="region" aria-label="Bulk actions">
+    <span class="bulk-count" id="bulkCount">0 selected</span>
+    <label for="bulkField" class="sr-only">Field to update</label>
+    <select class="filter-select" id="bulkField">
+      <option value="prodStatus">Production</option>
+      <option value="invStatus">Invoice Status</option>
+      <option value="delStatus">Delivery</option>
+    </select>
+    <label for="bulkValue" class="sr-only">New value</label>
+    <select class="filter-select" id="bulkValue"></select>
+    <button class="btn btn-accent" onclick="bulkSetStatus()">Apply</button>
+    <button class="btn" onclick="bulkExportSelected()">Export Selected CSV</button>
+    <button class="btn btn-danger" onclick="bulkDelete()">Delete</button>
+    <button class="bulk-clear" onclick="clearSelection()">Clear selection</button>
+  </div>
+
+  <!-- ENHANCEMENT 4: Customer name autocomplete source -->
+  <datalist id="custList"></datalist>
+
+  <div class="table-wrap" id="tableWrap" role="region" aria-label="Orders table" tabindex="0">
     <table>
       <caption>Century Gate order tracking table</caption>
       <colgroup>
+        <!-- ENHANCEMENT 3: bulk-select column added at start -->
+        <col style="width:36px">
         <col style="width:80px"><col style="width:130px"><col style="width:88px"><col style="width:115px">
         <col style="width:90px"><col style="width:125px"><col style="width:155px">
         <col style="width:72px"><col style="width:60px"><col style="width:85px"><col style="width:95px"><col style="width:95px">
@@ -324,7 +449,8 @@ tr:hover .del-btn { opacity:1; }
   </div>
 </main>
 
-<div class="modal-overlay" id="confirmModal">
+<!-- FIX (a11y): Added role="dialog", aria-modal, and aria-labelledby for screen readers -->
+<div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmMsg">
   <div class="modal-box">
     <p id="confirmMsg"></p>
     <div class="modal-actions">
@@ -338,6 +464,8 @@ tr:hover .del-btn { opacity:1; }
 
 <script>
 var COLS=[
+  // ENHANCEMENT 3: bulk-select column (rendered as checkbox, not stored in data)
+  {k:'_sel',l:'',t:'bulk-select',sortable:false},
   {k:'id',l:'Order ID',t:'text',sortable:true},
   {k:'date',l:'Order Date',t:'date',sortable:true},
   {k:'custNo',l:'Cust. No.',t:'text',sortable:true},
@@ -358,10 +486,123 @@ var COLS=[
 ];
 
 function safeNum(v){var n=parseFloat(v);return(isFinite(n)&&n>=0)?n:0}
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\//g,'&#47;')}
-function fmt(n){if(n==null||n==='')return'';return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function fmtInt(n){if(n==null||n==='')return'';return Number(n).toLocaleString('en-US')}
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\//g,'&#47;')}
+// FIX: fmt() now returns '' for NaN/non-numeric values instead of printing "NaN"
+function fmt(n){if(n==null||n==='')return'';var x=Number(n);if(isNaN(x))return'';return x.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtInt(n){if(n==null||n==='')return'';var x=Number(n);if(isNaN(x))return'';return x.toLocaleString('en-US')}
 function calcTotal(r){return safeNum(r.qty)*safeNum(r.price)+safeNum(r.cliche)}
+
+/* ============================================================
+   ENHANCEMENT 1: Auto-save indicator state
+   ============================================================ */
+// Set of row indices currently flagged as "saving" (waiting on debouncedSave).
+var _savingRows = {};
+
+function markSaving(idx){
+  _savingRows[idx] = true;
+  var tr = document.querySelector('tbody tr[data-ri="'+idx+'"]');
+  if(tr){
+    tr.classList.add('saving-row');
+    tr.classList.remove('saved-row');
+    // Remove any stale save-mark
+    var old = tr.querySelector('.save-mark'); if(old) old.remove();
+  }
+}
+function markSaved(idx){
+  delete _savingRows[idx];
+  var tr = document.querySelector('tbody tr[data-ri="'+idx+'"]');
+  if(!tr) return;
+  tr.classList.remove('saving-row');
+  tr.classList.add('saved-row');
+  // Attach a checkmark to the row's _sel cell (leftmost) so it doesn't overlap input text
+  var td = tr.querySelector('td.bulk-sel-c') || tr.querySelector('td');
+  if(!td) return;
+  td.classList.add('save-cell');
+  var old = td.querySelector('.save-mark'); if(old) old.remove();
+  var mark = document.createElement('span');
+  mark.className = 'save-mark';
+  mark.setAttribute('aria-hidden','true');
+  mark.textContent = '\u2713';
+  td.appendChild(mark);
+  // Auto-clear after the CSS animation
+  setTimeout(function(){
+    if(tr && tr.classList) tr.classList.remove('saved-row');
+    if(mark && mark.parentNode) mark.remove();
+  }, 1300);
+}
+
+/* ============================================================
+   ENHANCEMENT 2: Deadline urgency helpers
+   ============================================================ */
+// Returns: 'overdue' | 'soon' (<=3d) | 'upcoming' (<=14d) | 'ok' | 'none'
+function deadlineUrgency(dateStr){
+  if(!dateStr) return 'none';
+  var d = new Date(dateStr + 'T00:00:00');
+  if(isNaN(d.getTime())) return 'none';
+  var today = new Date(); today.setHours(0,0,0,0);
+  var diffDays = Math.round((d - today) / 86400000);
+  if(diffDays < 0) return 'overdue';
+  if(diffDays <= 3) return 'soon';
+  if(diffDays <= 14) return 'upcoming';
+  return 'ok';
+}
+var DL_LABELS = {overdue:'Overdue', soon:'≤3d', upcoming:'≤14d', ok:'On track', none:''};
+
+/* ============================================================
+   ENHANCEMENT 4: Customer dictionary + datalist
+   ============================================================ */
+// Built from existing data — keyed by normalized lowercased name.
+// Stored as {displayName, custNo}. Latest spelling wins.
+var _custDict = {};
+function rebuildCustDict(){
+  _custDict = {};
+  for(var i=0;i<data.length;i++){
+    var r=data[i];
+    if(!r.custName) continue;
+    var key = String(r.custName).trim().toLowerCase();
+    if(!key) continue;
+    // First seen custNo wins (so renaming doesn't wipe a known mapping);
+    // but if a later row has a custNo and the existing one is empty, fill it in.
+    if(!_custDict[key]){
+      _custDict[key] = {name:String(r.custName).trim(), no:String(r.custNo||'').trim()};
+    } else if(!_custDict[key].no && r.custNo){
+      _custDict[key].no = String(r.custNo).trim();
+    } else if(_custDict[key].name !== r.custName){
+      // Update display name to the most recent spelling
+      _custDict[key].name = String(r.custName).trim();
+    }
+  }
+  // Populate the <datalist>
+  var dl = document.getElementById('custList');
+  if(!dl) return;
+  var html = '';
+  for(var k in _custDict){
+    html += '<option value="'+esc(_custDict[k].name)+'">'+esc(_custDict[k].no)+'</option>';
+  }
+  dl.innerHTML = html;
+}
+// Look up a customer by name; returns {name,no} or null
+function lookupCust(name){
+  if(!name) return null;
+  var key = String(name).trim().toLowerCase();
+  return _custDict[key] || null;
+}
+
+/* ============================================================
+   ENHANCEMENT 5: Undo-delete trash
+   ============================================================ */
+// Stashed deletes waiting for undo. Keyed by an auto-incrementing id.
+var _undoTrash = []; // each: {id, row, idx, timer}
+var _undoSeq = 0;
+function trashUndoId(){ _undoSeq++; return _undoSeq }
+
+/* ============================================================
+   ENHANCEMENT 3: Bulk selection state
+   ============================================================ */
+// Set of selected row indices (into `data`).
+var _selectedRows = {};
+function selectedCount(){ var n=0; for(var k in _selectedRows) if(_selectedRows[k]) n++; return n }
+function selectedIndices(){ var a=[]; for(var k in _selectedRows) if(_selectedRows[k]) a.push(parseInt(k)); a.sort(function(x,y){return x-y}); return a }
 
 function parseDate(str) {
   if (!str) return '';
@@ -375,10 +616,36 @@ function parseDate(str) {
   return '';
 }
 
+// FIX: Added max-toast limit (5) so spammy actions can't pile up toasts
 function toast(msg,type){
   var c=document.getElementById('toasts'),d=document.createElement('div');
+  while(c.children.length>=5){c.removeChild(c.firstChild)}
   d.className='toast toast-'+(type||'info');d.textContent=msg;c.appendChild(d);
   setTimeout(function(){if(d.parentNode)d.remove()},3000);
+}
+// ENHANCEMENT 5: Undo toast — shows msg + Undo button + 5s progress bar.
+// onUndo() is called if user clicks Undo. onExpire() is called after 5s.
+function undoToast(msg,onUndo,onExpire){
+  var c=document.getElementById('toasts'),d=document.createElement('div');
+  while(c.children.length>=5){c.removeChild(c.firstChild)}
+  d.className='toast toast-undo';
+  d.setAttribute('role','alert');
+  var msgEl=document.createElement('span'); msgEl.className='toast-msg'; msgEl.textContent=msg;
+  var btn=document.createElement('button'); btn.className='toast-undo-btn'; btn.type='button'; btn.textContent='Undo';
+  var prog=document.createElement('span'); prog.className='toast-progress';
+  d.appendChild(msgEl); d.appendChild(btn); d.appendChild(prog);
+  c.appendChild(d);
+  var done=false;
+  function finish(action){
+    if(done) return; done=true;
+    clearTimeout(timer);
+    if(d.parentNode) d.remove();
+    if(action==='undo' && typeof onUndo==='function') try{onUndo()}catch(e){}
+    if(action==='expire' && typeof onExpire==='function') try{onExpire()}catch(e){}
+  }
+  btn.addEventListener('click',function(){finish('undo')});
+  var timer=setTimeout(function(){finish('expire')},5000);
+  return {forceFinish:finish};
 }
 
 function arrToObj(a){return{id:a[0],date:parseDate(a[1]),custNo:a[2],custName:a[3],orderType:a[4],productType:a[5],desc:a[6],qty:a[7],unit:a[8],price:a[9],cliche:a[10],total:a[11],deadline:parseDate(a[12]),prodStatus:a[13],invStatus:a[14],delStatus:a[15]}}
@@ -558,9 +825,20 @@ var newRowIdx=-1;
 
 var searchTimer=null, saveTimer=null, dashTimer=null;
 function onSearchInput(){clearTimeout(searchTimer);searchTimer=setTimeout(applyFilters,150)}
-function debouncedSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveData,500)}
+// ENHANCEMENT 1: debouncedSave flushes the saving indicator on each row currently flagged
+function debouncedSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){
+    saveData();
+    // Flip every flagged row from "saving" to "saved"
+    for(var idx in _savingRows){
+      if(_savingRows.hasOwnProperty(idx)) markSaved(parseInt(idx));
+    }
+  },500);
+}
 function debouncedDash(){clearTimeout(dashTimer);dashTimer=setTimeout(updateDashboard,300)}
 
+// ENHANCEMENT 4: storage key kept at v7 — schema unchanged, preserves user data
 var STORE_KEY='cg_orders_v7';
 function saveData(){try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){}}
 function loadData(){
@@ -582,6 +860,11 @@ function renderThead(){
   var h='<tr>';
   for(var i=0;i<COLS.length;i++){
     var c=COLS[i];
+    // ENHANCEMENT 3: Select-all checkbox header cell
+    if(c.t==='bulk-select'){
+      h+='<th class="bulk-sel-h"><input type="checkbox" id="selectAll" aria-label="Select all rows" onchange="toggleSelectAll(this.checked)"></th>';
+      continue;
+    }
     if(c.t==='delete'){h+='<th></th>';continue}
     var sorted=sortCol===i;
     var arrow=sorted?(sortDir===1?' &#9650;':' &#9660;'):'';
@@ -598,32 +881,54 @@ function renderThead(){
 function renderRow(r,idx){
   var ps=r.prodStatus==='Completed'?'completed':'in-progress';
   var isNew=idx===newRowIdx;
-  var h='<tr class="'+ps+(isNew?' new-row':'')+'" data-ri="'+idx+'">';
+  // ENHANCEMENT 3: highlight selected rows
+  var selCls = _selectedRows[idx] ? ' selected-row' : '';
+  var h='<tr class="'+ps+(isNew?' new-row':'')+selCls+'" data-ri="'+idx+'">';
   var oid=esc(r.id)||'new';
+  // ENHANCEMENT 2: compute deadline urgency once per row
+  var dlU = deadlineUrgency(r.deadline);
   for(var ci=0;ci<COLS.length;ci++){
     var c=COLS[ci];
+    // ENHANCEMENT 3: per-row bulk-select checkbox
+    if(c.t==='bulk-select'){
+      h+='<td class="bulk-sel-c"><input type="checkbox" aria-label="Select order '+oid+'" data-ri="'+idx+'" '+(_selectedRows[idx]?'checked':'')+' onchange="toggleSelectRow('+idx+',this.checked)"></td>';
+      continue;
+    }
     if(c.t==='delete'){
-      h+='<td><button class="del-btn" onclick="deleteRow('+idx+')" title="Delete order '+oid+'">&#10005;</button></td>';
+      // FIX (a11y): Added aria-label so screen readers announce the action, not just "x"
+      h+='<td><button class="del-btn" onclick="deleteRow('+idx+')" title="Delete order '+oid+'" aria-label="Delete order '+oid+'">&#10005;</button></td>';
       continue;
     }
     var v=r[c.k];
     var tdClass = c.k === 'cliche' ? ' class="cliche-col"' : '';
-    
+    // FIX (a11y): Each input/select now has an aria-label derived from the column header
+    var aria = ' aria-label="'+esc(c.l)+'"';
+
     h+='<td'+tdClass+'>';
     if(c.t==='auto'){
       h+='<span class="auto-cell">'+fmt(r.total)+'</span>';
     }else if(c.t==='checkbox'){
-      h+='<div class="cb-wrap"><input type="checkbox" data-f="'+c.k+'" data-ri="'+idx+'" '+(v?'checked':'')+' onchange="handleCheck(this)"></div>';
+      h+='<div class="cb-wrap"><input type="checkbox"'+aria+' data-f="'+c.k+'" data-ri="'+idx+'" '+(v?'checked':'')+' onchange="handleCheck(this)"></div>';
     }else if(c.t==='select'){
-      h+='<select data-f="'+c.k+'" data-ri="'+idx+'" onchange="handleSelect(this)">';
-      for(var j=0;j<c.o.length;j++){h+='<option'+(v===c.o[j]?' selected':'')+'>'+c.o[j]+'</option>'}
+      h+='<select'+aria+' data-f="'+c.k+'" data-ri="'+idx+'" onchange="handleSelect(this)">';
+      // FIX (XSS): Escape option text — same defensive pattern as input values
+      for(var j=0;j<c.o.length;j++){h+='<option'+(v===c.o[j]?' selected':'')+'>'+esc(c.o[j])+'</option>'}
       h+='</select>';
     }else if(c.t==='number'){
-      h+='<input type="number" step="any" data-f="'+c.k+'" data-ri="'+idx+'" value="'+(v!=null&&v!==''?v:'')+'" oninput="handleInput(this)">';
+      // FIX (mobile UX): inputmode="decimal" shows the numeric keypad with decimal on mobile
+      h+='<input type="number" step="any" inputmode="decimal"'+aria+' data-f="'+c.k+'" data-ri="'+idx+'" value="'+(v!=null&&v!==''?v:'')+'" oninput="handleInput(this)">';
     }else if(c.t==='date'){
-      h+='<input type="date" data-f="'+c.k+'" data-ri="'+idx+'" value="'+esc(v)+'" oninput="handleInput(this)">';
+      h+='<input type="date"'+aria+' data-f="'+c.k+'" data-ri="'+idx+'" value="'+esc(v)+'" oninput="handleInput(this)">';
+      // ENHANCEMENT 2: append urgency badge for deadline column
+      if(c.k==='deadline' && dlU!=='none' && dlU!=='ok'){
+        h+='<span class="dl-badge dl-'+dlU+'" title="'+DL_LABELS[dlU]+'">'+DL_LABELS[dlU]+'</span>';
+      } else if(c.k==='deadline' && dlU==='ok'){
+        h+='<span class="dl-badge dl-ok" title="'+DL_LABELS[dlU]+'">'+DL_LABELS[dlU]+'</span>';
+      }
     }else{
-      h+='<input type="text" data-f="'+c.k+'" data-ri="'+idx+'" value="'+esc(v)+'" placeholder="'+(c.ph||'')+'" oninput="handleInput(this)">';
+      // ENHANCEMENT 4: customer name field gets autocomplete via datalist
+      var listAttr = c.k==='custName' ? ' list="custList"' : '';
+      h+='<input type="text"'+aria+listAttr+' data-f="'+c.k+'" data-ri="'+idx+'" value="'+esc(v)+'" placeholder="'+esc(c.ph||'')+'" oninput="handleInput(this)">';
     }
     h+='</td>';
   }
@@ -648,6 +953,8 @@ function applyFilters(){
   var fp=document.getElementById('filterProduct').value;
   var fs=document.getElementById('filterProdStatus').value;
   var finv=document.getElementById('filterInvoice').value;
+  // ENHANCEMENT 2: deadline urgency filter
+  var fdl=document.getElementById('filterDeadline').value;
   filtered=[];
   for(var i=0;i<data.length;i++){
     var r=data[i];
@@ -655,10 +962,19 @@ function applyFilters(){
     if(fp&&r.productType!==fp)continue;
     if(fs&&r.prodStatus!==fs)continue;
     if(finv&&r.invStatus!==finv)continue;
+    if(fdl){
+      var u=deadlineUrgency(r.deadline);
+      if(fdl==='overdue' && u!=='overdue') continue;
+      if(fdl==='soon' && u!=='overdue' && u!=='soon') continue;
+      if(fdl==='upcoming' && u!=='overdue' && u!=='soon' && u!=='upcoming') continue;
+    }
     filtered.push(i);
   }
   if(sortCol>=0)doSortFiltered();
   renderBody();
+  // ENHANCEMENT 3: refresh bulk bar after filter changes
+  updateBulkBar();
+  syncSelectAllCheckbox();
 }
 
 function clearFilters(){
@@ -666,6 +982,8 @@ function clearFilters(){
   document.getElementById('filterProduct').value='';
   document.getElementById('filterProdStatus').value='';
   document.getElementById('filterInvoice').value='';
+  // ENHANCEMENT 2: clear deadline filter too
+  document.getElementById('filterDeadline').value='';
   applyFilters();
 }
 
@@ -695,16 +1013,43 @@ function handleInput(el){
   }else{
     data[fi][f]=el.value;
   }
+  // ENHANCEMENT 1: flag this row as saving
+  markSaving(fi);
+  // ENHANCEMENT 4: auto-fill custNo when customer name matches a known customer
+  if(f==='custName'){
+    var hit = lookupCust(el.value);
+    var row = el.closest('tr');
+    if(row){
+      var noInput = row.querySelector('input[data-f="custNo"]');
+      if(noInput){
+        if(hit && hit.no){
+          // Only auto-fill if custNo is empty or differs from a known mapping
+          if(!data[fi].custNo || data[fi].custNo !== hit.no){
+            data[fi].custNo = hit.no;
+            noInput.value = hit.no;
+          }
+        }
+        // Also normalize display name to canonical spelling on blur-equivalent (here, on every input — but only if exact match)
+        if(hit && hit.name && hit.name !== el.value && hit.name.toLowerCase() === el.value.toLowerCase()){
+          // Don't overwrite while user is typing; leave their casing alone
+        }
+      }
+    }
+  }
   debouncedSave();debouncedDash();
 }
 function handleSelect(el){
   var fi=parseInt(el.dataset.ri),f=el.dataset.f;
   data[fi][f]=el.value;
+  // ENHANCEMENT 1: flag this row as saving
+  markSaving(fi);
   debouncedSave();debouncedDash();
 }
 function handleCheck(el){
   var fi=parseInt(el.dataset.ri),f=el.dataset.f;
   data[fi][f]=el.checked;
+  // ENHANCEMENT 1: flag this row as saving
+  markSaving(fi);
   debouncedSave();debouncedDash();
 }
 
@@ -733,17 +1078,194 @@ function addRow(){
   }, 100);
 }
 
+// ENHANCEMENT 5: Soft-delete with 5-second undo window.
+// The row is removed from `data` immediately (so the UI updates), but stashed in
+// _undoTrash so the user can restore it within 5s.
 function deleteRow(fi){
   if(fi<0||fi>=data.length)return;
-  var id=data[fi].id;
+  var removed = data[fi];
+  var id = removed.id;
+  // Clear selection on this row so we don't keep stale indices
+  delete _selectedRows[fi];
+  // Remove from data
   data.splice(fi,1);
-  saveData();applyFilters();updateDashboard();
-  toast('Order '+id+' deleted','error');
+  // Re-key any selection indices > fi (since array shifted down by 1)
+  var newSel = {};
+  for(var k in _selectedRows){
+    if(!_selectedRows[k]) continue;
+    var ki = parseInt(k);
+    if(ki > fi) newSel[ki-1] = true;
+    else newSel[ki] = true;
+  }
+  _selectedRows = newSel;
+  saveData();applyFilters();updateDashboard();updateBulkBar();
+  // Show undo toast
+  var entry = {id:trashUndoId(), row:removed, idx:fi};
+  _undoTrash.push(entry);
+  var handle = undoToast(
+    'Order '+id+' deleted',
+    function(){ // onUndo
+      // Re-insert at the original index (clamp to current end)
+      var insertAt = Math.min(entry.idx, data.length);
+      data.splice(insertAt, 0, entry.row);
+      // Bump any selected indices >= insertAt up by 1
+      var bumped = {};
+      for(var k in _selectedRows){
+        if(!_selectedRows[k]) continue;
+        var ki = parseInt(k);
+        if(ki >= insertAt) bumped[ki+1] = true;
+        else bumped[ki] = true;
+      }
+      _selectedRows = bumped;
+      saveData();applyFilters();updateDashboard();updateBulkBar();
+      toast('Order '+id+' restored','success');
+      // Remove from trash
+      for(var i=_undoTrash.length-1;i>=0;i--){
+        if(_undoTrash[i].id === entry.id){ _undoTrash.splice(i,1); break; }
+      }
+    },
+    null // onExpire — nothing extra to do; data is already removed
+  );
+  entry.handle = handle;
 }
 
+/* ============================================================
+   ENHANCEMENT 3: Bulk-action handlers
+   ============================================================ */
+function toggleSelectRow(idx, checked){
+  if(checked){ _selectedRows[idx] = true; }
+  else { delete _selectedRows[idx]; }
+  // Toggle the selected-row class without a full re-render
+  var tr = document.querySelector('tbody tr[data-ri="'+idx+'"]');
+  if(tr){ if(checked) tr.classList.add('selected-row'); else tr.classList.remove('selected-row'); }
+  updateBulkBar();
+  syncSelectAllCheckbox();
+}
+function toggleSelectAll(checked){
+  if(checked){
+    for(var i=0;i<filtered.length;i++) _selectedRows[filtered[i]] = true;
+  } else {
+    // Only clear the currently-visible (filtered) ones
+    for(var j=0;j<filtered.length;j++) delete _selectedRows[filtered[j]];
+  }
+  // Re-render body to update per-row checkbox states + highlight
+  renderBody();
+  updateBulkBar();
+}
+function syncSelectAllCheckbox(){
+  var cb = document.getElementById('selectAll');
+  if(!cb) return;
+  if(filtered.length === 0){ cb.checked = false; cb.indeterminate = false; return; }
+  var visibleSelected = 0;
+  for(var i=0;i<filtered.length;i++){ if(_selectedRows[filtered[i]]) visibleSelected++; }
+  cb.checked = (visibleSelected === filtered.length);
+  cb.indeterminate = (visibleSelected > 0 && visibleSelected < filtered.length);
+}
+function clearSelection(){
+  _selectedRows = {};
+  renderBody();
+  updateBulkBar();
+  syncSelectAllCheckbox();
+}
+function updateBulkBar(){
+  var bar = document.getElementById('bulkBar');
+  var cnt = document.getElementById('bulkCount');
+  if(!bar || !cnt) return;
+  var n = selectedCount();
+  cnt.textContent = n + (n === 1 ? ' order selected' : ' orders selected');
+  if(n > 0) bar.classList.add('active'); else bar.classList.remove('active');
+  // Repopulate bulkValue options based on bulkField
+  refreshBulkValueOptions();
+}
+function refreshBulkValueOptions(){
+  var field = document.getElementById('bulkField');
+  var valBox = document.getElementById('bulkValue');
+  if(!field || !valBox) return;
+  var colDef = null;
+  for(var i=0;i<COLS.length;i++){ if(COLS[i].k === field.value){ colDef = COLS[i]; break; } }
+  valBox.innerHTML = '';
+  if(!colDef || !colDef.o) return;
+  for(var j=0;j<colDef.o.length;j++){
+    var o = document.createElement('option');
+    o.value = colDef.o[j]; o.textContent = colDef.o[j];
+    valBox.appendChild(o);
+  }
+}
+// Bulk apply status: iterate over selected rows, update the chosen field
+function bulkSetStatus(){
+  var field = document.getElementById('bulkField').value;
+  var val = document.getElementById('bulkValue').value;
+  var idxs = selectedIndices();
+  if(idxs.length === 0){ toast('No rows selected','error'); return; }
+  if(!field || !val){ toast('Choose a field and value','error'); return; }
+  for(var i=0;i<idxs.length;i++){
+    var idx = idxs[i];
+    if(idx < 0 || idx >= data.length) continue;
+    data[idx][field] = val;
+    markSaving(idx);
+  }
+  debouncedSave();debouncedDash();
+  toast(idxs.length + ' order' + (idxs.length===1?'':'s') + ' updated','success');
+  renderBody(); // refresh cell values
+  updateBulkBar();
+}
+// Bulk delete: iterate in reverse so indices stay valid; each goes through undo
+function bulkDelete(){
+  var idxs = selectedIndices();
+  if(idxs.length === 0){ toast('No rows selected','error'); return; }
+  // Reverse so we splice from highest index first
+  for(var i=idxs.length-1;i>=0;i--){
+    deleteRow(idxs[i]);
+  }
+}
+// Bulk export CSV of just the selected rows
+function bulkExportSelected(){
+  var idxs = selectedIndices();
+  if(idxs.length === 0){ toast('No rows selected','error'); return; }
+  var csv = '';
+  var BOM = '\uFEFF';
+  try {
+    var headers = [];
+    for (var i = 0; i < COLS.length; i++) {
+      if (COLS[i].t === 'delete' || COLS[i].t === 'bulk-select') continue;
+      headers.push(COLS[i].l);
+    }
+    csv = headers.join(',') + '\n';
+    for (var r = 0; r < idxs.length; r++) {
+      var row = data[idxs[r]], cells = [];
+      for (var i = 0; i < COLS.length; i++) {
+        var c = COLS[i];
+        if (c.t === 'delete' || c.t === 'bulk-select') continue;
+        var v = row[c.k];
+        if (c.t === 'checkbox') v = v ? 'Yes' : 'No';
+        v = String(v == null ? '' : v);
+        if (v.indexOf(',') >= 0 || v.indexOf('"') >= 0 || v.indexOf('\n') >= 0) {
+          v = '"' + v.replace(/"/g, '""') + '"';
+        }
+        cells.push(v);
+      }
+      csv += cells.join(',') + '\n';
+    }
+    var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csv);
+    var link = document.createElement('a');
+    link.href = dataUri;
+    link.download = 'century_gate_selected_orders.csv';
+    link.target = '_blank';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    toast(idxs.length + ' order' + (idxs.length===1?'':'s') + ' exported','success');
+  } catch (e) {
+    console.error('Bulk CSV Export Error:', e);
+    toast('Bulk CSV export failed','error');
+  }
+}
+
+// FIX (a11y): Modal now traps initial focus on the Cancel button (safest choice),
+// and the previously-focused element is restored on close.
+var _lastFocusBeforeModal=null;
 function resetData(){
   document.getElementById('confirmMsg').innerHTML='This will <strong>erase all your changes</strong> and restore the original orders. Are you sure?';
   document.getElementById('confirmModal').classList.add('active');
+  _lastFocusBeforeModal=document.activeElement;
   document.getElementById('confirmBtn').onclick=function(){
     closeConfirm();
     data=getInitialData().map(arrToObj);
@@ -753,12 +1275,28 @@ function resetData(){
     saveData();applyFilters();updateDashboard();
     toast('Data reset to original','info');
   };
+  // Focus Cancel (safe default) so keyboard users can immediately dismiss
+  setTimeout(function(){var c=document.querySelector('#confirmModal .btn');if(c)c.focus()},50);
 }
-function closeConfirm(){document.getElementById('confirmModal').classList.remove('active')}
+function closeConfirm(){
+  document.getElementById('confirmModal').classList.remove('active');
+  // Restore focus to whoever opened the modal
+  if(_lastFocusBeforeModal&&_lastFocusBeforeModal.focus){try{_lastFocusBeforeModal.focus()}catch(e){}}
+  _lastFocusBeforeModal=null;
+}
 
+// FIX (UX bug): Escape should NOT trigger clearFilters while user is typing in an
+// input/select/textarea — that would silently wipe their in-progress entry.
+// Escape still closes the modal (highest priority) and clears filters when focus
+// is on the body / table region.
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     if(document.getElementById('confirmModal').classList.contains('active')){closeConfirm();return}
+    var tag=(e.target&&e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='select'||tag==='textarea'){
+      e.target.blur();
+      return;
+    }
     clearFilters();return;
   }
 });
@@ -823,15 +1361,18 @@ function exportPDF() {
 }
 
 function exportCSV() {
+  // FIX: Declare csv/BOM in outer scope so the catch block can safely reference them
+  var csv = '';
+  var BOM = '\uFEFF';
   try {
     var headers = [];
-    for (var i = 0; i < COLS.length; i++) { if (COLS[i].t !== 'delete') headers.push(COLS[i].l); }
-    var csv = headers.join(',') + '\n';
+    for (var i = 0; i < COLS.length; i++) { if (COLS[i].t !== 'delete' && COLS[i].t !== 'bulk-select') headers.push(COLS[i].l); }
+    csv = headers.join(',') + '\n';
     for (var r = 0; r < data.length; r++) {
       var row = data[r], cells = [];
       for (var i = 0; i < COLS.length; i++) {
         var c = COLS[i];
-        if (c.t === 'delete') continue;
+        if (c.t === 'delete' || c.t === 'bulk-select') continue;
         var v = row[c.k];
         if (c.t === 'checkbox') v = v ? 'Yes' : 'No';
         v = String(v == null ? '' : v);
@@ -840,7 +1381,6 @@ function exportCSV() {
       }
       csv += cells.join(',') + '\n';
     }
-    var BOM = '\uFEFF';
     var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csv);
     var link = document.createElement('a');
     link.href = dataUri; link.download = 'century_gate_orders.csv'; link.target = '_blank';
@@ -848,12 +1388,19 @@ function exportCSV() {
     toast('CSV downloaded successfully', 'success');
   } catch (e) {
     console.error('CSV Export Error:', e);
-    window.open('data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csv), '_blank');
-    toast('CSV export fallback triggered.', 'info');
+    // FIX: Only attempt fallback if csv was actually built; otherwise show a clean error
+    if (csv && csv.length > 0) {
+      window.open('data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csv), '_blank');
+      toast('CSV export fallback triggered.', 'info');
+    } else {
+      toast('CSV export failed. Please try again.', 'error');
+    }
   }
 }
 
 function updateDashboard(){
+  // ENHANCEMENT 4: keep the customer dictionary in sync with data on every dashboard refresh
+  rebuildCustDict();
   var total=data.length,totalVal=0,newOrders=0,totalCliche=0,inProgress=0,completed=0,notShipped=0,fullyDelivered=0,notInvoiced=0,invoiced=0;
   for(var i=0;i<data.length;i++){
     var r=data[i];
@@ -899,7 +1446,15 @@ function toggleDashboard(){
 
 function init(){
   if(!loadData()){data=getInitialData().map(arrToObj)}
+  // ENHANCEMENT 4: build customer dictionary + populate datalist
+  rebuildCustDict();
   renderThead();applyFilters();updateDashboard();
+  // ENHANCEMENT 3: initialize bulk-action UI state
+  refreshBulkValueOptions();
+  updateBulkBar();
+  // ENHANCEMENT 3: wire up bulkField -> bulkValue cascading
+  var bf = document.getElementById('bulkField');
+  if(bf) bf.addEventListener('change', refreshBulkValueOptions);
 }
 init();
 </script>
