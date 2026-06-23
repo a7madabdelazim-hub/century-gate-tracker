@@ -72,16 +72,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .dash-card.red .dash-value{color:var(--red-text)}
 .dash-sub{font-size:9.5px;color:var(--text-muted);margin-top:2px}
 
-/* Top Customers */
-.top-cust-section{padding:10px 20px 12px;background:var(--surface);border-bottom:1px solid var(--border)}
-.top-cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
-.top-cust-row{display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border-light);border-radius:var(--radius)}
-.top-cust-rank{font-size:10px;font-weight:800;color:var(--accent);width:16px;text-align:center}
-.top-cust-name{flex:1;font-size:11.5px;font-weight:600}
-.top-cust-sub{font-size:9.5px;color:var(--text-muted);font-weight:400}
-.top-cust-val{font-size:11px;font-weight:700;color:var(--accent);text-align:right}
-.top-cust-ord{font-size:9.5px;color:var(--text-muted);font-weight:400}
-
 /* Toolbar */
 .toolbar{padding:8px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .search-box{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--radius);padding:0 10px;flex:1;min-width:180px;max-width:320px;background:var(--surface)}
@@ -104,7 +94,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
     overscroll-behavior: contain;
 }
 
+/* ============================================================
+   ISSUE 5 FIX (CRITICAL): Locked-step table layout
+   - table-layout:fixed forces the browser to honor colgroup widths
+     exactly, so focusing an input NEVER triggers column reflow.
+   - Without this, iOS Safari recalculates column widths on every
+     focus event, which makes rows below jump vertically.
+   ============================================================ */
 table {
+    table-layout: fixed;
     border-collapse: separate;
     border-spacing: 0;
     width: max-content;
@@ -152,16 +150,42 @@ thead th.no-sort:hover { background:#f8fafc; cursor:default; }
 tbody tr:nth-child(odd) td { background-color: #ffffff; }
 tbody tr:nth-child(even) td { background-color: var(--stripe-color); }
 tbody tr:hover td { background-color: #dbeafe !important; }
-tbody tr.in-progress { box-shadow: inset 3px 0 0 var(--amber); }
-tbody tr.completed { box-shadow: inset 3px 0 0 var(--green); }
-tbody tr.new-row { animation: fadeSlideIn .3s ease; }
 
-@keyframes fadeSlideIn { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:translateY(0) } }
+/* ============================================================
+   ISSUE 1 FIX: Removed `tr.in-progress` and `tr.completed`
+   box-shadow rules — those painted colored stripes (amber/green)
+   on rows based on production status, which was the only
+   production-status color coding in the file.
+   ============================================================ */
+
+/* ============================================================
+   ISSUE 5 FIX (CRITICAL): Locked row heights + layout containment.
+   - Fixed height + line-height prevents any cell content from
+     changing the row's vertical footprint on focus or edit.
+   - `contain:layout` tells the browser that this row's contents
+     cannot affect the layout of anything outside it, so internal
+     reflow (e.g. font fallback on focus) cannot shift siblings.
+   ============================================================ */
+tbody tr {
+    height: 36px;
+    line-height: 1;
+    contain: layout style;
+}
+tbody tr.new-row { animation: fadeSlideIn .25s ease; }
+
+/* ISSUE 5 FIX: animation is now opacity-only — the previous
+   transform:translateY caused a 6px vertical jump during the
+   0.3s after adding a row, which propagated to all rows below. */
+@keyframes fadeSlideIn { from { opacity:0 } to { opacity:1 } }
 
 td {
     padding: 1px 2px;
     vertical-align: middle;
     white-space: nowrap;
+    /* ISSUE 5 FIX: clip any overflow so a wide input value can't
+       push the column width and reflow the table. */
+    overflow: hidden;
+    text-overflow: clip;
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
 }
@@ -173,17 +197,25 @@ td input, td select {
     border: 1px solid transparent;
     border-radius: 4px;
     color: var(--text);
-    font-size: 12px;
-    padding: 6px 6px;
+    /* ISSUE 5 FIX: 16px everywhere (not just mobile) — prevents
+       iOS Safari's focus-auto-zoom, which itself causes row jumps. */
+    font-size: 16px;
+    padding: 4px 6px;
     width: 100%;
+    height: 28px;
     outline: none;
-    transition: border-color .15s, background .15s;
+    transition: background .15s, box-shadow .15s;
     font-family: inherit;
 }
+/* ISSUE 5 FIX: focus state uses ONLY non-layout properties.
+   - border stays 1px (transparent → accent-border): no width change
+   - background changes color: no layout change
+   - box-shadow is an outer shadow: no layout change
+   - We DO NOT change padding, margin, font-size, or height on focus. */
 td input:focus, td select:focus {
     border-color: var(--accent-border);
     background: #eff6ff;
-    box-shadow: 0 0 0 2px rgba(37,99,235,.1);
+    box-shadow: 0 0 0 2px rgba(37,99,235,.12);
 }
 td input[type="number"] { text-align: right; }
 td input[type="date"] { color: var(--text-dim); }
@@ -233,7 +265,7 @@ tr:hover .del-btn { opacity:1; }
   .btn { width: 100%; justify-content: center; padding: 10px 4px; font-size: 11px; }
   
   .dash-inner { padding: 10px 12px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-  .top-cust-section { padding: 10px 12px; }
+  /* ISSUE 4 FIX: .top-cust-section mobile rule removed */
   
   .toolbar { padding: 8px 12px; gap: 6px; }
   .search-box { min-width: 100%; max-width: none; order: 1; }
@@ -245,14 +277,8 @@ tr:hover .del-btn { opacity:1; }
   .table-wrap { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   thead th { padding: 8px 6px; font-size: 11px; }
 
-  /* ============================================================
-     FIX (CRITICAL): Input font-size MUST be >= 16px on mobile.
-     iOS Safari auto-zooms when an input < 16px gains focus, and
-     on certain layouts (position:fixed + overflow:hidden body)
-     it fails to zoom back out on blur, leaving the screen stuck.
-     Setting 16px prevents the auto-zoom from triggering at all.
-     ============================================================ */
-  td input, td select { padding: 8px 4px; font-size: 16px; }
+  /* NOTE: td input/select font-size:16px now lives in the base CSS
+     (ISSUE 5 FIX) so it applies on all viewports, not just mobile. */
   .search-box input { font-size: 16px; }
   .filter-select { font-size: 16px; }
 
@@ -297,28 +323,8 @@ td.save-cell{position:relative}
 .dl-ok     {background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
 
 /* ============================================================
-   ENHANCEMENT 3: Bulk-action bar
-   ============================================================ */
-.bulk-bar{
-  display:none;align-items:center;gap:8px;padding:8px 20px;
-  background:linear-gradient(90deg,var(--accent-bg),transparent);
-  border-bottom:1px solid var(--accent-border);flex-shrink:0;
-  animation:bulkSlide .2s ease;
-}
-.bulk-bar.active{display:flex}
-@keyframes bulkSlide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.bulk-count{font-size:12px;font-weight:700;color:var(--accent);margin-right:auto}
-.bulk-bar select,.bulk-bar button{font-size:11.5px}
-.bulk-bar .filter-select{min-width:140px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231d4ed8'/%3E%3C/svg%3E")}
-.bulk-clear{color:var(--text-muted);text-decoration:underline;cursor:pointer;background:none;border:none;font-size:11px;font-weight:600;padding:4px 6px}
-
-/* Bulk-select checkbox column */
-th.bulk-sel-h,td.bulk-sel-c{text-align:center;width:36px;min-width:36px;padding:0}
-td.bulk-sel-c input,th.bulk-sel-h input{width:16px;height:16px;cursor:pointer;margin:0}
-tr.selected-row td{background-color:var(--accent-bg) !important}
-
-/* ============================================================
-   ENHANCEMENT 4: Customer datalist
+   ENHANCEMENT 4: Customer datalist (kept — Issue 4 only asks to
+   remove the Top 20 Customers dashboard, not the autocomplete)
    ============================================================ */
 td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 2l4 4 4-4z' fill='%231d4ed8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center}
 
@@ -361,10 +367,7 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
 <main style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
   <div id="dashboardArea">
     <div class="dash-inner" id="dashCards"></div>
-    <div class="top-cust-section">
-      <div class="sales-title" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:8px">Top 20 Customers by Total Sales</div>
-      <div class="top-cust-grid" id="topCusts"></div>
-    </div>
+    <!-- ISSUE 4 FIX: Top 20 Customers section removed -->
   </div>
 
   <nav class="toolbar" aria-label="Filter and search toolbar">
@@ -397,46 +400,20 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
       <option value="Invoiced">Invoiced</option>
       <option value="Not Invoiced">Not Invoiced</option>
     </select>
-    <!-- ENHANCEMENT 2: Deadline urgency filter -->
-    <label for="filterDeadline" class="sr-only">Filter by deadline urgency</label>
-    <select class="filter-select" id="filterDeadline" onchange="applyFilters()">
-      <option value="">All Deadlines</option>
-      <option value="overdue">Overdue</option>
-      <option value="soon">Due ≤ 3 days</option>
-      <option value="upcoming">Due ≤ 14 days</option>
-    </select>
     <div class="toolbar-right">
       <span class="row-count" id="rowCount"></span>
       <button class="btn btn-accent" onclick="addRow()">+ Add Order</button>
     </div>
   </nav>
 
-  <!-- ENHANCEMENT 3: Bulk action bar (hidden until ≥1 row selected) -->
-  <div class="bulk-bar" id="bulkBar" role="region" aria-label="Bulk actions">
-    <span class="bulk-count" id="bulkCount">0 selected</span>
-    <label for="bulkField" class="sr-only">Field to update</label>
-    <select class="filter-select" id="bulkField">
-      <option value="prodStatus">Production</option>
-      <option value="invStatus">Invoice Status</option>
-      <option value="delStatus">Delivery</option>
-    </select>
-    <label for="bulkValue" class="sr-only">New value</label>
-    <select class="filter-select" id="bulkValue"></select>
-    <button class="btn btn-accent" onclick="bulkSetStatus()">Apply</button>
-    <button class="btn" onclick="bulkExportSelected()">Export Selected CSV</button>
-    <button class="btn btn-danger" onclick="bulkDelete()">Delete</button>
-    <button class="bulk-clear" onclick="clearSelection()">Clear selection</button>
-  </div>
-
-  <!-- ENHANCEMENT 4: Customer name autocomplete source -->
+  <!-- ENHANCEMENT 4: Customer name autocomplete source (kept) -->
   <datalist id="custList"></datalist>
 
   <div class="table-wrap" id="tableWrap" role="region" aria-label="Orders table" tabindex="0">
     <table>
       <caption>Century Gate order tracking table</caption>
       <colgroup>
-        <!-- ENHANCEMENT 3: bulk-select column added at start -->
-        <col style="width:36px">
+        <!-- ISSUE 2 FIX: bulk-select column removed -->
         <col style="width:80px"><col style="width:130px"><col style="width:88px"><col style="width:115px">
         <col style="width:90px"><col style="width:125px"><col style="width:155px">
         <col style="width:72px"><col style="width:60px"><col style="width:85px"><col style="width:95px"><col style="width:95px">
@@ -464,8 +441,7 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
 
 <script>
 var COLS=[
-  // ENHANCEMENT 3: bulk-select column (rendered as checkbox, not stored in data)
-  {k:'_sel',l:'',t:'bulk-select',sortable:false},
+  // ISSUE 2 FIX: bulk-select column (`_sel`) removed
   {k:'id',l:'Order ID',t:'text',sortable:true},
   {k:'date',l:'Order Date',t:'date',sortable:true},
   {k:'custNo',l:'Cust. No.',t:'text',sortable:true},
@@ -596,13 +572,8 @@ var _undoTrash = []; // each: {id, row, idx, timer}
 var _undoSeq = 0;
 function trashUndoId(){ _undoSeq++; return _undoSeq }
 
-/* ============================================================
-   ENHANCEMENT 3: Bulk selection state
-   ============================================================ */
-// Set of selected row indices (into `data`).
-var _selectedRows = {};
-function selectedCount(){ var n=0; for(var k in _selectedRows) if(_selectedRows[k]) n++; return n }
-function selectedIndices(){ var a=[]; for(var k in _selectedRows) if(_selectedRows[k]) a.push(parseInt(k)); a.sort(function(x,y){return x-y}); return a }
+// ISSUE 2 FIX: bulk-selection state (`_selectedRows`, `selectedCount`,
+// `selectedIndices`) removed along with the bulk-select column.
 
 function parseDate(str) {
   if (!str) return '';
@@ -860,11 +831,7 @@ function renderThead(){
   var h='<tr>';
   for(var i=0;i<COLS.length;i++){
     var c=COLS[i];
-    // ENHANCEMENT 3: Select-all checkbox header cell
-    if(c.t==='bulk-select'){
-      h+='<th class="bulk-sel-h"><input type="checkbox" id="selectAll" aria-label="Select all rows" onchange="toggleSelectAll(this.checked)"></th>';
-      continue;
-    }
+    // ISSUE 2 FIX: bulk-select header branch removed
     if(c.t==='delete'){h+='<th></th>';continue}
     var sorted=sortCol===i;
     var arrow=sorted?(sortDir===1?' &#9650;':' &#9660;'):'';
@@ -879,21 +846,18 @@ function renderThead(){
 }
 
 function renderRow(r,idx){
-  var ps=r.prodStatus==='Completed'?'completed':'in-progress';
+  // ISSUE 1 FIX: removed `ps` (production-status class) from the row's class list.
+  // The row no longer carries 'completed' or 'in-progress' styling — the
+  // colored left-edge stripe that depended on those classes is gone too.
   var isNew=idx===newRowIdx;
-  // ENHANCEMENT 3: highlight selected rows
-  var selCls = _selectedRows[idx] ? ' selected-row' : '';
-  var h='<tr class="'+ps+(isNew?' new-row':'')+selCls+'" data-ri="'+idx+'">';
+  var h='<tr class="'+(isNew?'new-row':'')+'" data-ri="'+idx+'">';
   var oid=esc(r.id)||'new';
-  // ENHANCEMENT 2: compute deadline urgency once per row
+  // Deadline urgency is still computed for the badge — Issue 3 only removes
+  // the filter UI, not the visual badge on each row.
   var dlU = deadlineUrgency(r.deadline);
   for(var ci=0;ci<COLS.length;ci++){
     var c=COLS[ci];
-    // ENHANCEMENT 3: per-row bulk-select checkbox
-    if(c.t==='bulk-select'){
-      h+='<td class="bulk-sel-c"><input type="checkbox" aria-label="Select order '+oid+'" data-ri="'+idx+'" '+(_selectedRows[idx]?'checked':'')+' onchange="toggleSelectRow('+idx+',this.checked)"></td>';
-      continue;
-    }
+    // ISSUE 2 FIX: bulk-select cell branch removed
     if(c.t==='delete'){
       // FIX (a11y): Added aria-label so screen readers announce the action, not just "x"
       h+='<td><button class="del-btn" onclick="deleteRow('+idx+')" title="Delete order '+oid+'" aria-label="Delete order '+oid+'">&#10005;</button></td>';
@@ -919,7 +883,7 @@ function renderRow(r,idx){
       h+='<input type="number" step="any" inputmode="decimal"'+aria+' data-f="'+c.k+'" data-ri="'+idx+'" value="'+(v!=null&&v!==''?v:'')+'" oninput="handleInput(this)">';
     }else if(c.t==='date'){
       h+='<input type="date"'+aria+' data-f="'+c.k+'" data-ri="'+idx+'" value="'+esc(v)+'" oninput="handleInput(this)">';
-      // ENHANCEMENT 2: append urgency badge for deadline column
+      // Deadline urgency badge (kept — only the filter was removed)
       if(c.k==='deadline' && dlU!=='none' && dlU!=='ok'){
         h+='<span class="dl-badge dl-'+dlU+'" title="'+DL_LABELS[dlU]+'">'+DL_LABELS[dlU]+'</span>';
       } else if(c.k==='deadline' && dlU==='ok'){
@@ -953,8 +917,7 @@ function applyFilters(){
   var fp=document.getElementById('filterProduct').value;
   var fs=document.getElementById('filterProdStatus').value;
   var finv=document.getElementById('filterInvoice').value;
-  // ENHANCEMENT 2: deadline urgency filter
-  var fdl=document.getElementById('filterDeadline').value;
+  // ISSUE 3 FIX: deadline filter (`fdl`) branch removed
   filtered=[];
   for(var i=0;i<data.length;i++){
     var r=data[i];
@@ -962,19 +925,11 @@ function applyFilters(){
     if(fp&&r.productType!==fp)continue;
     if(fs&&r.prodStatus!==fs)continue;
     if(finv&&r.invStatus!==finv)continue;
-    if(fdl){
-      var u=deadlineUrgency(r.deadline);
-      if(fdl==='overdue' && u!=='overdue') continue;
-      if(fdl==='soon' && u!=='overdue' && u!=='soon') continue;
-      if(fdl==='upcoming' && u!=='overdue' && u!=='soon' && u!=='upcoming') continue;
-    }
     filtered.push(i);
   }
   if(sortCol>=0)doSortFiltered();
   renderBody();
-  // ENHANCEMENT 3: refresh bulk bar after filter changes
-  updateBulkBar();
-  syncSelectAllCheckbox();
+  // ISSUE 2 FIX: updateBulkBar() / syncSelectAllCheckbox() calls removed
 }
 
 function clearFilters(){
@@ -982,8 +937,7 @@ function clearFilters(){
   document.getElementById('filterProduct').value='';
   document.getElementById('filterProdStatus').value='';
   document.getElementById('filterInvoice').value='';
-  // ENHANCEMENT 2: clear deadline filter too
-  document.getElementById('filterDeadline').value='';
+  // ISSUE 3 FIX: filterDeadline reset removed
   applyFilters();
 }
 
@@ -1081,24 +1035,14 @@ function addRow(){
 // ENHANCEMENT 5: Soft-delete with 5-second undo window.
 // The row is removed from `data` immediately (so the UI updates), but stashed in
 // _undoTrash so the user can restore it within 5s.
+// ISSUE 2 FIX: bulk-selection re-indexing logic removed (no more _selectedRows).
 function deleteRow(fi){
   if(fi<0||fi>=data.length)return;
   var removed = data[fi];
   var id = removed.id;
-  // Clear selection on this row so we don't keep stale indices
-  delete _selectedRows[fi];
   // Remove from data
   data.splice(fi,1);
-  // Re-key any selection indices > fi (since array shifted down by 1)
-  var newSel = {};
-  for(var k in _selectedRows){
-    if(!_selectedRows[k]) continue;
-    var ki = parseInt(k);
-    if(ki > fi) newSel[ki-1] = true;
-    else newSel[ki] = true;
-  }
-  _selectedRows = newSel;
-  saveData();applyFilters();updateDashboard();updateBulkBar();
+  saveData();applyFilters();updateDashboard();
   // Show undo toast
   var entry = {id:trashUndoId(), row:removed, idx:fi};
   _undoTrash.push(entry);
@@ -1108,16 +1052,7 @@ function deleteRow(fi){
       // Re-insert at the original index (clamp to current end)
       var insertAt = Math.min(entry.idx, data.length);
       data.splice(insertAt, 0, entry.row);
-      // Bump any selected indices >= insertAt up by 1
-      var bumped = {};
-      for(var k in _selectedRows){
-        if(!_selectedRows[k]) continue;
-        var ki = parseInt(k);
-        if(ki >= insertAt) bumped[ki+1] = true;
-        else bumped[ki] = true;
-      }
-      _selectedRows = bumped;
-      saveData();applyFilters();updateDashboard();updateBulkBar();
+      saveData();applyFilters();updateDashboard();
       toast('Order '+id+' restored','success');
       // Remove from trash
       for(var i=_undoTrash.length-1;i>=0;i--){
@@ -1129,135 +1064,10 @@ function deleteRow(fi){
   entry.handle = handle;
 }
 
-/* ============================================================
-   ENHANCEMENT 3: Bulk-action handlers
-   ============================================================ */
-function toggleSelectRow(idx, checked){
-  if(checked){ _selectedRows[idx] = true; }
-  else { delete _selectedRows[idx]; }
-  // Toggle the selected-row class without a full re-render
-  var tr = document.querySelector('tbody tr[data-ri="'+idx+'"]');
-  if(tr){ if(checked) tr.classList.add('selected-row'); else tr.classList.remove('selected-row'); }
-  updateBulkBar();
-  syncSelectAllCheckbox();
-}
-function toggleSelectAll(checked){
-  if(checked){
-    for(var i=0;i<filtered.length;i++) _selectedRows[filtered[i]] = true;
-  } else {
-    // Only clear the currently-visible (filtered) ones
-    for(var j=0;j<filtered.length;j++) delete _selectedRows[filtered[j]];
-  }
-  // Re-render body to update per-row checkbox states + highlight
-  renderBody();
-  updateBulkBar();
-}
-function syncSelectAllCheckbox(){
-  var cb = document.getElementById('selectAll');
-  if(!cb) return;
-  if(filtered.length === 0){ cb.checked = false; cb.indeterminate = false; return; }
-  var visibleSelected = 0;
-  for(var i=0;i<filtered.length;i++){ if(_selectedRows[filtered[i]]) visibleSelected++; }
-  cb.checked = (visibleSelected === filtered.length);
-  cb.indeterminate = (visibleSelected > 0 && visibleSelected < filtered.length);
-}
-function clearSelection(){
-  _selectedRows = {};
-  renderBody();
-  updateBulkBar();
-  syncSelectAllCheckbox();
-}
-function updateBulkBar(){
-  var bar = document.getElementById('bulkBar');
-  var cnt = document.getElementById('bulkCount');
-  if(!bar || !cnt) return;
-  var n = selectedCount();
-  cnt.textContent = n + (n === 1 ? ' order selected' : ' orders selected');
-  if(n > 0) bar.classList.add('active'); else bar.classList.remove('active');
-  // Repopulate bulkValue options based on bulkField
-  refreshBulkValueOptions();
-}
-function refreshBulkValueOptions(){
-  var field = document.getElementById('bulkField');
-  var valBox = document.getElementById('bulkValue');
-  if(!field || !valBox) return;
-  var colDef = null;
-  for(var i=0;i<COLS.length;i++){ if(COLS[i].k === field.value){ colDef = COLS[i]; break; } }
-  valBox.innerHTML = '';
-  if(!colDef || !colDef.o) return;
-  for(var j=0;j<colDef.o.length;j++){
-    var o = document.createElement('option');
-    o.value = colDef.o[j]; o.textContent = colDef.o[j];
-    valBox.appendChild(o);
-  }
-}
-// Bulk apply status: iterate over selected rows, update the chosen field
-function bulkSetStatus(){
-  var field = document.getElementById('bulkField').value;
-  var val = document.getElementById('bulkValue').value;
-  var idxs = selectedIndices();
-  if(idxs.length === 0){ toast('No rows selected','error'); return; }
-  if(!field || !val){ toast('Choose a field and value','error'); return; }
-  for(var i=0;i<idxs.length;i++){
-    var idx = idxs[i];
-    if(idx < 0 || idx >= data.length) continue;
-    data[idx][field] = val;
-    markSaving(idx);
-  }
-  debouncedSave();debouncedDash();
-  toast(idxs.length + ' order' + (idxs.length===1?'':'s') + ' updated','success');
-  renderBody(); // refresh cell values
-  updateBulkBar();
-}
-// Bulk delete: iterate in reverse so indices stay valid; each goes through undo
-function bulkDelete(){
-  var idxs = selectedIndices();
-  if(idxs.length === 0){ toast('No rows selected','error'); return; }
-  // Reverse so we splice from highest index first
-  for(var i=idxs.length-1;i>=0;i--){
-    deleteRow(idxs[i]);
-  }
-}
-// Bulk export CSV of just the selected rows
-function bulkExportSelected(){
-  var idxs = selectedIndices();
-  if(idxs.length === 0){ toast('No rows selected','error'); return; }
-  var csv = '';
-  var BOM = '\uFEFF';
-  try {
-    var headers = [];
-    for (var i = 0; i < COLS.length; i++) {
-      if (COLS[i].t === 'delete' || COLS[i].t === 'bulk-select') continue;
-      headers.push(COLS[i].l);
-    }
-    csv = headers.join(',') + '\n';
-    for (var r = 0; r < idxs.length; r++) {
-      var row = data[idxs[r]], cells = [];
-      for (var i = 0; i < COLS.length; i++) {
-        var c = COLS[i];
-        if (c.t === 'delete' || c.t === 'bulk-select') continue;
-        var v = row[c.k];
-        if (c.t === 'checkbox') v = v ? 'Yes' : 'No';
-        v = String(v == null ? '' : v);
-        if (v.indexOf(',') >= 0 || v.indexOf('"') >= 0 || v.indexOf('\n') >= 0) {
-          v = '"' + v.replace(/"/g, '""') + '"';
-        }
-        cells.push(v);
-      }
-      csv += cells.join(',') + '\n';
-    }
-    var dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(BOM + csv);
-    var link = document.createElement('a');
-    link.href = dataUri;
-    link.download = 'century_gate_selected_orders.csv';
-    link.target = '_blank';
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    toast(idxs.length + ' order' + (idxs.length===1?'':'s') + ' exported','success');
-  } catch (e) {
-    console.error('Bulk CSV Export Error:', e);
-    toast('Bulk CSV export failed','error');
-  }
-}
+/* ISSUE 2 FIX: entire ENHANCEMENT 3 bulk-action handler block removed
+   (toggleSelectRow, toggleSelectAll, syncSelectAllCheckbox,
+    clearSelection, updateBulkBar, refreshBulkValueOptions,
+    bulkSetStatus, bulkDelete, bulkExportSelected). */
 
 // FIX (a11y): Modal now traps initial focus on the Cancel button (safest choice),
 // and the previously-focused element is restored on close.
@@ -1366,13 +1176,13 @@ function exportCSV() {
   var BOM = '\uFEFF';
   try {
     var headers = [];
-    for (var i = 0; i < COLS.length; i++) { if (COLS[i].t !== 'delete' && COLS[i].t !== 'bulk-select') headers.push(COLS[i].l); }
+    for (var i = 0; i < COLS.length; i++) { if (COLS[i].t !== 'delete') headers.push(COLS[i].l); }
     csv = headers.join(',') + '\n';
     for (var r = 0; r < data.length; r++) {
       var row = data[r], cells = [];
       for (var i = 0; i < COLS.length; i++) {
         var c = COLS[i];
-        if (c.t === 'delete' || c.t === 'bulk-select') continue;
+        if (c.t === 'delete') continue;
         var v = row[c.k];
         if (c.t === 'checkbox') v = v ? 'Yes' : 'No';
         v = String(v == null ? '' : v);
@@ -1419,22 +1229,10 @@ function updateDashboard(){
     '<div class="dash-card amber"><div class="dash-label">In Progress</div><div class="dash-value">'+inProgress+'</div></div>'+
     '<div class="dash-card green"><div class="dash-label">Delivered</div><div class="dash-value">'+fullyDelivered+'</div></div>'+
     '<div class="dash-card red"><div class="dash-label">Not Invoiced</div><div class="dash-value">'+notInvoiced+'</div></div>';
-  
-  var custMap={};
-  for(var i=0;i<data.length;i++){
-    var r=data[i],key=r.custName||'Unknown';
-    if(!custMap[key])custMap[key]={name:key,no:r.custNo,orders:0,val:0};
-    custMap[key].orders++;custMap[key].val+=safeNum(r.total);
-  }
-  var custArr=[];for(var k in custMap)custArr.push(custMap[k]);
-  custArr.sort(function(a,b){return b.val-a.val});
-  
-  var topCusts=custArr.slice(0,20),custHtml='';
-  for(var i=0;i<topCusts.length;i++){
-    var c=topCusts[i];
-    custHtml+='<div class="top-cust-row"><div class="top-cust-rank">'+(i+1)+'</div><div class="top-cust-name">'+esc(c.name)+' <span class="top-cust-sub">'+esc(c.no)+'</span></div><div class="top-cust-val">'+fmt(c.val)+' <span class="top-cust-ord">('+c.orders+')</span></div></div>';
-  }
-  document.getElementById('topCusts').innerHTML=custHtml;
+  // ISSUE 4 FIX: Top 20 Customers aggregation + DOM write removed.
+  // The customer dictionary (`_custDict`) is still rebuilt below for the
+  // customer-name autocomplete feature (Enhancement 4) — that's separate
+  // from the dashboard's Top-20 panel.
 }
 
 function toggleDashboard(){
@@ -1449,12 +1247,8 @@ function init(){
   // ENHANCEMENT 4: build customer dictionary + populate datalist
   rebuildCustDict();
   renderThead();applyFilters();updateDashboard();
-  // ENHANCEMENT 3: initialize bulk-action UI state
-  refreshBulkValueOptions();
-  updateBulkBar();
-  // ENHANCEMENT 3: wire up bulkField -> bulkValue cascading
-  var bf = document.getElementById('bulkField');
-  if(bf) bf.addEventListener('change', refreshBulkValueOptions);
+  // ISSUE 2 FIX: bulk-action UI initialization (refreshBulkValueOptions,
+  // updateBulkBar, bulkField event listener) removed.
 }
 init();
 </script>
