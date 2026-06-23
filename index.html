@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#1e3a8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Century Gate">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,29 +23,35 @@
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
 <!-- Favicon: CGC icon as inline SVG -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%231e40af%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%2038%2018%20A%207%207%200%201%200%2038%2028%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%2042%2030%20A%209%209%200%201%200%2042%2044%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%2042%2037%20L%2030%2037%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%2038%2044%20A%207%207%200%201%200%2038%2054%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%2064%22%20width%3D%22128%22%20height%3D%2264%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%22128%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%3E%0A%20%20%20%20%3C%21--%20Left%20C%20--%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%2030%2022%20A%2011%2011%200%201%200%2030%2042%22%2F%3E%0A%20%20%20%20%3C%21--%20Middle%20G%20%28arc%20%2B%20inward%20tongue%29%20--%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%2072%2020%20A%2012%2012%200%201%200%2072%2044%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%2072%2032%20L%2058%2032%22%2F%3E%0A%20%20%20%20%3C%21--%20Right%20C%20--%3E%0A%20%20%20%20%3Cpath%20d%3D%22M%20102%2022%20A%2011%2011%200%201%200%20102%2042%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E">
 
 <style>
 
-/* Century Gate — blue + amber theme */
+/* Century Gate — navy blue theme */
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1e40af;
-  --primary-light: #3b82f6;
-  --accent: #d97706;
-  --bg: #f8fafc;
+  --primary: #1e3a8a;          /* navy blue (blue-900) */
+  --primary-dark: #172554;     /* darker navy (blue-950) */
+  --primary-light: #1e40af;    /* blue-800 */
+  --accent: #f59e0b;           /* amber-500 — complements navy */
+  --bg: #f1f5f9;               /* slate-100 */
   --card: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --sidebar-bg: #1e3a8a;
-  --sidebar-fg: #f1f5f9;
+  --text: #0f172a;             /* slate-900 */
+  --muted: #475569;            /* slate-600 */
+  --border: #cbd5e1;           /* slate-300 */
+  --sidebar-bg: #0f172a;       /* slate-950 — deep navy sidebar */
+  --sidebar-fg: #e2e8f0;
+  --strip-light: #dbeafe;      /* light blue for striped rows */
 }
 
 body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
 /* Card */
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+/* Table — striped rows (light blue alternating) */
+.table tbody tr:nth-child(even) { background: var(--strip-light); }
+.table tbody tr:nth-child(odd) { background: var(--card); }
+.table tbody tr:hover { background: #bfdbfe !important; cursor: pointer; }
 
 /* Badge */
 .badge { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; border: 1px solid; }
@@ -59,14 +65,14 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .badge-orange { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
 .badge-violet { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
 
-/* Status badge styles */
-.status-Completed, .status-Fully-Delivered, .status-Invoiced, .status-Fully-Paid { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+/* Status badge styles — navy blue for "good" statuses */
+.status-Completed, .status-Fully-Delivered, .status-Invoiced, .status-Fully-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
 .status-In-Progress, .status-Partially-Delivered { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-.status-Pending, .status-Not-Invoiced { background: #f4f4f5; color: #52525b; border-color: #e4e4e7; }
-.status-Not-Shipped, .status-No-Payment { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; }
-.status-50-Advance-Paid { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
+.status-Pending, .status-Not-Invoiced { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.status-Not-Shipped, .status-No-Payment { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.status-50-Advance-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
 .status-New-Order { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-.status-Reorder { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+.status-Reorder { background: #e0e7ff; color: #312e81; border-color: #a5b4fc; }
 
 /* Product type badges */
 .product-Printed-Paper-Bags { background: #fef3c7; color: #92400e; border-color: #fde68a; }
@@ -89,13 +95,12 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 
 /* Input */
 .input { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
-.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,58,138,0.1); }
 
 /* Table */
 .table { width: 100%; border-collapse: collapse; }
 .table th { text-align: left; padding: 0.625rem 0.75rem; font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.025em; background: #f8fafc; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .table td { padding: 0.625rem 0.75rem; font-size: 0.875rem; border-bottom: 1px solid var(--border); }
-.table tbody tr:hover { background: #f8fafc; cursor: pointer; }
 
 
 /* iOS safe areas */
@@ -410,7 +415,7 @@ function render() {
 // ============================================================
 function renderDashboard() {
   const s = getStats();
-  const PRODUCT_COLORS = ['#2563eb', '#d97706', '#c2410c', '#1e40af', '#be123c', '#7c3aed'];
+  const PRODUCT_COLORS = ['#1e3a8a', '#f59e0b', '#c2410c', '#172554', '#be123c', '#7c3aed'];
 
   return `
     <div class="flex min-h-screen w-full">
@@ -422,23 +427,23 @@ function renderDashboard() {
 
             <!-- KPI Row -->
             <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-              ${kpiCard('Total Orders', formatNumber(s.totalOrders), 'clipboard-list', 'bg-blue-100 text-blue-700', s.newOrders + ' new · ' + s.reorders + ' reorders')}
-              ${kpiCard('Total Value', formatSARShort(s.totalValue), 'banknote', 'bg-amber-100 text-amber-700', formatSAR(s.totalValue))}
-              ${kpiCard('Delivered', formatNumber(s.delivered), 'package-check', 'bg-sky-100 text-sky-700', (s.delivered / (s.totalOrders || 1) * 100).toFixed(1) + '% of orders')}
-              ${kpiCard('New Orders', formatNumber(s.newOrders), 'sparkles', 'bg-orange-100 text-orange-700', (s.newOrders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total')}
-              ${kpiCard('Reorders', formatNumber(s.reorders), 'repeat', 'bg-violet-100 text-violet-700', (s.reorders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total')}
+              ${kpiCard('Total Orders', formatNumber(s.totalOrders), 'clipboard-list', 'bg-blue-100 text-blue-900', s.newOrders + ' new · ' + s.reorders + ' reorders')}
+              ${kpiCard('Total Value', formatSARShort(s.totalValue), 'banknote', 'bg-amber-100 text-amber-800', formatSAR(s.totalValue))}
+              ${kpiCard('Delivered', formatNumber(s.delivered), 'package-check', 'bg-blue-100 text-blue-900', (s.delivered / (s.totalOrders || 1) * 100).toFixed(1) + '% of orders')}
+              ${kpiCard('New Orders', formatNumber(s.newOrders), 'sparkles', 'bg-amber-100 text-amber-800', (s.newOrders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total')}
+              ${kpiCard('Reorders', formatNumber(s.reorders), 'repeat', 'bg-indigo-100 text-indigo-900', (s.reorders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total')}
               ${kpiCard('Total Cliche', formatSARShort(s.totalCliche), 'coins', 'bg-rose-100 text-rose-700', formatSAR(s.totalCliche))}
             </div>
 
             <!-- Charts row -->
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
               <div class="card p-6 lg:col-span-3">
-                <h3 class="font-semibold flex items-center gap-2 mb-1"><i data-lucide="trending-up" class="w-4 h-4 text-blue-600"></i> Monthly Order Trend</h3>
+                <h3 class="font-semibold flex items-center gap-2 mb-1"><i data-lucide="trending-up" class="w-4 h-4 text-blue-900"></i> Monthly Order Trend</h3>
                 <p class="text-xs text-slate-500 mb-4">Order volume and total value by month</p>
                 <div style="height: 288px;"><canvas id="trendChart"></canvas></div>
               </div>
               <div class="card p-6 lg:col-span-2">
-                <h3 class="font-semibold flex items-center gap-2 mb-1"><i data-lucide="package-check" class="w-4 h-4 text-blue-600"></i> Sales by Product Type</h3>
+                <h3 class="font-semibold flex items-center gap-2 mb-1"><i data-lucide="package-check" class="w-4 h-4 text-blue-900"></i> Sales by Product Type</h3>
                 <p class="text-xs text-slate-500 mb-4">Revenue distribution across product categories</p>
                 <div style="height: 208px;"><canvas id="productChart"></canvas></div>
                 <div class="space-y-1.5 mt-2">
@@ -489,7 +494,7 @@ function renderDashboard() {
                       <button onclick="openOrderDetail('${o.orderId}')" class="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-slate-100 transition-colors text-left border-b border-slate-100 last:border-0">
                         <i data-lucide="${overdue ? 'alert-triangle' : 'clock'}" class="w-3.5 h-3.5 ${overdue ? 'text-rose-500' : 'text-slate-400'}"></i>
                         <div class="w-20 shrink-0">
-                          <p class="text-xs font-mono font-semibold text-blue-600">${o.orderId}</p>
+                          <p class="text-xs font-mono font-semibold text-blue-900">${o.orderId}</p>
                           <p class="text-[10px] text-slate-500">${formatDate(o.orderDate)}</p>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -553,7 +558,7 @@ function renderStatusCard(title, data) {
               <span class="font-semibold tabular-nums">${row.count} <span class="text-slate-400 font-normal">· ${(row.pct * 100).toFixed(1)}%</span></span>
             </div>
             <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-600 rounded-full" style="width:${row.pct * 100}%"></div>
+              <div class="h-full bg-blue-900 rounded-full" style="width:${row.pct * 100}%"></div>
             </div>
           </div>
         `).join('')}
@@ -564,7 +569,7 @@ function renderStatusCard(title, data) {
 
 function renderDashboardCharts() {
   const s = getStats();
-  const PRODUCT_COLORS = ['#2563eb', '#d97706', '#c2410c', '#1e40af', '#be123c', '#7c3aed'];
+  const PRODUCT_COLORS = ['#1e3a8a', '#f59e0b', '#c2410c', '#172554', '#be123c', '#7c3aed'];
 
   // Destroy old charts
   Object.values(charts).forEach(c => { if (c) c.destroy(); });
@@ -578,7 +583,7 @@ function renderDashboardCharts() {
       data: {
         labels: s.monthlyTrend.map(m => m.month),
         datasets: [
-          { label: 'Orders', data: s.monthlyTrend.map(m => m.orders), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+          { label: 'Orders', data: s.monthlyTrend.map(m => m.orders), borderColor: '#1e3a8a', backgroundColor: 'rgba(30,58,138,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
           { label: 'Value (SAR)', data: s.monthlyTrend.map(m => m.value), borderColor: '#d97706', backgroundColor: 'rgba(217,119,6,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' },
         ],
       },
@@ -614,7 +619,7 @@ function renderDashboardCharts() {
       data: {
         labels: s.salesByProduct.map(p => p.productType),
         datasets: [
-          { label: 'Orders', data: s.salesByProduct.map(p => p.orders), backgroundColor: '#2563eb', yAxisID: 'y' },
+          { label: 'Orders', data: s.salesByProduct.map(p => p.orders), backgroundColor: '#1e3a8a', yAxisID: 'y' },
           { label: 'Value (SAR × 1000)', data: s.salesByProduct.map(p => p.totalValue / 1000), backgroundColor: '#d97706', yAxisID: 'y1' },
         ],
       },
@@ -656,7 +661,7 @@ function renderOrders() {
 
   const sortIcon = (field) => {
     if (state.sortBy !== field) return '<i data-lucide="arrow-up-down" class="w-3 h-3 opacity-40"></i>';
-    return state.sortDir === 'asc' ? '<i data-lucide="arrow-up" class="w-3 h-3 text-blue-600"></i>' : '<i data-lucide="arrow-down" class="w-3 h-3 text-blue-600"></i>';
+    return state.sortDir === 'asc' ? '<i data-lucide="arrow-up" class="w-3 h-3 text-blue-900"></i>' : '<i data-lucide="arrow-down" class="w-3 h-3 text-blue-900"></i>';
   };
 
   return `
@@ -678,7 +683,7 @@ function renderOrders() {
                   <i data-lucide="filter" class="w-4 h-4"></i> Filters
                   ${activeFilterCount > 0 ? '<span class="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 text-[10px] font-bold">' + activeFilterCount + '</span>' : ''}
                 </button>
-                <button onclick="exportPDF()" id="pdf-btn" class="btn btn-outline shrink-0" style="border-color: rgba(37,99,235,0.4); color: #2563eb;" title="Export current filtered orders as PDF">
+                <button onclick="exportPDF()" id="pdf-btn" class="btn btn-outline shrink-0" style="border-color: rgba(30,58,138,0.4); color: #1e3a8a;" title="Export current filtered orders as PDF">
                   <i data-lucide="file-text" class="w-4 h-4"></i>
                   <span class="hidden sm:inline">Export to PDF</span>
                   <span class="sm:hidden">PDF</span>
@@ -728,7 +733,7 @@ function renderOrders() {
                       const overdue = isOverdue(o.deadline, o.deliveryStatus);
                       return `
                         <tr onclick="openOrderDetail('${o.orderId}')">
-                          <td class="font-mono text-xs font-semibold text-blue-600 whitespace-nowrap">${o.orderId}</td>
+                          <td class="font-mono text-xs font-semibold text-blue-900 whitespace-nowrap">${o.orderId}</td>
                           <td class="text-xs text-slate-500 whitespace-nowrap">${formatDate(o.orderDate)}</td>
                           <td class="font-medium text-sm whitespace-nowrap">${o.customerName || '—'}</td>
                           <td class="whitespace-nowrap">${statusBadge(o.productType, 'product')}</td>
@@ -794,15 +799,12 @@ function renderSidebar() {
   return `
     <aside class="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen" style="background: var(--sidebar-bg); color: var(--sidebar-fg);">
       <div class="px-5 py-5 border-b" style="border-color: rgba(255,255,255,0.1);">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-xl overflow-hidden shadow-md shrink-0 bg-white">
-            ${CGC_ICON_SVG_SMALL}
-          </div>
-          <div class="min-w-0">
-            <h1 class="font-bold text-base leading-tight truncate">Century Gate</h1>
-            <p class="text-[11px] uppercase tracking-wider opacity-60">Order Tracker</p>
-          </div>
+        <!-- Horizontal CGC logo -->
+        <div class="rounded-xl overflow-hidden shadow-md mb-2" style="background: #0f172a;">
+          <div style="width: 100%; height: 44px;">${CGC_ICON_SVG_SMALL}</div>
         </div>
+        <h1 class="font-bold text-base leading-tight">Century Gate</h1>
+        <p class="text-[11px] uppercase tracking-wider opacity-60">Order Tracker</p>
       </div>
       <nav class="flex-1 p-3 space-y-1 overflow-y-auto scroll-thin">
         <p class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider opacity-50 font-semibold">Workspace</p>
@@ -830,7 +832,7 @@ function renderTopbar(title, subtitle) {
     <header class="sticky top-0 z-30 border-b backdrop-blur-sm bg-white/80" style="padding-top: env(safe-area-inset-top);">
       <div class="flex items-center justify-between px-4 md:px-6 py-3.5">
         <div class="md:hidden flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-sm shrink-0">${CGC_ICON_SVG_SMALL}</div>
+          <div class="rounded-lg overflow-hidden shadow-sm shrink-0" style="background: #0f172a; width: 56px; height: 28px;">${CGC_ICON_SVG_SMALL}</div>
           <span class="font-bold text-sm">Century Gate</span>
         </div>
         <div class="hidden md:block">
@@ -840,7 +842,7 @@ function renderTopbar(title, subtitle) {
         <div class="flex items-center gap-2 text-xs text-slate-500">
           <i data-lucide="calendar" class="w-3.5 h-3.5 hidden sm:block"></i>
           <span class="hidden sm:inline">${today}</span>
-          <span class="hidden md:inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-100 text-blue-700 font-medium">
+          <span class="hidden md:inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-100 text-blue-900 font-medium">
             <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>Live
           </span>
         </div>
@@ -886,7 +888,7 @@ function renderOrderDetailModal() {
       <div class="modal-content card max-w-3xl max-h-[90vh] overflow-y-auto scroll-thin w-full">
         <div class="p-6 border-b">
           <div class="flex items-center gap-3 mb-1">
-            <span class="font-mono text-blue-600 text-xl font-bold">${order.orderId}</span>
+            <span class="font-mono text-blue-900 text-xl font-bold">${order.orderId}</span>
             ${statusBadge(order.productionStatus)}
           </div>
           <p class="text-sm text-slate-500">${order.customerName || 'Unknown customer'} · ${order.description || '—'}</p>
@@ -925,7 +927,7 @@ function renderOrderDetailModal() {
             ${field('Remaining Qty', formatNumber(order.remainingQty))}
             ${field('50% Advance', order.advance50Paid)}
             ${field('Full Payment', order.fullPayment)}
-            <div class="space-y-1"><dt class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Total Value</dt><dd class="text-lg font-bold text-blue-600">${formatSAR(order.totalValue)}</dd></div>
+            <div class="space-y-1"><dt class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Total Value</dt><dd class="text-lg font-bold text-blue-900">${formatSAR(order.totalValue)}</dd></div>
           </dl>
         </div>
         <div class="p-6 border-t flex gap-2 bg-slate-50">
@@ -1262,12 +1264,12 @@ function exportPDF() {
     const margin = 14;
     const contentWidth = pageWidth - margin * 2;
 
-    // Colors
-    const PRIMARY = [37, 99, 235];
-    const PRIMARY_DARK = [30, 58, 138];
-    const ACCENT = [217, 119, 6];
-    const TEXT = [17, 24, 39];
-    const MUTED = [107, 114, 128];
+    // Colors — navy blue palette
+    const PRIMARY = [30, 58, 138];        // navy blue (blue-900)
+    const PRIMARY_DARK = [23, 37, 84];    // blue-950 (darker navy)
+    const ACCENT = [245, 158, 11];        // amber-500 — complements navy
+    const TEXT = [15, 23, 42];
+    const MUTED = [71, 85, 105];
     const BORDER = [229, 231, 235];
     const LIGHT_BG = [243, 244, 246];
     const WHITE = [255, 255, 255];
@@ -1370,12 +1372,12 @@ function exportPDF() {
         o.unitPrice != null ? o.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—',
         o.clicheValue != null ? o.clicheValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—',
         o.totalValue != null ? o.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—',
-        formatDate(o.deadline), o.productionStatus || '—', o.deliveryStatus || '—', o.paymentSummary || '—',
+        formatDate(o.deadline), o.productionStatus || '—', o.deliveryStatus || '—',
       ]);
 
       doc.autoTable({
         startY: cursorY,
-        head: [['Order ID', 'Order Date', 'Customer', 'Description', 'Quantity', 'Unit Price', 'Cliche', 'Total Value', 'Deadline', 'Production', 'Delivery', 'Payment']],
+        head: [['Order ID', 'Order Date', 'Customer', 'Description', 'Quantity', 'Unit Price', 'Cliche', 'Total Value', 'Deadline', 'Production', 'Delivery']],
         body: rows,
         theme: 'striped',
         headStyles: { fillColor: PRIMARY_DARK, textColor: WHITE, fontSize: 7.5, fontStyle: 'bold', halign: 'left', cellPadding: 1.8 },
@@ -1386,7 +1388,7 @@ function exportPDF() {
           1: { cellWidth: 19 }, 2: { cellWidth: 28 }, 3: { cellWidth: 38 },
           4: { cellWidth: 22, halign: 'right' }, 5: { cellWidth: 20, halign: 'right' },
           6: { cellWidth: 18, halign: 'right' }, 7: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
-          8: { cellWidth: 19 }, 9: { cellWidth: 20 }, 10: { cellWidth: 21 }, 11: { cellWidth: 20 },
+          8: { cellWidth: 19 }, 9: { cellWidth: 20 }, 10: { cellWidth: 21 },
         },
         margin: { left: margin, right: margin },
         didDrawPage: function() {
@@ -1460,7 +1462,7 @@ function attachEventListeners() {
 // ============================================================
 // CGC ICON SVG (embedded)
 // ============================================================
-const CGC_ICON_SVG_SMALL = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%" style="display:block"><defs><linearGradient id="cgc-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e40af"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs><rect width="64" height="64" fill="url(#cgc-bg)"/><g fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"><path d="M 38 18 A 7 7 0 1 0 38 28"/><path d="M 42 30 A 9 9 0 1 0 42 44"/><path d="M 42 37 L 30 37"/><path d="M 38 44 A 7 7 0 1 0 38 54"/></g></svg>';
+const CGC_ICON_SVG_SMALL = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 64" width="100%" height="100%" style="display:block" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="cgc-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs><rect width="128" height="64" fill="url(#cgc-bg)"/><g fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"><path d="M 30 22 A 11 11 0 1 0 30 42"/><path d="M 72 20 A 12 12 0 1 0 72 44"/><path d="M 72 32 L 58 32"/><path d="M 102 22 A 11 11 0 1 0 102 42"/></g></svg>';
 
 // ============================================================
 // INIT
