@@ -100,32 +100,49 @@ body{
    - overscroll-behavior-x: contain → prevents horizontal swipe
      from triggering browser back/forward navigation.
 */
-/* ── Table Scroll Container ──────────────────────────────────────
-   ARCHITECTURE (matches first code exactly):
-   - body + main are flex columns, overflow:hidden — they never scroll.
-   - .table-wrap is the ONE and ONLY scroll owner for the orders table.
-   - overflow-x:auto  → horizontal scroll (right-swipe to see all columns).
-   - overflow-y:auto  → vertical scroll (down-swipe to see all rows).
-   - touch-action:pan-x pan-y → tells iOS both axes are valid scroll
-     directions on THIS element. iOS then uses the INITIAL gesture angle
-     to lock to one axis — so a mostly-horizontal swipe scrolls columns,
-     a mostly-vertical swipe scrolls rows. No more jumping.
-   - overscroll-behavior-x:contain → prevents a horizontal swipe from
-     triggering browser back/forward navigation.
-   - flex:1 + min-height:0 → table-wrap fills all remaining vertical
-     space after header, dashboard, and toolbar, so it can actually grow
-     tall enough to scroll.
+/* ── Two-layer scroll architecture (matches first code exactly) ────
+
+   LAYER 1 — .scroll-outer (vertical scroll owner)
+   ─────────────────────────────────────────────────
+   - flex:1 + min-height:0  → fills all space below toolbar
+   - overflow-y:auto        → owns ALL vertical scrolling (see all rows)
+   - overflow-x:hidden      → never scrolls horizontally itself
+   - -webkit-overflow-scrolling:touch → iOS momentum scroll
+   - touch-action:pan-y     → iOS locks this element to vertical-only
+                               gestures; a down-swipe always scrolls rows
+
+   LAYER 2 — .table-wrap (horizontal scroll owner)
+   ─────────────────────────────────────────────────
+   - overflow-x:auto        → owns ALL horizontal scrolling (see all cols)
+   - overflow-y:visible     → never clips or scrolls vertically
+   - overscroll-behavior-x:contain → stops horizontal swipe triggering
+                                     browser back/forward navigation
+   - touch-action:pan-x     → iOS locks this element to horizontal-only
+                               gestures; a right-swipe always scrolls cols
+
+   WHY THIS WORKS ON iPHONE:
+   iOS Safari assigns each touch gesture to the INNERMOST element that
+   can handle it. A mostly-horizontal swipe hits .table-wrap first
+   (touch-action:pan-x) → columns scroll, vertical is ignored.
+   A mostly-vertical swipe passes through .table-wrap (can't scroll Y)
+   and is caught by .scroll-outer (touch-action:pan-y) → rows scroll,
+   horizontal is ignored. The two axes NEVER fight each other.
    ─────────────────────────────────────────────────────────────────── */
-.table-wrap{
+
+.scroll-outer{
   flex:1;
-  overflow-x:auto;
   overflow-y:auto;
+  overflow-x:hidden;
   min-height:0;
-  background:var(--surface);
   -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+}
+.table-wrap{
+  overflow-x:auto;
+  overflow-y:visible;
+  background:var(--surface);
   overscroll-behavior-x:contain;
-  overscroll-behavior-y:auto;
-  touch-action:pan-x pan-y;
+  touch-action:pan-x;
 }
 
 /* ── Table ───────────────────────────────────────────────── */
@@ -349,7 +366,8 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
   .toolbar-right{width:100%;justify-content:space-between;order:3;margin-left:0}
   .row-count{flex:1;text-align:center}
   .btn-accent{flex:1.5}
-  .table-wrap{-webkit-overflow-scrolling:touch;overflow-x:auto;overflow-y:auto;overscroll-behavior-x:contain;overscroll-behavior-y:auto;touch-action:pan-x pan-y}
+  .scroll-outer{-webkit-overflow-scrolling:touch;overflow-y:auto;overflow-x:hidden;touch-action:pan-y}
+  .table-wrap{overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;touch-action:pan-x}
   thead th{padding:8px 6px;font-size:11px}
   .search-box input{font-size:16px}
   .filter-select{font-size:16px}
@@ -417,12 +435,14 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
 
   <datalist id="custList"></datalist>
 
-  <div class="table-wrap" id="tableWrap" role="region" aria-label="Orders table" tabindex="0">
-    <table>
-      <caption>Century Gate order tracking table</caption>
-      <thead id="thead"></thead>
-      <tbody id="tbody"></tbody>
-    </table>
+  <div class="scroll-outer" id="scrollOuter">
+    <div class="table-wrap" id="tableWrap" role="region" aria-label="Orders table" tabindex="0">
+      <table>
+        <caption>Century Gate order tracking table</caption>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
 </main>
 
@@ -913,9 +933,9 @@ function addRow(){
   saveData();applyFilters();updateDashboard();
   toast('Order '+id+' added','success');
   setTimeout(function(){
-    var wrap=document.getElementById('tableWrap');
-    void wrap.offsetHeight;
-    wrap.scrollTo({top:wrap.scrollHeight,behavior:'smooth'});
+    var outer=document.getElementById('scrollOuter');
+    void outer.offsetHeight;
+    outer.scrollTo({top:outer.scrollHeight,behavior:'smooth'});
   },100);
 }
 
