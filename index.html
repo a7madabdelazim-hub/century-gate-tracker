@@ -90,7 +90,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .row-count{font-size:11px;color:var(--text-muted);font-weight:600;background:var(--surface2);padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border-light)}
 
 /* =====================================================================
-   TABLE SCROLLING LOGIC (Removed Sticky to Prevent Jumping)
+   TABLE SCROLLING LOGIC — Sticky Header + Locked Rows
    ===================================================================== */
 .table-wrap {
     flex: 1;
@@ -100,40 +100,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
     background: var(--surface);
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    /* ============================================================
-       ISSUE 5 POLISH (video-confirmed): hardware-accelerate the
-       scroll container so iOS Safari composites the table on the
-       GPU. This eliminates the sub-pixel repaint stutter that
-       makes rows appear to "jump" vertically during horizontal
-       momentum scroll. Combined with table-layout:fixed + locked
-       row heights above, the table now scrolls as one rigid,
-       Windows-like unit — matching the reference app's behavior.
-       ============================================================ */
+    /* GPU-promote the scroll container only — NOT the table inside it,
+       because transforming the table would break position:sticky on thead. */
     will-change: scroll-position;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
 }
 
 /* ============================================================
-   ISSUE 5 FIX (CRITICAL): Locked-step table layout
-   - table-layout:fixed forces the browser to honor colgroup widths
-     exactly, so focusing an input NEVER triggers column reflow.
-   - Without this, iOS Safari recalculates column widths on every
-     focus event, which makes rows below jump vertically.
+   ROOT-CAUSE FIX (movement issue):
+   table-layout: auto lets every column auto-size to its widest cell,
+   so NO content is ever clipped (no letters hidden). Combined with
+   hard-locked row heights below, columns cannot trigger vertical
+   reflow when content changes during focus or scroll.
    ============================================================ */
 table {
-    table-layout: fixed;
+    table-layout: auto;
     border-collapse: separate;
     border-spacing: 0;
     width: max-content;
     min-width: 100%;
     background: var(--surface);
-    /* ISSUE 5 POLISH: promote the whole table to its own GPU layer so
-       iOS Safari scrolls it as a single composited bitmap instead of
-       repainting row-by-row during momentum scroll. */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    backface-visibility: hidden;
 }
 
 caption {
@@ -146,8 +131,21 @@ caption {
     white-space: nowrap;
 }
 
-/* Standard Headers (No Sticky) */
+/* ============================================================
+   STICKY HEADER (matches reference app's behavior):
+   - position:sticky + top:0 keeps the header visible at the top of
+     the scroll viewport during VERTICAL scroll (so it never "jumps
+     away" when the user accidentally swipes diagonally).
+   - It does NOT set `left`, so the header scrolls naturally with
+     the body during HORIZONTAL scroll (header + body move together
+     as one unit).
+   - z-index keeps it above body cells.
+   ============================================================ */
 thead th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 2;
     background: #f8fafc;
     border-bottom: 2px solid var(--border);
     padding: 10px 8px;
@@ -172,7 +170,7 @@ thead th.sorted .sort-arrow { opacity:1; color:var(--accent); }
 thead th.no-sort { cursor:default; }
 thead th.no-sort:hover { background:#f8fafc; cursor:default; }
 
-/* Standard Body Cells (No Sticky) */
+/* Standard Body Cells */
 tbody tr:nth-child(odd) td { background-color: #ffffff; }
 tbody tr:nth-child(even) td { background-color: var(--stripe-color); }
 tbody tr:hover td { background-color: #dbeafe !important; }
@@ -185,63 +183,82 @@ tbody tr:hover td { background-color: #dbeafe !important; }
    ============================================================ */
 
 /* ============================================================
-   ISSUE 5 FIX (CRITICAL): Locked row heights + layout containment.
-   - Fixed height + line-height prevents any cell content from
-     changing the row's vertical footprint on focus or edit.
-   - `contain:layout` tells the browser that this row's contents
-     cannot affect the layout of anything outside it, so internal
-     reflow (e.g. font fallback on focus) cannot shift siblings.
+   ROOT-CAUSE FIX (movement issue): Hard-lock row geometry.
+   - height + max-height + min-height all set to the same value
+     so the row CANNOT grow or shrink, period.
+   - line-height: 1 + overflow: hidden means even if a child
+     element is taller than the row, the row's reserved vertical
+     space does not change.
+   - We DO NOT use `contain:layout` here because that creates a
+     new containing block which would break the `position:sticky`
+     on thead th above.
    ============================================================ */
 tbody tr {
     height: 36px;
+    min-height: 36px;
+    max-height: 36px;
     line-height: 1;
-    contain: layout style;
 }
 tbody tr.new-row { animation: fadeSlideIn .25s ease; }
 
-/* ISSUE 5 FIX: animation is now opacity-only — the previous
-   transform:translateY caused a 6px vertical jump during the
-   0.3s after adding a row, which propagated to all rows below. */
+/* Animation is opacity-only — never transform the row vertically. */
 @keyframes fadeSlideIn { from { opacity:0 } to { opacity:1 } }
 
+/* ============================================================
+   ROOT-CAUSE FIX (no clipping): td has NO overflow:hidden.
+   - white-space:nowrap prevents wrapping (so cells stay 1 line).
+   - The column auto-sizes to the widest cell (table-layout:auto).
+   - If a value is wider than the column, the column simply grows.
+   ============================================================ */
 td {
     padding: 1px 2px;
     vertical-align: middle;
     white-space: nowrap;
-    /* ISSUE 5 FIX: clip any overflow so a wide input value can't
-       push the column width and reflow the table. */
-    overflow: hidden;
-    text-overflow: clip;
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
 }
 td:first-child { border-left: 1px solid var(--border); }
 
-/* Input styling */
+/* Input styling — 16px everywhere prevents iOS focus auto-zoom. */
 td input, td select {
     background: transparent;
     border: 1px solid transparent;
     border-radius: 4px;
     color: var(--text);
-    /* ISSUE 5 FIX: 16px everywhere (not just mobile) — prevents
-       iOS Safari's focus-auto-zoom, which itself causes row jumps. */
     font-size: 16px;
     padding: 4px 6px;
     width: 100%;
+    /* min-width lets the input grow with its content so values
+       are never clipped inside the input itself. */
+    min-width: 0;
     height: 28px;
     outline: none;
     transition: background .15s, box-shadow .15s;
     font-family: inherit;
+    /* Remove iOS native select chevron — we add a custom one below
+       so all selects have a consistent, predictable height. */
+    -webkit-appearance: none;
+    appearance: none;
 }
-/* ISSUE 5 FIX: focus state uses ONLY non-layout properties.
-   - border stays 1px (transparent → accent-border): no width change
-   - background changes color: no layout change
-   - box-shadow is an outer shadow: no layout change
-   - We DO NOT change padding, margin, font-size, or height on focus. */
+td select {
+    /* Custom chevron — same on iOS and desktop */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 20px;
+}
+/* Focus state uses ONLY non-layout properties: border-color, background,
+   box-shadow. No padding/margin/font-size/height change. */
 td input:focus, td select:focus {
     border-color: var(--accent-border);
-    background: #eff6ff;
+    background-color: #eff6ff;
     box-shadow: 0 0 0 2px rgba(37,99,235,.12);
+}
+/* Keep the select chevron visible when focused */
+td select:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231d4ed8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
 }
 td input[type="number"] { text-align: right; }
 td input[type="date"] { color: var(--text-dim); }
@@ -261,10 +278,64 @@ td.cliche-col input, th.cliche-col {
 
 .auto-cell { background:var(--accent-bg); border-radius:4px; padding:4px 6px; font-weight:700; font-size:12px; text-align:right; color:var(--accent); min-width:60px; display:block; border:1px solid var(--accent-border); }
 
-.del-btn { width:24px; height:24px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .15s; opacity:0; }
-tr:hover .del-btn { opacity:1; }
-.del-btn:hover { background:var(--red-bg); color:var(--red); }
+/* ============================================================
+   NEW DELETE UX: Long-press any row → confirmation popover.
+   (Replaces the tiny ✕ hover button which was hard to tap on mobile.)
+   ============================================================ */
+/* Visual hint while user is long-pressing (before popover opens) */
+tr.pressing { background: var(--accent-bg) !important; }
+tr.pressing td { background: transparent !important; }
 
+/* Popover that appears on long-press */
+.delete-popover {
+    position: fixed;
+    z-index: 10000;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(15,23,42,.18), 0 2px 8px rgba(15,23,42,.08);
+    padding: 14px 16px;
+    min-width: 240px;
+    max-width: 320px;
+    animation: popIn .15s ease-out;
+}
+@keyframes popIn {
+    from { opacity: 0; transform: scale(.92) translateY(4px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.delete-popover .dp-title {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    margin-bottom: 4px;
+}
+.delete-popover .dp-sub {
+    font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px;
+}
+.delete-popover .dp-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+}
+.delete-popover .dp-actions button {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .12s;
+}
+.delete-popover .dp-actions button:hover { background: var(--surface3); }
+.delete-popover .dp-actions .dp-delete {
+    background: var(--red); border-color: var(--red); color: #fff;
+}
+.delete-popover .dp-actions .dp-delete:hover { background: #b91c1c; border-color: #b91c1c; }
+
+/* Backdrop to catch outside-tap dismissing the popover */
+.dp-backdrop {
+    position: fixed; inset: 0; z-index: 9999; background: transparent;
+}
+
+/* Empty state */
 .empty-state { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:14px; border:none !important; }
 .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:9999; display:none; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
 .modal-overlay.active { display:flex; }
@@ -439,12 +510,13 @@ td input[list]{padding-right:18px;background-image:url("data:image/svg+xml,%3Csv
     <table>
       <caption>Century Gate order tracking table</caption>
       <colgroup>
-        <!-- ISSUE 2 FIX: bulk-select column removed -->
+        <!-- NEW DELETE UX: delete column removed.
+             With table-layout:auto these widths are MINIMUMS — columns
+             auto-grow to fit their widest content, so no letters clip. -->
         <col style="width:80px"><col style="width:130px"><col style="width:88px"><col style="width:115px">
         <col style="width:90px"><col style="width:125px"><col style="width:155px">
         <col style="width:72px"><col style="width:60px"><col style="width:85px"><col style="width:95px"><col style="width:95px">
         <col style="width:130px"><col style="width:95px"><col style="width:100px"><col style="width:100px">
-        <col style="width:28px">
       </colgroup>
       <thead id="thead"></thead>
       <tbody id="tbody"></tbody>
@@ -483,8 +555,8 @@ var COLS=[
   {k:'deadline',l:'Deadline',t:'date',sortable:true},
   {k:'prodStatus',l:'Production',t:'select',o:['In Progress','Completed'],sortable:true},
   {k:'invStatus',l:'Invoice Status',t:'select',o:['Invoiced','Not Invoiced'],sortable:true},
-  {k:'delStatus',l:'Delivery',t:'select',o:['Fully Delivered','Not Shipped'],sortable:true},
-  {k:'_del',l:'',t:'delete',sortable:false}
+  {k:'delStatus',l:'Delivery',t:'select',o:['Fully Delivered','Not Shipped'],sortable:true}
+  // NEW DELETE UX: _del column removed — deletion is now via long-press on any row
 ];
 
 function safeNum(v){var n=parseFloat(v);return(isFinite(n)&&n>=0)?n:0}
@@ -857,8 +929,7 @@ function renderThead(){
   var h='<tr>';
   for(var i=0;i<COLS.length;i++){
     var c=COLS[i];
-    // ISSUE 2 FIX: bulk-select header branch removed
-    if(c.t==='delete'){h+='<th></th>';continue}
+    // NEW DELETE UX: delete header branch removed (no more ✕ column).
     var sorted=sortCol===i;
     var arrow=sorted?(sortDir===1?' &#9650;':' &#9660;'):'';
     var sortAttr=sorted?(sortDir===1?' aria-sort="ascending"':' aria-sort="descending"'):' aria-sort="none"';
@@ -873,8 +944,6 @@ function renderThead(){
 
 function renderRow(r,idx){
   // ISSUE 1 FIX: removed `ps` (production-status class) from the row's class list.
-  // The row no longer carries 'completed' or 'in-progress' styling — the
-  // colored left-edge stripe that depended on those classes is gone too.
   var isNew=idx===newRowIdx;
   var h='<tr class="'+(isNew?'new-row':'')+'" data-ri="'+idx+'">';
   var oid=esc(r.id)||'new';
@@ -883,12 +952,8 @@ function renderRow(r,idx){
   var dlU = deadlineUrgency(r.deadline);
   for(var ci=0;ci<COLS.length;ci++){
     var c=COLS[ci];
-    // ISSUE 2 FIX: bulk-select cell branch removed
-    if(c.t==='delete'){
-      // FIX (a11y): Added aria-label so screen readers announce the action, not just "x"
-      h+='<td><button class="del-btn" onclick="deleteRow('+idx+')" title="Delete order '+oid+'" aria-label="Delete order '+oid+'">&#10005;</button></td>';
-      continue;
-    }
+    // NEW DELETE UX: delete cell branch removed entirely.
+    // To delete an order, long-press anywhere on the row (see wireLongPress).
     var v=r[c.k];
     var tdClass = c.k === 'cliche' ? ' class="cliche-col"' : '';
     // FIX (a11y): Each input/select now has an aria-label derived from the column header
@@ -1090,6 +1155,180 @@ function deleteRow(fi){
   entry.handle = handle;
 }
 
+/* ============================================================
+   NEW DELETE UX: Long-press any row → confirmation popover.
+   - Touch: 500ms long-press without moving >10px triggers it.
+   - Mouse: 500ms mousedown without moving >10px triggers it.
+   - If user starts scrolling (horizontal OR vertical) the press is cancelled.
+   - The popover shows the order ID + Cancel / Delete buttons.
+   - Tapping outside dismisses the popover.
+   ============================================================ */
+var _pressTimer = null;
+var _pressTarget = null;
+var _pressStartX = 0;
+var _pressStartY = 0;
+var _activePopover = null;
+
+function wireLongPress(){
+  var tbody = document.getElementById('tbody');
+  if(!tbody) return;
+
+  // Touch handlers (iOS / Android)
+  tbody.addEventListener('touchstart', function(e){
+    var tr = e.target.closest('tr[data-ri]');
+    if(!tr) return;
+    // Don't trigger long-press if the user tapped on an input/select/checkbox
+    var tag = (e.target.tagName || '').toLowerCase();
+    if(tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button' || tag === 'option') return;
+    _pressTarget = tr;
+    var t = e.touches[0];
+    _pressStartX = t.clientX;
+    _pressStartY = t.clientY;
+    clearTimeout(_pressTimer);
+    _pressTimer = setTimeout(function(){
+      tr.classList.add('pressing');
+      var idx = parseInt(tr.getAttribute('data-ri'));
+      if(!isNaN(idx)) showDeletePopover(idx, tr);
+    }, 500);
+  }, { passive: true });
+
+  tbody.addEventListener('touchmove', function(e){
+    if(!_pressTimer) return;
+    var t = e.touches[0];
+    var dx = Math.abs(t.clientX - _pressStartX);
+    var dy = Math.abs(t.clientY - _pressStartY);
+    if(dx > 10 || dy > 10){
+      // User is scrolling — cancel the long-press
+      clearTimeout(_pressTimer);
+      _pressTimer = null;
+      if(_pressTarget) _pressTarget.classList.remove('pressing');
+      _pressTarget = null;
+    }
+  }, { passive: true });
+
+  tbody.addEventListener('touchend', function(){
+    clearTimeout(_pressTimer);
+    _pressTimer = null;
+    if(_pressTarget) _pressTarget.classList.remove('pressing');
+    _pressTarget = null;
+  });
+  tbody.addEventListener('touchcancel', function(){
+    clearTimeout(_pressTimer);
+    _pressTimer = null;
+    if(_pressTarget) _pressTarget.classList.remove('pressing');
+    _pressTarget = null;
+  });
+
+  // Mouse handlers (desktop)
+  tbody.addEventListener('mousedown', function(e){
+    if(e.button !== 0) return;
+    var tr = e.target.closest('tr[data-ri]');
+    if(!tr) return;
+    var tag = (e.target.tagName || '').toLowerCase();
+    if(tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button') return;
+    _pressTarget = tr;
+    _pressStartX = e.clientX;
+    _pressStartY = e.clientY;
+    clearTimeout(_pressTimer);
+    _pressTimer = setTimeout(function(){
+      tr.classList.add('pressing');
+      var idx = parseInt(tr.getAttribute('data-ri'));
+      if(!isNaN(idx)) showDeletePopover(idx, tr);
+    }, 500);
+  });
+
+  document.addEventListener('mousemove', function(e){
+    if(!_pressTimer) return;
+    var dx = Math.abs(e.clientX - _pressStartX);
+    var dy = Math.abs(e.clientY - _pressStartY);
+    if(dx > 10 || dy > 10){
+      clearTimeout(_pressTimer);
+      _pressTimer = null;
+      if(_pressTarget) _pressTarget.classList.remove('pressing');
+      _pressTarget = null;
+    }
+  });
+
+  document.addEventListener('mouseup', function(){
+    clearTimeout(_pressTimer);
+    _pressTimer = null;
+    if(_pressTarget) _pressTarget.classList.remove('pressing');
+    _pressTarget = null;
+  });
+}
+
+function showDeletePopover(idx, anchorTr){
+  dismissDeletePopover();
+  var r = data[idx];
+  if(!r) return;
+  var oid = r.id || 'this order';
+  var cust = r.custName ? ' — ' + r.custName : '';
+  var desc = r.desc ? ' · ' + r.desc : '';
+
+  // Backdrop (transparent) catches outside-tap to dismiss
+  var backdrop = document.createElement('div');
+  backdrop.className = 'dp-backdrop';
+  backdrop.addEventListener('click', dismissDeletePopover);
+  backdrop.addEventListener('touchstart', dismissDeletePopover, { passive: true });
+
+  // Popover
+  var pop = document.createElement('div');
+  pop.className = 'delete-popover';
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-modal', 'false');
+  pop.setAttribute('aria-label', 'Delete order ' + oid);
+  pop.innerHTML =
+    '<div class="dp-title">Delete order ' + esc(oid) + '?</div>' +
+    '<div class="dp-sub">' + esc(cust + desc) + '<br>This order will be removed with a 5-second undo window.</div>' +
+    '<div class="dp-actions">' +
+      '<button type="button" class="dp-cancel">Cancel</button>' +
+      '<button type="button" class="dp-delete">Delete</button>' +
+    '</div>';
+  document.body.appendChild(backdrop);
+  document.body.appendChild(pop);
+
+  // Position the popover near the anchor row, clamped to viewport
+  var rect = anchorTr.getBoundingClientRect();
+  var popW = 260; // approx, will adjust after layout
+  var popH = 110;
+  var left = rect.left + rect.width / 2 - popW / 2;
+  var top  = rect.top + rect.height / 2 - popH / 2;
+  // Clamp to viewport
+  var margin = 12;
+  if(left < margin) left = margin;
+  if(left + popW > window.innerWidth - margin) left = window.innerWidth - margin - popW;
+  if(top < margin) top = margin;
+  if(top + popH > window.innerHeight - margin) top = window.innerHeight - margin - popH;
+  pop.style.left = left + 'px';
+  pop.style.top  = top + 'px';
+
+  // Wire buttons
+  pop.querySelector('.dp-cancel').addEventListener('click', dismissDeletePopover);
+  pop.querySelector('.dp-delete').addEventListener('click', function(){
+    dismissDeletePopover();
+    deleteRow(idx);
+  });
+
+  _activePopover = { pop: pop, backdrop: backdrop };
+
+  // Auto-dismiss on Escape
+  document.addEventListener('keydown', _popoverEscHandler);
+}
+
+function _popoverEscHandler(e){
+  if(e.key === 'Escape'){ dismissDeletePopover(); }
+}
+
+function dismissDeletePopover(){
+  if(_activePopover){
+    if(_activePopover.pop && _activePopover.pop.parentNode) _activePopover.pop.remove();
+    if(_activePopover.backdrop && _activePopover.backdrop.parentNode) _activePopover.backdrop.remove();
+    _activePopover = null;
+  }
+  document.removeEventListener('keydown', _popoverEscHandler);
+  if(_pressTarget) _pressTarget.classList.remove('pressing');
+}
+
 /* ISSUE 2 FIX: entire ENHANCEMENT 3 bulk-action handler block removed
    (toggleSelectRow, toggleSelectAll, syncSelectAllCheckbox,
     clearSelection, updateBulkBar, refreshBulkValueOptions,
@@ -1202,13 +1441,12 @@ function exportCSV() {
   var BOM = '\uFEFF';
   try {
     var headers = [];
-    for (var i = 0; i < COLS.length; i++) { if (COLS[i].t !== 'delete') headers.push(COLS[i].l); }
+    for (var i = 0; i < COLS.length; i++) { headers.push(COLS[i].l); }
     csv = headers.join(',') + '\n';
     for (var r = 0; r < data.length; r++) {
       var row = data[r], cells = [];
       for (var i = 0; i < COLS.length; i++) {
         var c = COLS[i];
-        if (c.t === 'delete') continue;
         var v = row[c.k];
         if (c.t === 'checkbox') v = v ? 'Yes' : 'No';
         v = String(v == null ? '' : v);
@@ -1273,8 +1511,8 @@ function init(){
   // ENHANCEMENT 4: build customer dictionary + populate datalist
   rebuildCustDict();
   renderThead();applyFilters();updateDashboard();
-  // ISSUE 2 FIX: bulk-action UI initialization (refreshBulkValueOptions,
-  // updateBulkBar, bulkField event listener) removed.
+  // NEW DELETE UX: wire long-press handler on table body
+  wireLongPress();
 }
 init();
 </script>
