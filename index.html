@@ -56,27 +56,27 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 /* Badge */
 .badge { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; border: 1px solid; }
 .badge-blue { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-.badge-amber { background: #fef9e7; color: #713f12; border-color: #d4af37; }
+.badge-amber { background: #d4af37; color: #ffffff; border-color: #b8860b; }
 .badge-rose { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; }
 .badge-zinc { background: #f4f4f5; color: #52525b; border-color: #e4e4e7; }
 .badge-sky { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
 .badge-indigo { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
 .badge-cyan { background: #cffafe; color: #155e75; border-color: #a5f3fc; }
-.badge-orange { background: #fef9e7; color: #713f12; border-color: #d4af37; }
+.badge-orange { background: #d4af37; color: #ffffff; border-color: #b8860b; }
 .badge-violet { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
 
-/* Status badge styles — navy blue for "good" statuses, gold for "in progress" */
+/* Status badge styles — navy blue for "good" statuses, dark gold for "in progress" */
 .status-Completed, .status-Fully-Delivered, .status-Invoiced, .status-Fully-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
-.status-In-Progress, .status-Partially-Delivered { background: #fef9e7; color: #713f12; border-color: #d4af37; }
+.status-In-Progress, .status-Partially-Delivered { background: #d4af37; color: #ffffff; border-color: #b8860b; }
 .status-Pending, .status-Not-Invoiced { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
 .status-Not-Shipped, .status-No-Payment { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 .status-50-Advance-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
-.status-New-Order { background: #fef9e7; color: #713f12; border-color: #d4af37; }
+.status-New-Order { background: #d4af37; color: #ffffff; border-color: #b8860b; }
 .status-Reorder { background: #e0e7ff; color: #312e81; border-color: #a5b4fc; }
 
 /* Product type badges */
-.product-Printed-Paper-Bags { background: #fef9e7; color: #713f12; border-color: #d4af37; }
-.product-Printed-Boxes { background: #fef9e7; color: #713f12; border-color: #d4af37; }
+.product-Printed-Paper-Bags { background: #d4af37; color: #ffffff; border-color: #b8860b; }
+.product-Printed-Boxes { background: #d4af37; color: #ffffff; border-color: #b8860b; }
 .product-Printed-Cups { background: #cffafe; color: #155e75; border-color: #a5f3fc; }
 .product-Printed-Napkins { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; }
 .product-Printed-Sheet { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
@@ -428,9 +428,9 @@ function renderDashboard() {
             <!-- KPI Row -->
             <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               ${kpiCard('Total Orders', formatNumber(s.totalOrders), 'clipboard-list', 'bg-blue-100 text-blue-900', s.newOrders + ' new · ' + s.reorders + ' reorders')}
-              ${kpiCard('Total Value', formatSARShort(s.totalValue), 'banknote', 'text-[#713f12]', formatSAR(s.totalValue), '#fef9e7')}
+              ${kpiCard('Total Value', formatSARShort(s.totalValue), 'banknote', 'text-white', formatSAR(s.totalValue), '#d4af37')}
               ${kpiCard('Delivered', formatNumber(s.delivered), 'package-check', 'bg-blue-100 text-blue-900', (s.delivered / (s.totalOrders || 1) * 100).toFixed(1) + '% of orders')}
-              ${kpiCard('New Orders', formatNumber(s.newOrders), 'sparkles', 'text-[#713f12]', (s.newOrders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total', '#fef9e7')}
+              ${kpiCard('New Orders', formatNumber(s.newOrders), 'sparkles', 'text-white', (s.newOrders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total', '#d4af37')}
               ${kpiCard('Reorders', formatNumber(s.reorders), 'repeat', 'bg-indigo-100 text-indigo-900', (s.reorders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total')}
               ${kpiCard('Total Cliche', formatSARShort(s.totalCliche), 'coins', 'bg-rose-100 text-rose-700', formatSAR(s.totalCliche))}
             </div>
@@ -474,7 +474,7 @@ function renderDashboard() {
                 <div class="space-y-1">
                   ${s.topCustomers.slice(0, 8).map((c, i) => `
                     <button onclick="goToOrdersWithCustomer('${c.customerName.replace(/'/g, "\\'")}')" class="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-slate-100 transition-colors text-left">
-                      <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? 'text-[#713f12]' : 'bg-slate-100 text-slate-500'}" ${i < 3 ? 'style="background:#fef9e7"' : ''}>${i + 1}</span>
+                      <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? 'text-white' : 'bg-slate-100 text-slate-500'}" ${i < 3 ? 'style="background:#d4af37"' : ''}>${i + 1}</span>
                       <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium truncate">${c.customerName}</p>
                         <p class="text-[11px] text-slate-500">${c.orders} orders · avg ${formatSARShort(c.avgOrder)}</p>
