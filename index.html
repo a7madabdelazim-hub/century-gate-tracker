@@ -721,6 +721,7 @@ function renderOrders() {
                       <th class="min-w-[140px] whitespace-nowrap"><button onclick="toggleSort('productType')" class="flex items-center gap-1 font-semibold">Product Type ${sortIcon('productType')}</button></th>
                       <th class="min-w-[180px] whitespace-nowrap">Description</th>
                       <th class="text-right w-24 whitespace-nowrap"><button onclick="toggleSort('quantity')" class="flex items-center gap-1 font-semibold ml-auto">Qty ${sortIcon('quantity')}</button></th>
+                      <th class="text-right w-28 whitespace-nowrap">Unit Price</th>
                       <th class="text-right w-32 whitespace-nowrap"><button onclick="toggleSort('totalValue')" class="flex items-center gap-1 font-semibold ml-auto">Total ${sortIcon('totalValue')}</button></th>
                       <th class="w-28 whitespace-nowrap"><button onclick="toggleSort('deadline')" class="flex items-center gap-1 font-semibold">Deadline ${sortIcon('deadline')}</button></th>
                       <th class="min-w-[120px] whitespace-nowrap">Production</th>
@@ -729,7 +730,7 @@ function renderOrders() {
                     </tr>
                   </thead>
                   <tbody>
-                    ${pageData.length === 0 ? '<tr><td colspan="11" class="text-center py-12 text-slate-500">No orders match your filters. Try clearing some filters or search terms.</td></tr>' : pageData.map(o => {
+                    ${pageData.length === 0 ? '<tr><td colspan="12" class="text-center py-12 text-slate-500">No orders match your filters. Try clearing some filters or search terms.</td></tr>' : pageData.map(o => {
                       const overdue = isOverdue(o.deadline, o.deliveryStatus);
                       return `
                         <tr onclick="openOrderDetail('${o.orderId}')">
@@ -739,6 +740,7 @@ function renderOrders() {
                           <td class="whitespace-nowrap">${statusBadge(o.productType, 'product')}</td>
                           <td class="text-xs text-slate-500 max-w-[220px] truncate">${o.description || '—'}</td>
                           <td class="text-right text-xs tabular-nums whitespace-nowrap">${formatNumber(o.quantity)} <span class="text-slate-400">${o.qtyUnit || ''}</span></td>
+                          <td class="text-right text-xs tabular-nums whitespace-nowrap">${o.unitPrice != null ? formatSAR(o.unitPrice) : '—'}</td>
                           <td class="text-right font-semibold tabular-nums text-sm whitespace-nowrap">${formatSARShort(o.totalValue)}</td>
                           <td class="text-xs whitespace-nowrap">
                             <div class="flex items-center gap-1">
