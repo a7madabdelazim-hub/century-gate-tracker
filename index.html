@@ -1281,17 +1281,19 @@ function exportPDF() {
     // Header
     doc.setFillColor(...PRIMARY_DARK);
     doc.rect(0, 0, pageWidth, 24, 'F');
+    // CG logo — larger gold square with visible "CG" text
     doc.setFillColor(...ACCENT);
-    doc.roundedRect(margin, 6, 12, 12, 2, 2, 'F');
-    doc.setTextColor(...WHITE);
+    doc.roundedRect(margin, 4, 16, 16, 2, 2, 'F');
+    doc.setTextColor(...PRIMARY_DARK);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('CG', margin + 6, 13.5, { align: 'center' });
+    doc.setFontSize(13);
+    doc.text('CG', margin + 8, 14.5, { align: 'center' });
+    doc.setTextColor(...WHITE);
     doc.setFontSize(15);
-    doc.text('Century Gate Company Ltd', margin + 16, 12);
+    doc.text('Century Gate Company Ltd', margin + 20, 12);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text('Order Tracker — Filtered Orders Export', margin + 16, 18);
+    doc.text('Order Tracker — Filtered Orders Export', margin + 20, 18);
     const now = new Date();
     const ts = now.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     doc.setFontSize(8);
@@ -1356,7 +1358,20 @@ function exportPDF() {
 
     // Tables per category
     groupArray.forEach((group, idx) => {
-      if (cursorY + 22 > pageHeight - margin) { doc.addPage(); cursorY = margin; }
+      // Check if we need a page break (title + table header + at least 2 rows)
+      if (cursorY + 30 > pageHeight - margin) { doc.addPage(); cursorY = margin; }
+
+      // Category title banner — drawn BEFORE the table (at the top)
+      doc.setFillColor(...PRIMARY);
+      doc.rect(margin, cursorY, contentWidth, 12, 'F');
+      doc.setTextColor(...WHITE);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(group.productType, margin + 4, cursorY + 8);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(group.orderCount + ' orders   ·   SAR ' + group.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), pageWidth - margin - 4, cursorY + 8, { align: 'right' });
+      cursorY += 14;
 
       // Build table rows
       const rows = group.orders.map(o => [
@@ -1368,24 +1383,23 @@ function exportPDF() {
         formatDate(o.deadline), o.productionStatus || '—', o.deliveryStatus || '—',
       ]);
 
-      // Draw the table FIRST (no title banner on top)
+      // Draw the table (title is already above it)
       doc.autoTable({
         startY: cursorY,
         head: [['Order ID', 'Order Date', 'Customer', 'Description', 'Quantity', 'Unit Price', 'Cliche', 'Total Value', 'Deadline', 'Production', 'Delivery']],
         body: rows,
         theme: 'striped',
-        headStyles: { fillColor: PRIMARY_DARK, textColor: WHITE, fontSize: 7.5, fontStyle: 'bold', halign: 'left', cellPadding: 1.8 },
-        bodyStyles: { fontSize: 7.5, textColor: TEXT, cellPadding: 1.8, lineColor: BORDER, lineWidth: 0.1 },
+        headStyles: { fillColor: PRIMARY_DARK, textColor: WHITE, fontSize: 9, fontStyle: 'bold', halign: 'left', cellPadding: 2 },
+        bodyStyles: { fontSize: 9, textColor: TEXT, cellPadding: 2, lineColor: BORDER, lineWidth: 0.1 },
         alternateRowStyles: { fillColor: LIGHT_BG },
         columnStyles: {
-          0: { cellWidth: 20, fontStyle: 'bold', textColor: PRIMARY },
-          1: { cellWidth: 19 }, 2: { cellWidth: 28 }, 3: { cellWidth: 38 },
+          0: { cellWidth: 22, fontStyle: 'bold', textColor: PRIMARY },
+          1: { cellWidth: 20 }, 2: { cellWidth: 34 }, 3: { cellWidth: 44 },
           4: { cellWidth: 22, halign: 'right' }, 5: { cellWidth: 20, halign: 'right' },
           6: { cellWidth: 18, halign: 'right' }, 7: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
-          8: { cellWidth: 19 }, 9: { cellWidth: 20 }, 10: { cellWidth: 21 },
+          8: { cellWidth: 20 }, 9: { cellWidth: 22 }, 10: { cellWidth: 23 },
         },
-        // Leave room at the bottom of each page for the category title banner (18mm)
-        margin: { left: margin, right: margin, bottom: 22 },
+        margin: { left: margin, right: margin, bottom: 14 },
         didDrawPage: function() {
           const pageNum = doc.internal.getNumberOfPages();
           doc.setFontSize(7);
@@ -1395,20 +1409,7 @@ function exportPDF() {
         },
       });
 
-      // Category title banner — drawn AFTER the table (at the bottom)
-      cursorY = doc.lastAutoTable.finalY + 3;
-      // Check if we need a page break for the banner
-      if (cursorY + 14 > pageHeight - margin) { doc.addPage(); cursorY = margin; }
-      doc.setFillColor(...PRIMARY);
-      doc.rect(margin, cursorY, contentWidth, 10, 'F');
-      doc.setTextColor(...WHITE);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text(group.productType, margin + 3, cursorY + 6.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.text(group.orderCount + ' orders   ·   SAR ' + group.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), pageWidth - margin - 3, cursorY + 6.5, { align: 'right' });
-      cursorY += 18;
+      cursorY = doc.lastAutoTable.finalY + 10;
     });
 
     // Summary
