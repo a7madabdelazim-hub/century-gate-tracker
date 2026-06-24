@@ -1373,9 +1373,9 @@ function exportPDF() {
       doc.text(group.orderCount + ' orders   ·   SAR ' + group.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), pageWidth - margin - 4, cursorY + 8, { align: 'right' });
       cursorY += 14;
 
-      // Build table rows
+      // Build table rows — now includes Customer Number after Customer
       const rows = group.orders.map(o => [
-        o.orderId, formatDate(o.orderDate), o.customerName || '—', o.description || '—',
+        o.orderId, formatDate(o.orderDate), o.customerName || '—', o.customerNumber || '—', o.description || '—',
         formatNumber(o.quantity) + (o.qtyUnit ? ' ' + o.qtyUnit : ''),
         o.unitPrice != null ? o.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—',
         o.clicheValue != null ? o.clicheValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—',
@@ -1386,18 +1386,19 @@ function exportPDF() {
       // Draw the table (title is already above it)
       doc.autoTable({
         startY: cursorY,
-        head: [['Order ID', 'Order Date', 'Customer', 'Description', 'Quantity', 'Unit Price', 'Cliche', 'Total Value', 'Deadline', 'Production', 'Delivery']],
+        head: [['Order ID', 'Order Date', 'Customer', 'Cust No', 'Description', 'Quantity', 'Unit Price', 'Cliche', 'Total Value', 'Deadline', 'Production', 'Delivery']],
         body: rows,
         theme: 'striped',
-        headStyles: { fillColor: PRIMARY_DARK, textColor: WHITE, fontSize: 9, fontStyle: 'bold', halign: 'left', cellPadding: 2 },
-        bodyStyles: { fontSize: 9, textColor: TEXT, cellPadding: 2, lineColor: BORDER, lineWidth: 0.1 },
+        headStyles: { fillColor: PRIMARY_DARK, textColor: WHITE, fontSize: 8.5, fontStyle: 'bold', halign: 'left', cellPadding: 2 },
+        bodyStyles: { fontSize: 8.5, textColor: TEXT, cellPadding: 2, lineColor: BORDER, lineWidth: 0.1 },
         alternateRowStyles: { fillColor: LIGHT_BG },
         columnStyles: {
-          0: { cellWidth: 22, fontStyle: 'bold', textColor: PRIMARY },
-          1: { cellWidth: 20 }, 2: { cellWidth: 34 }, 3: { cellWidth: 44 },
-          4: { cellWidth: 22, halign: 'right' }, 5: { cellWidth: 20, halign: 'right' },
-          6: { cellWidth: 18, halign: 'right' }, 7: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
-          8: { cellWidth: 20 }, 9: { cellWidth: 22 }, 10: { cellWidth: 23 },
+          0: { cellWidth: 20, fontStyle: 'bold', textColor: PRIMARY },
+          1: { cellWidth: 24 }, 2: { cellWidth: 28 }, 3: { cellWidth: 18 },
+          4: { cellWidth: 36 },
+          5: { cellWidth: 20, halign: 'right' }, 6: { cellWidth: 18, halign: 'right' },
+          7: { cellWidth: 15, halign: 'right' }, 8: { cellWidth: 22, halign: 'right', fontStyle: 'bold' },
+          9: { cellWidth: 24 }, 10: { cellWidth: 22 }, 11: { cellWidth: 22 },
         },
         margin: { left: margin, right: margin, bottom: 14 },
         didDrawPage: function() {
