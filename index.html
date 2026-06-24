@@ -32,7 +32,7 @@
   --primary: #1e3a8a;          /* navy blue (blue-900) */
   --primary-dark: #172554;     /* darker navy (blue-950) */
   --primary-light: #1e40af;    /* blue-800 */
-  --accent: #f59e0b;           /* amber-500 — complements navy */
+  --accent: #d4af37;           /* gold — complements navy */
   --bg: #f1f5f9;               /* slate-100 */
   --card: #ffffff;
   --text: #0f172a;             /* slate-900 */
@@ -40,7 +40,7 @@
   --border: #cbd5e1;           /* slate-300 */
   --sidebar-bg: #0f172a;       /* slate-950 — deep navy sidebar */
   --sidebar-fg: #e2e8f0;
-  --strip-light: #dbeafe;      /* light blue for striped rows */
+  --strip-light: #eff6ff;      /* very light blue for striped rows */
 }
 
 body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -56,27 +56,27 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 /* Badge */
 .badge { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; border: 1px solid; }
 .badge-blue { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-.badge-amber { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.badge-amber { background: #fef9e7; color: #713f12; border-color: #d4af37; }
 .badge-rose { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; }
 .badge-zinc { background: #f4f4f5; color: #52525b; border-color: #e4e4e7; }
 .badge-sky { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
 .badge-indigo { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
 .badge-cyan { background: #cffafe; color: #155e75; border-color: #a5f3fc; }
-.badge-orange { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+.badge-orange { background: #fef9e7; color: #713f12; border-color: #d4af37; }
 .badge-violet { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
 
-/* Status badge styles — navy blue for "good" statuses */
+/* Status badge styles — navy blue for "good" statuses, gold for "in progress" */
 .status-Completed, .status-Fully-Delivered, .status-Invoiced, .status-Fully-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
-.status-In-Progress, .status-Partially-Delivered { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.status-In-Progress, .status-Partially-Delivered { background: #fef9e7; color: #713f12; border-color: #d4af37; }
 .status-Pending, .status-Not-Invoiced { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
 .status-Not-Shipped, .status-No-Payment { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 .status-50-Advance-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
-.status-New-Order { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.status-New-Order { background: #fef9e7; color: #713f12; border-color: #d4af37; }
 .status-Reorder { background: #e0e7ff; color: #312e81; border-color: #a5b4fc; }
 
 /* Product type badges */
-.product-Printed-Paper-Bags { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-.product-Printed-Boxes { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+.product-Printed-Paper-Bags { background: #fef9e7; color: #713f12; border-color: #d4af37; }
+.product-Printed-Boxes { background: #fef9e7; color: #713f12; border-color: #d4af37; }
 .product-Printed-Cups { background: #cffafe; color: #155e75; border-color: #a5f3fc; }
 .product-Printed-Napkins { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; }
 .product-Printed-Sheet { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
@@ -415,7 +415,7 @@ function render() {
 // ============================================================
 function renderDashboard() {
   const s = getStats();
-  const PRODUCT_COLORS = ['#1e3a8a', '#f59e0b', '#c2410c', '#172554', '#be123c', '#7c3aed'];
+  const PRODUCT_COLORS = ['#1e3a8a', '#d4af37', '#c2410c', '#172554', '#be123c', '#7c3aed'];
 
   return `
     <div class="flex min-h-screen w-full">
@@ -428,9 +428,9 @@ function renderDashboard() {
             <!-- KPI Row -->
             <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               ${kpiCard('Total Orders', formatNumber(s.totalOrders), 'clipboard-list', 'bg-blue-100 text-blue-900', s.newOrders + ' new · ' + s.reorders + ' reorders')}
-              ${kpiCard('Total Value', formatSARShort(s.totalValue), 'banknote', 'bg-amber-100 text-amber-800', formatSAR(s.totalValue))}
+              ${kpiCard('Total Value', formatSARShort(s.totalValue), 'banknote', 'text-[#713f12]', formatSAR(s.totalValue), '#fef9e7')}
               ${kpiCard('Delivered', formatNumber(s.delivered), 'package-check', 'bg-blue-100 text-blue-900', (s.delivered / (s.totalOrders || 1) * 100).toFixed(1) + '% of orders')}
-              ${kpiCard('New Orders', formatNumber(s.newOrders), 'sparkles', 'bg-amber-100 text-amber-800', (s.newOrders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total')}
+              ${kpiCard('New Orders', formatNumber(s.newOrders), 'sparkles', 'text-[#713f12]', (s.newOrders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total', '#fef9e7')}
               ${kpiCard('Reorders', formatNumber(s.reorders), 'repeat', 'bg-indigo-100 text-indigo-900', (s.reorders / (s.totalOrders || 1) * 100).toFixed(1) + '% of total')}
               ${kpiCard('Total Cliche', formatSARShort(s.totalCliche), 'coins', 'bg-rose-100 text-rose-700', formatSAR(s.totalCliche))}
             </div>
@@ -474,7 +474,7 @@ function renderDashboard() {
                 <div class="space-y-1">
                   ${s.topCustomers.slice(0, 8).map((c, i) => `
                     <button onclick="goToOrdersWithCustomer('${c.customerName.replace(/'/g, "\\'")}')" class="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-slate-100 transition-colors text-left">
-                      <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}">${i + 1}</span>
+                      <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? 'text-[#713f12]' : 'bg-slate-100 text-slate-500'}" ${i < 3 ? 'style="background:#fef9e7"' : ''}>${i + 1}</span>
                       <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium truncate">${c.customerName}</p>
                         <p class="text-[11px] text-slate-500">${c.orders} orders · avg ${formatSARShort(c.avgOrder)}</p>
@@ -529,7 +529,8 @@ function renderDashboard() {
   `;
 }
 
-function kpiCard(label, value, icon, accent, hint) {
+function kpiCard(label, value, icon, accent, hint, bg) {
+  const accentStyle = bg ? 'style="background:' + bg + '"' : '';
   return `
     <div class="card p-6">
       <div class="flex items-start justify-between gap-3">
@@ -538,7 +539,7 @@ function kpiCard(label, value, icon, accent, hint) {
           <p class="text-2xl font-bold tracking-tight">${value}</p>
           ${hint ? '<p class="text-xs text-slate-500">' + hint + '</p>' : ''}
         </div>
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${accent}">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${accent}" ${accentStyle}>
           <i data-lucide="${icon}" class="w-5 h-5"></i>
         </div>
       </div>
@@ -569,7 +570,7 @@ function renderStatusCard(title, data) {
 
 function renderDashboardCharts() {
   const s = getStats();
-  const PRODUCT_COLORS = ['#1e3a8a', '#f59e0b', '#c2410c', '#172554', '#be123c', '#7c3aed'];
+  const PRODUCT_COLORS = ['#1e3a8a', '#d4af37', '#c2410c', '#172554', '#be123c', '#7c3aed'];
 
   // Destroy old charts
   Object.values(charts).forEach(c => { if (c) c.destroy(); });
@@ -584,7 +585,7 @@ function renderDashboardCharts() {
         labels: s.monthlyTrend.map(m => m.month),
         datasets: [
           { label: 'Orders', data: s.monthlyTrend.map(m => m.orders), borderColor: '#1e3a8a', backgroundColor: 'rgba(30,58,138,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
-          { label: 'Value (SAR)', data: s.monthlyTrend.map(m => m.value), borderColor: '#d97706', backgroundColor: 'rgba(217,119,6,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' },
+          { label: 'Value (SAR)', data: s.monthlyTrend.map(m => m.value), borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' },
         ],
       },
       options: {
@@ -620,7 +621,7 @@ function renderDashboardCharts() {
         labels: s.salesByProduct.map(p => p.productType),
         datasets: [
           { label: 'Orders', data: s.salesByProduct.map(p => p.orders), backgroundColor: '#1e3a8a', yAxisID: 'y' },
-          { label: 'Value (SAR × 1000)', data: s.salesByProduct.map(p => p.totalValue / 1000), backgroundColor: '#d97706', yAxisID: 'y1' },
+          { label: 'Value (SAR × 1000)', data: s.salesByProduct.map(p => p.totalValue / 1000), backgroundColor: '#d4af37', yAxisID: 'y1' },
         ],
       },
       options: {
@@ -1269,7 +1270,7 @@ function exportPDF() {
     // Colors — navy blue palette
     const PRIMARY = [30, 58, 138];        // navy blue (blue-900)
     const PRIMARY_DARK = [23, 37, 84];    // blue-950 (darker navy)
-    const ACCENT = [245, 158, 11];        // amber-500 — complements navy
+    const ACCENT = [212, 175, 55];        // gold — complements navy
     const TEXT = [15, 23, 42];
     const MUTED = [71, 85, 105];
     const BORDER = [229, 231, 235];
@@ -1356,18 +1357,7 @@ function exportPDF() {
     groupArray.forEach((group, idx) => {
       if (cursorY + 22 > pageHeight - margin) { doc.addPage(); cursorY = margin; }
 
-      // Category banner
-      doc.setFillColor(...PRIMARY);
-      doc.rect(margin, cursorY, contentWidth, 10, 'F');
-      doc.setTextColor(...WHITE);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text(group.productType, margin + 3, cursorY + 6.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.text(group.orderCount + ' orders   ·   SAR ' + group.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), pageWidth - margin - 3, cursorY + 6.5, { align: 'right' });
-      cursorY += 12;
-
+      // Build table rows
       const rows = group.orders.map(o => [
         o.orderId, formatDate(o.orderDate), o.customerName || '—', o.description || '—',
         formatNumber(o.quantity) + (o.qtyUnit ? ' ' + o.qtyUnit : ''),
@@ -1377,6 +1367,7 @@ function exportPDF() {
         formatDate(o.deadline), o.productionStatus || '—', o.deliveryStatus || '—',
       ]);
 
+      // Draw the table FIRST (no title banner on top)
       doc.autoTable({
         startY: cursorY,
         head: [['Order ID', 'Order Date', 'Customer', 'Description', 'Quantity', 'Unit Price', 'Cliche', 'Total Value', 'Deadline', 'Production', 'Delivery']],
@@ -1392,7 +1383,8 @@ function exportPDF() {
           6: { cellWidth: 18, halign: 'right' }, 7: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
           8: { cellWidth: 19 }, 9: { cellWidth: 20 }, 10: { cellWidth: 21 },
         },
-        margin: { left: margin, right: margin },
+        // Leave room at the bottom of each page for the category title banner (18mm)
+        margin: { left: margin, right: margin, bottom: 22 },
         didDrawPage: function() {
           const pageNum = doc.internal.getNumberOfPages();
           doc.setFontSize(7);
@@ -1402,7 +1394,20 @@ function exportPDF() {
         },
       });
 
-      cursorY = doc.lastAutoTable.finalY + 8;
+      // Category title banner — drawn AFTER the table (at the bottom)
+      cursorY = doc.lastAutoTable.finalY + 3;
+      // Check if we need a page break for the banner
+      if (cursorY + 14 > pageHeight - margin) { doc.addPage(); cursorY = margin; }
+      doc.setFillColor(...PRIMARY);
+      doc.rect(margin, cursorY, contentWidth, 10, 'F');
+      doc.setTextColor(...WHITE);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(group.productType, margin + 3, cursorY + 6.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text(group.orderCount + ' orders   ·   SAR ' + group.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), pageWidth - margin - 3, cursorY + 6.5, { align: 'right' });
+      cursorY += 18;
     });
 
     // Summary
