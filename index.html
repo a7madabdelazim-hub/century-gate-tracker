@@ -68,18 +68,18 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 
 /* Status badge styles — navy blue for "good" statuses, dark gold for "in progress" */
 .status-Completed, .status-Fully-Delivered, .status-Invoiced, .status-Fully-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
-.status-In-Progress, .status-Partially-Delivered { background: #d4af37; color: #ffffff; border-color: #b8860b; }
+.status-In-Progress, .status-Partially-Delivered { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 .status-Pending, .status-Not-Invoiced { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
 .status-Not-Shipped, .status-No-Payment { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 .status-50-Advance-Paid { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
 .status-New-Order { background: #d4af37; color: #ffffff; border-color: #b8860b; }
 .status-Reorder { background: #e0e7ff; color: #312e81; border-color: #a5b4fc; }
 
-/* Product type badges */
-.product-Printed-Paper-Bags { background: #d4af37; color: #ffffff; border-color: #b8860b; }
-.product-Printed-Boxes { background: #d4af37; color: #ffffff; border-color: #b8860b; }
+/* Product type badges — each unique, no two share a color */
+.product-Printed-Paper-Bags { background: #10b981; color: #ffffff; border-color: #059669; }
+.product-Printed-Boxes { background: #ea580c; color: #ffffff; border-color: #c2410c; }
 .product-Printed-Cups { background: #cffafe; color: #155e75; border-color: #a5f3fc; }
-.product-Printed-Napkins { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; }
+.product-Printed-Napkins { background: #0d9488; color: #ffffff; border-color: #0f766e; }
 .product-Printed-Sheet { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
 .product-Plain-Items { background: #f4f4f5; color: #52525b; border-color: #e4e4e7; }
 
@@ -812,11 +812,11 @@ function renderSidebar() {
       </div>
       <nav class="flex-1 p-3 space-y-1 overflow-y-auto scroll-thin">
         <p class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider opacity-50 font-semibold">Workspace</p>
-        <button onclick="setView('dashboard')" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${state.view === 'dashboard' ? 'text-white shadow-sm' : 'opacity-80 hover:opacity-100'}" ${state.view === 'dashboard' ? 'style="background: var(--accent);"' : ''}>
+        <button onclick="setView('dashboard')" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${state.view === 'dashboard' ? 'text-white shadow-sm' : 'opacity-80 hover:opacity-100'}" ${state.view === 'dashboard' ? 'style="background: #d4af37;"' : ''}>
           <i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0"></i>
           <div class="flex-1 text-left"><div>Dashboard</div><div class="text-[10px] font-normal opacity-70">Overview &amp; KPIs</div></div>
         </button>
-        <button onclick="setView('orders')" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${state.view === 'orders' ? 'text-white shadow-sm' : 'opacity-80 hover:opacity-100'}" ${state.view === 'orders' ? 'style="background: var(--accent);"' : ''}>
+        <button onclick="setView('orders')" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${state.view === 'orders' ? 'text-white shadow-sm' : 'opacity-80 hover:opacity-100'}" ${state.view === 'orders' ? 'style="background: #d4af37;"' : ''}>
           <i data-lucide="clipboard-list" class="w-5 h-5 shrink-0"></i>
           <div class="flex-1 text-left"><div>Orders</div><div class="text-[10px] font-normal opacity-70">All order records</div></div>
         </button>
@@ -859,11 +859,11 @@ function renderMobileNav() {
   return `
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t" style="background: var(--sidebar-bg); color: var(--sidebar-fg); padding-bottom: env(safe-area-inset-bottom);">
       <div class="grid grid-cols-2 gap-2 px-4" style="padding-top: 8px; padding-bottom: 8px;">
-        <button onclick="setView('dashboard')" class="flex flex-col items-center justify-center gap-1.5 rounded-xl transition-colors min-h-[56px] ${state.view === 'dashboard' ? 'text-white' : 'opacity-70'}" ${state.view === 'dashboard' ? 'style="background: var(--accent);"' : ''}>
+        <button onclick="setView('dashboard')" class="flex flex-col items-center justify-center gap-1.5 rounded-xl transition-colors min-h-[56px] ${state.view === 'dashboard' ? 'text-white' : 'opacity-70'}" ${state.view === 'dashboard' ? 'style="background: #d4af37;"' : ''}>
           <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
           <span class="text-[11px] font-semibold">Dashboard</span>
         </button>
-        <button onclick="setView('orders')" class="flex flex-col items-center justify-center gap-1.5 rounded-xl transition-colors min-h-[56px] ${state.view === 'orders' ? 'text-white' : 'opacity-70'}" ${state.view === 'orders' ? 'style="background: var(--accent);"' : ''}>
+        <button onclick="setView('orders')" class="flex flex-col items-center justify-center gap-1.5 rounded-xl transition-colors min-h-[56px] ${state.view === 'orders' ? 'text-white' : 'opacity-70'}" ${state.view === 'orders' ? 'style="background: #d4af37;"' : ''}>
           <i data-lucide="clipboard-list" class="w-6 h-6"></i>
           <span class="text-[11px] font-semibold">Orders</span>
         </button>
