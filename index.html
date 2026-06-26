@@ -1093,7 +1093,7 @@ function renderTopbar(title, subtitle) {
       <span class="liquid-text shrink-0" style="font-size: 14px; margin-right: 4px; white-space: nowrap;">Madinah Area</span>
       <div class="header-greeting text-right shrink-0" style="margin-right: 4px;">
         <div class="text-xs font-semibold" style="color: var(--text); line-height: 1.2;">${greeting}, Admin 👋</div>
-        <div class="text-[10px]" style="color: var(--sub);">${today}</div>
+        <div class="text-[10px] hidden sm:block" style="color: var(--sub);">${today}</div>
       </div>
       <button class="btn-icon shrink-0" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="${state.theme === 'dark' ? 'moon' : 'sun'}" class="w-5 h-5" id="theme-icon"></i></button>
     </header>
@@ -1427,7 +1427,7 @@ function renderOrdersContent() {
               </div>
 
               ${state.showFilters ? `
-                <div class="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" style="border-color: var(--border);">
+                <div class="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3" style="border-color: var(--border);">
                   ${filterSelect('Production', 'filterProduction', prodStatuses)}
                   ${filterSelect('Invoice', 'filterInvoice', invStatuses)}
                   ${activeFilterCount > 0 ? '<div class="flex items-end"><button onclick="clearFilters()" class="btn btn-ghost text-sm"><i data-lucide="x" class="w-3.5 h-3.5"></i> Clear all</button></div>' : ''}
