@@ -261,14 +261,31 @@ select.input {
   -moz-appearance: none;
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 38px;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 30px;
+  width: 100%;
+  min-width: 0;
 }
 [data-theme="light"] select.input {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
-select.input option { background: var(--card); color: var(--text); }
+/* iOS Safari clips <option> text when the <select> has appearance:none + padding-right.
+   Force options to render with full padding and prevent text truncation. */
+select.input option {
+  background: var(--card);
+  color: var(--text);
+  padding: 10px 12px;
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+  word-wrap: break-word;
+}
+/* The closed <select> should truncate long text gracefully (ellipsis) instead of clipping */
+select.input {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
 
 .modal-backdrop {
   position: fixed; inset: 0;
@@ -1367,9 +1384,9 @@ function renderOrdersContent() {
   const customers = unique('customerName');
   const productTypes = unique('productType');
   const orderTypes = unique('orderType');
-  const prodStatuses = unique('productionStatus');
+  const prodStatuses = unique('productionStatus').filter(s => s !== 'Pending');
   const invStatuses = unique('invoiceStatus');
-  const delStatuses = unique('deliveryStatus');
+  const delStatuses = unique('deliveryStatus').filter(s => s !== 'Partially Delivered');
 
   const activeFilterCount = [state.filterProduction, state.filterInvoice].filter(Boolean).length;
 
@@ -1594,9 +1611,9 @@ function renderOrderFormModal() {
   const PRODUCT_TYPES = ['Plain Items', 'Printed Boxes', 'Printed Cups', 'Printed Napkins', 'Printed Paper Bags', 'Printed Sheet'];
   const ORDER_TYPES = ['New Order', 'Reorder'];
   const QTY_UNITS = ['PCS', 'CTN', 'KGS', 'M', 'M\u00b2', 'ROLL', 'PKT', 'BOX'];
-  const PRODUCTION_STATUSES = ['In Progress', 'Completed', 'Pending'];
+  const PRODUCTION_STATUSES = ['In Progress', 'Completed'];
   const INVOICE_STATUSES = ['Not Invoiced', 'Invoiced'];
-  const DELIVERY_STATUSES = ['Not Shipped', 'Partially Delivered', 'Fully Delivered'];
+  const DELIVERY_STATUSES = ['Not Shipped', 'Fully Delivered'];
   const PAYMENT_STATUSES = ['No Payment', '50% Advance Paid', 'Fully Paid'];
   const YES_NO = ['Yes', 'No'];
 
