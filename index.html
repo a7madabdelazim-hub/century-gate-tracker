@@ -370,7 +370,7 @@ select.input option { background: var(--card); color: var(--text); }
 .nav-btn {
   flex: 1; max-width: 220px;
   display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 16px 20px; border-radius: 14px;
+  padding: 14px 20px; border-radius: 14px;
   font-size: 16px; font-weight: 700; cursor: pointer;
   border: 1px solid var(--border); transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
   color: var(--sub); background: var(--card);
@@ -381,6 +381,8 @@ select.input option { background: var(--card); color: var(--text); }
   background: var(--primary-grad); color: white; border-color: transparent;
   box-shadow: 0 8px 24px var(--primary-glow), 0 0 0 1px rgba(255,255,255,0.1) inset;
   animation: navBreath 2s ease-in-out infinite;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px var(--primary-glow), 0 0 0 1px rgba(255,255,255,0.15) inset, 0 0 48px var(--primary-glow);
 }
 .nav-btn.active::after {
   content: '';
@@ -392,8 +394,8 @@ select.input option { background: var(--card); color: var(--text); }
   pointer-events: none;
 }
 @keyframes navBreath {
-  0%,100% { transform: scale(1); box-shadow: 0 8px 24px var(--primary-glow), 0 0 0 1px rgba(255,255,255,0.1) inset; }
-  50% { transform: scale(1.03); box-shadow: 0 12px 32px var(--primary-glow), 0 0 0 1px rgba(255,255,255,0.15) inset; }
+  0%,100% { transform: translateY(-4px) scale(1); box-shadow: 0 12px 32px var(--primary-glow), 0 0 0 1px rgba(255,255,255,0.15) inset, 0 0 48px var(--primary-glow); }
+  50% { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 40px var(--primary-glow), 0 0 0 1px rgba(255,255,255,0.2) inset, 0 0 64px var(--primary-glow); }
 }
 @keyframes navShimmer {
   0% { background-position: -200% 0; }
@@ -1057,35 +1059,18 @@ function renderTopbar(title, subtitle) {
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
   const overdueCount = state.orders.filter(o => isOverdue(o.deadline, o.deliveryStatus)).length;
   return `
-    <header class="sticky top-0 z-30 px-4 md:px-6 py-3 flex items-center gap-3" style="background: var(--topbar-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding-top: max(0.75rem, env(safe-area-inset-top));">
-      <div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl cursor-pointer transition-all" onclick="openCmdPalette()" style="background: var(--card); border: 1px solid var(--border); min-width: 200px; flex: 0 1 auto;">
-        <i data-lucide="search" class="w-4 h-4" style="color: var(--sub);"></i>
-        <span class="text-sm flex-1 hidden md:inline" style="color: var(--muted);">Search...</span>
-        <span class="hidden md:inline" style="background: var(--hover); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; font-size: 11px; font-family: ui-monospace, monospace; color: var(--sub);">⌘K</span>
+    <header class="sticky top-0 z-30 px-4 md:px-6 py-3 flex items-center gap-2 md:gap-3" style="background: var(--topbar-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding-top: max(0.75rem, env(safe-area-inset-top));">
+      <div class="logo-glow shrink-0" style="background: var(--primary-grad); width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; letter-spacing: 1px; font-size: 18px; position: relative; overflow: hidden;">CGC</div>
+      <div class="flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer transition-all" onclick="openCmdPalette()" style="background: var(--card); border: 1px solid var(--border); min-width: 80px; flex: 1 1 auto;">
+        <i data-lucide="search" class="w-4 h-4 shrink-0" style="color: var(--sub);"></i>
+        <span class="text-sm flex-1 truncate" style="color: var(--muted);">Search...</span>
       </div>
-      <div class="flex-1"></div>
-      <span class="liquid-text hidden sm:inline" style="font-size: 15px; margin-right: 8px; white-space: nowrap;">Madinah Area</span>
-      <div class="header-greeting text-right mr-2 hidden lg:block">
-        <div class="text-sm font-semibold" style="color: var(--text);">${greeting}, Admin 👋</div>
-        <div class="text-[11px]" style="color: var(--sub);">${today}</div>
+      <span class="liquid-text shrink-0" style="font-size: 14px; margin-right: 4px; white-space: nowrap;">Madinah Area</span>
+      <div class="header-greeting text-right shrink-0" style="margin-right: 4px;">
+        <div class="text-xs font-semibold" style="color: var(--text); line-height: 1.2;">${greeting}, Admin 👋</div>
+        <div class="text-[10px]" style="color: var(--sub);">${today}</div>
       </div>
-      <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="${state.theme === 'dark' ? 'moon' : 'sun'}" class="w-5 h-5" id="theme-icon"></i></button>
-      <div class="relative">
-        <button class="btn-icon" onclick="toggleNotifs(event)" aria-label="Notifications">
-          <i data-lucide="bell" class="w-5 h-5"></i>
-          ${overdueCount > 0 ? '<span class="notif-dot"></span>' : ''}
-        </button>
-        <div id="notif-panel" style="display:none; position:absolute; top:calc(100% + 8px); right:0; width:360px; max-height:480px; overflow-y:auto; background:var(--card); border:1px solid var(--border-strong); border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.5); z-index:50; animation: modalIn 0.2s ease-out;">
-          <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border);">
-            <div class="font-semibold text-sm" style="color: var(--text);">Notifications</div>
-            ${overdueCount > 0 ? '<span class="text-[10px] px-2 py-0.5 rounded-full" style="background: var(--danger-soft); color: var(--danger);">' + overdueCount + ' overdue</span>' : ''}
-          </div>
-          ${renderNotifications()}
-          <div class="px-4 py-3 border-t text-center" style="border-color: var(--border);">
-            <button onclick="setView('orders'); closeNotifs();" class="text-xs font-semibold" style="color: var(--primary);">View all orders →</button>
-          </div>
-        </div>
-      </div>
+      <button class="btn-icon shrink-0" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="${state.theme === 'dark' ? 'moon' : 'sun'}" class="w-5 h-5" id="theme-icon"></i></button>
     </header>
   `;
 }
