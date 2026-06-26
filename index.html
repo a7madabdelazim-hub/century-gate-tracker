@@ -53,6 +53,7 @@
   --text: #FFFFFF;
   --sub: #94A3B8;
   --muted: #64748B;
+  --topbar-bg: rgba(7,11,23,0.6);
 }
 [data-theme="light"] {
   --bg: #F8FAFC;
@@ -72,6 +73,7 @@
   --text: #0F172A;
   --sub: #475569;
   --muted: #94A3B8;
+  --topbar-bg: rgba(255,255,255,0.8);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -248,7 +250,20 @@ body::after { width: 500px; height: 500px; background: var(--accent); top: 40%; 
 }
 .input::placeholder { color: var(--muted); }
 .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-select.input { cursor: pointer; }
+select.input {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 38px;
+}
+[data-theme="light"] select.input {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
 select.input option { background: var(--card); color: var(--text); }
 
 .modal-backdrop {
@@ -305,10 +320,28 @@ select.input option { background: var(--card); color: var(--text); }
   animation: pulse 2s infinite;
 }
 @keyframes logoGlow {
-  0%,100% { box-shadow: 0 0 20px var(--primary-glow); }
-  50% { box-shadow: 0 0 32px var(--primary-glow), 0 0 48px var(--primary-glow); }
+  0%,100% { box-shadow: 0 0 20px var(--primary-glow); transform: scale(1); }
+  50% { box-shadow: 0 0 32px var(--primary-glow), 0 0 48px var(--primary-glow); transform: scale(1.04); }
 }
-.logo-glow { animation: logoGlow 3s ease-in-out infinite; }
+@keyframes logoShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.logo-glow {
+  animation: logoGlow 3s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+.logo-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.45) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: logoShimmer 3s linear infinite;
+  border-radius: inherit;
+  pointer-events: none;
+}
 
 .fab {
   position: fixed; bottom: max(24px, env(safe-area-inset-bottom)); right: 24px;
@@ -719,46 +752,15 @@ function toggleSidebar() {
   state.sidebarOpen = !state.sidebarOpen;
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebar-overlay');
-  if (sb) sb.classList.toggle('open', state.sidebarOpen);
-  if (ov) ov.style.display = state.sidebarOpen ? 'block' : 'none';
-}
-
-// Swipe-left-to-close gesture for mobile sidebar (native iOS pattern)
-// Only attaches once, on first render.
-let _sidebarSwipeAttached = false;
-function attachSidebarSwipe() {
-  if (_sidebarSwipeAttached) return;
-  _sidebarSwipeAttached = true;
-  let startX = null, currentX = null, swiping = false;
-  document.addEventListener('touchstart', (e) => {
-    if (!state.sidebarOpen) return;
-    startX = e.touches[0].clientX;
-    swiping = true;
-  }, { passive: true });
-  document.addEventListener('touchmove', (e) => {
-    if (!swiping || startX === null) return;
-    currentX = e.touches[0].clientX;
-    const sb = document.getElementById('sidebar');
-    if (sb && currentX < startX) {
-      const offset = startX - currentX;
-      sb.style.transform = 'translateX(-' + offset + 'px)';
-      sb.style.transition = 'none';
-    }
-  }, { passive: true });
-  document.addEventListener('touchend', () => {
-    if (!swiping) return;
-    const sb = document.getElementById('sidebar');
-    if (sb) sb.style.transition = '';
-    if (currentX !== null && startX !== null && (startX - currentX) > 80) {
-      // Swiped left far enough — close
-      if (sb) sb.style.transform = '';
-      toggleSidebar();
-    } else {
-      // Not far enough — snap back
-      if (sb) sb.style.transform = '';
-    }
-    startX = null; currentX = null; swiping = false;
-  }, { passive: true });
+  if (state.sidebarOpen) {
+    if (sb) { sb.classList.add('open'); sb.style.transform = ''; sb.style.transition = ''; }
+    if (ov) ov.style.display = 'block';
+  } else {
+    // Force-clear any inline transform (from old swipe gesture) so the CSS
+    // class .sidebar (without .open) takes effect and slides the drawer off.
+    if (sb) { sb.classList.remove('open'); sb.style.transform = ''; sb.style.transition = ''; }
+    if (ov) ov.style.display = 'none';
+  }
 }
 
 // ============================================================
@@ -785,7 +787,6 @@ function render() {
       app.dataset.view = 'orders';
     }
     attachEventListeners();
-    attachSidebarSwipe();
 
     // Always rebuild lucide icons — innerHTML replaces the whole DOM tree
     if (window.lucide) lucide.createIcons();
@@ -864,12 +865,12 @@ function renderSidebar() {
   return `
     <aside id="sidebar" class="sidebar slide-in flex flex-col">
       <div class="px-5 py-5 flex items-center gap-3 border-b" style="border-color: var(--border);">
-        <div class="logo-glow shrink-0" style="background: var(--primary-grad); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; letter-spacing: 1px; font-size: 16px;">CGC</div>
+        <div class="logo-glow shrink-0" style="background: var(--primary-grad); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; letter-spacing: 1px; font-size: 18px; position: relative; overflow: hidden;">CGC</div>
         <div class="flex-1 min-w-0">
           <div class="font-bold text-base" style="color: var(--text);">Century Gate</div>
           <div class="text-[10px] uppercase tracking-wider" style="color: var(--sub);">Order Tracker</div>
         </div>
-        <button class="btn-icon lg:hidden" style="width:32px;height:32px;flex-shrink:0;" onclick="toggleSidebar()" aria-label="Close sidebar"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button class="btn-icon lg:hidden" style="width:44px;height:44px;flex-shrink:0;touch-action:manipulation;" onclick="toggleSidebar()" aria-label="Close sidebar"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <nav class="flex-1 px-3 py-4 space-y-1">
         <p class="px-3 pb-2 text-[10px] uppercase tracking-wider font-semibold" style="color: var(--muted);">Workspace</p>
@@ -908,7 +909,7 @@ function renderTopbar(title, subtitle) {
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
   const overdueCount = state.orders.filter(o => isOverdue(o.deadline, o.deliveryStatus)).length;
   return `
-    <header class="sticky top-0 z-30 px-4 md:px-6 py-3 flex items-center gap-3" style="background: rgba(7,11,23,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding-top: max(0.75rem, env(safe-area-inset-top));">
+    <header class="sticky top-0 z-30 px-4 md:px-6 py-3 flex items-center gap-3" style="background: var(--topbar-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding-top: max(0.75rem, env(safe-area-inset-top));">
       <button class="btn-icon mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
       <div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl cursor-pointer transition-all" onclick="openCmdPalette()" style="background: var(--card); border: 1px solid var(--border); min-width: 200px; flex: 0 1 auto;">
         <i data-lucide="search" class="w-4 h-4" style="color: var(--sub);"></i>
@@ -1851,7 +1852,7 @@ function renderCmdResults(query) {
     el.addEventListener('click', () => {
       const idx = parseInt(el.dataset.idx);
       const item = allItems[idx];
-      if (item) item.data.action ? item.data.action() : openOrderDetail(item.data.orderId);
+      if (item) { if (item.data.action) item.data.action(); else { closeCmdPalette(); openOrderDetail(item.data.orderId); } }
     });
     el.addEventListener('mouseenter', () => {
       container.querySelectorAll('.cmd-result').forEach(e => e.classList.remove('selected'));
@@ -2130,7 +2131,7 @@ document.addEventListener('keydown', (e) => {
       const item = items[state.cmdSelectedIndex];
       if (item) {
         if (item.data.action) item.data.action();
-        else openOrderDetail(item.data.orderId);
+        else { closeCmdPalette(); openOrderDetail(item.data.orderId); }
       }
     }
   }
