@@ -270,21 +270,29 @@ select.input {
 [data-theme="light"] select.input {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
-/* iOS Safari clips <option> text when the <select> has appearance:none + padding-right.
-   Force options to render with full padding and prevent text truncation. */
 select.input option {
   background: var(--card);
   color: var(--text);
   padding: 10px 12px;
-  max-width: none;
-  overflow: visible;
-  white-space: normal;
-  word-wrap: break-word;
 }
-/* The closed <select> should truncate long text gracefully (ellipsis) instead of clipping */
-select.input {
-  text-overflow: ellipsis;
-  overflow: hidden;
+/* MOBILE FIX: On iOS, appearance:none + custom arrow + padding-right narrows the
+   select's text area and causes option text to truncate. On mobile we revert to
+   the NATIVE iOS select rendering — no custom arrow, no padding-right, full text
+   width. iOS's native chevron is used instead. Desktop keeps the custom arrow. */
+@media (max-width: 768px) {
+  select.input {
+    appearance: auto;
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+    background-image: none !important;
+    padding-right: 12px !important;
+  }
+}
+/* MOBILE FIX: Cap the search bar width so the greeting is visible on iPhone.
+   Without this, flex:1 1 auto makes the search bar greedily fill all leftover
+   space, pushing the greeting off-screen. */
+@media (max-width: 768px) {
+  .cmd-trigger-topbar { flex: 0 1 auto !important; max-width: 110px !important; min-width: 60px !important; }
 }
 
 .modal-backdrop {
@@ -1078,7 +1086,7 @@ function renderTopbar(title, subtitle) {
   return `
     <header class="sticky top-0 z-30 px-4 md:px-6 py-3 flex items-center gap-2 md:gap-3" style="background: var(--topbar-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding-top: max(0.75rem, env(safe-area-inset-top));">
       <div class="logo-glow shrink-0" style="background: var(--primary-grad); width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; letter-spacing: 1px; font-size: 18px; position: relative; overflow: hidden;">CGC</div>
-      <div class="flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer transition-all" onclick="openCmdPalette()" style="background: var(--card); border: 1px solid var(--border); min-width: 80px; flex: 1 1 auto;">
+      <div class="cmd-trigger-topbar flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer transition-all" onclick="openCmdPalette()" style="background: var(--card); border: 1px solid var(--border); min-width: 80px; flex: 1 1 auto;">
         <i data-lucide="search" class="w-4 h-4 shrink-0" style="color: var(--sub);"></i>
         <span class="text-sm flex-1 truncate" style="color: var(--muted);">Search...</span>
       </div>
