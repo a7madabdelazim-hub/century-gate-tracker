@@ -803,17 +803,12 @@ function render() {
       // Sidebar + topbar persist untouched → no white flash, no sidebar close bug.
       renderMainContent();
       renderModals();
-      // Only scan the content area for new icons (faster than full document scan)
-      if (window.lucide) {
-        const mc = document.getElementById('main-content');
-        const mod = document.getElementById('modal-container');
-        if (mc) lucide.createIcons({ root: mc });
-        if (mod) lucide.createIcons({ root: mod });
-        // Fallback: if scoped scan didn't work (older lucide versions), do full scan
-        // We detect this by checking if any [data-lucide] remain unprocessed
-        const unprocessed = document.querySelectorAll('[data-lucide]:not(svg)');
-        if (unprocessed.length > 0) lucide.createIcons();
-      }
+      // Full lucide icon scan on every render. We previously tried scoping this
+      // to #main-content / #modal-container for performance, but the scoped scan
+      // silently failed on some lucide builds — leaving topbar icons (☰ menu,
+      // + New Order, bell, theme toggle) as invisible raw <i> elements.
+      // A full scan is fast enough and guarantees every icon gets processed.
+      if (window.lucide) lucide.createIcons();
       // Charts: only rebuild if we're on dashboard (they don't depend on order filters,
       // but they DO depend on order data which changes when orders are created/edited/deleted).
       // We detect this by checking if the chart canvases exist but data may have changed.
@@ -1066,8 +1061,17 @@ function renderDashboardContent() {
   const s = getStats();
   return `
 <div class="fade-up">
-              <h1 class="text-2xl md:text-3xl font-extrabold mb-1" style="color: var(--text); letter-spacing: -0.02em;">Century Gate Dashboard</h1>
-              <p class="text-sm" style="color: var(--sub);">Overview of orders, revenue and operational status</p>
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h1 class="text-2xl md:text-3xl font-extrabold mb-1" style="color: var(--text); letter-spacing: -0.02em;">Century Gate Dashboard</h1>
+                  <p class="text-sm" style="color: var(--sub);">Overview of orders, revenue and operational status</p>
+                </div>
+                <button onclick="setView('orders')" class="btn btn-ghost shrink-0" style="background: var(--card); border: 1px solid var(--border);">
+                  <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                  <span>View All Orders</span>
+                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+              </div>
             </div>
 
             <!-- KPI Row -->
@@ -1330,8 +1334,16 @@ function renderOrdersContent() {
 
   return `
 <div class="fade-up">
-              <h1 class="text-2xl md:text-3xl font-extrabold mb-1" style="color: var(--text); letter-spacing: -0.02em;">Orders</h1>
-              <p class="text-sm" style="color: var(--sub);">Search, filter and track all customer orders</p>
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h1 class="text-2xl md:text-3xl font-extrabold mb-1" style="color: var(--text); letter-spacing: -0.02em;">Orders</h1>
+                  <p class="text-sm" style="color: var(--sub);">Search, filter and track all customer orders</p>
+                </div>
+                <button onclick="setView('dashboard')" class="btn btn-ghost shrink-0" style="background: var(--card); border: 1px solid var(--border);">
+                  <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                  <span>Dashboard</span>
+                </button>
+              </div>
             </div>
 
             <!-- Search + actions -->
@@ -1459,6 +1471,13 @@ function renderOrderDetailModal() {
   function field(label, value) {
     return '<div class="space-y-1"><dt class="text-[11px] uppercase tracking-wide font-medium" style="color: var(--sub);">' + label + '</dt><dd class="text-sm font-medium" style="color: var(--text);">' + (value == null || value === '' ? '<span style="color:var(--muted);">\u2014</span>' : value) + '</dd></div>';
   }
+  // Colored field for the Quantity & Pricing section — each metric gets a distinct
+  // semantic color so they're easy to spot at a glance in the order detail modal.
+  // Quantity = cyan, Unit Price = amber, Cliche = violet, Total Value = primary blue.
+  function coloredField(label, value, color, icon) {
+    const valHtml = (value == null || value === '') ? '<span style="color:var(--muted);">\u2014</span>' : value;
+    return '<div class="space-y-1"><dt class="text-[11px] uppercase tracking-wide font-medium flex items-center gap-1.5" style="color: ' + color + ';">' + (icon ? '<i data-lucide="' + icon + '" class="w-3 h-3"></i>' : '') + label + '</dt><dd class="text-sm font-bold" style="color: ' + color + ';">' + valHtml + '</dd></div>';
+  }
 
   return `
     <div class="modal-backdrop" role="dialog" aria-modal="true" onclick="if(event.target===this)closeOrderDetail()">
@@ -1497,14 +1516,14 @@ function renderOrderDetailModal() {
           <hr style="border-color: var(--border);">
 
           <dl class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            ${field('Quantity', formatNumber(order.quantity))}
-            ${field('Qty Unit', esc(order.qtyUnit))}
-            ${field('Unit Price', formatSAR(order.unitPrice))}
-            ${field('Cliche Value', formatSAR(order.clicheValue))}
+            ${coloredField('Quantity', formatNumber(order.quantity), '#06B6D4', 'hash')}
+            ${coloredField('Qty Unit', esc(order.qtyUnit), '#06B6D4', 'ruler')}
+            ${coloredField('Unit Price', formatSAR(order.unitPrice), '#F59E0B', 'tag')}
+            ${coloredField('Cliche Value', formatSAR(order.clicheValue), '#8B5CF6', 'palette')}
             ${field('Remaining Qty', formatNumber(order.remainingQty))}
             ${field('50% Advance', esc(order.advance50Paid))}
             ${field('Full Payment', esc(order.fullPayment))}
-            <div class="space-y-1"><dt class="text-[11px] uppercase tracking-wide font-medium" style="color: var(--sub);">Total Value</dt><dd class="text-lg font-bold" style="color: var(--primary);">${formatSAR(order.totalValue)}</dd></div>
+            <div class="space-y-1"><dt class="text-[11px] uppercase tracking-wide font-medium flex items-center gap-1.5" style="color: var(--primary);"><i data-lucide="banknote" class="w-3 h-3"></i>Total Value</dt><dd class="text-lg font-bold" style="color: var(--primary);">${formatSAR(order.totalValue)}</dd></div>
           </dl>
         </div>
         <div class="p-6 border-t flex gap-2" style="border-color: var(--border); background: var(--hover);">
