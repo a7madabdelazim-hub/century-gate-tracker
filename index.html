@@ -723,6 +723,44 @@ function toggleSidebar() {
   if (ov) ov.style.display = state.sidebarOpen ? 'block' : 'none';
 }
 
+// Swipe-left-to-close gesture for mobile sidebar (native iOS pattern)
+// Only attaches once, on first render.
+let _sidebarSwipeAttached = false;
+function attachSidebarSwipe() {
+  if (_sidebarSwipeAttached) return;
+  _sidebarSwipeAttached = true;
+  let startX = null, currentX = null, swiping = false;
+  document.addEventListener('touchstart', (e) => {
+    if (!state.sidebarOpen) return;
+    startX = e.touches[0].clientX;
+    swiping = true;
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!swiping || startX === null) return;
+    currentX = e.touches[0].clientX;
+    const sb = document.getElementById('sidebar');
+    if (sb && currentX < startX) {
+      const offset = startX - currentX;
+      sb.style.transform = 'translateX(-' + offset + 'px)';
+      sb.style.transition = 'none';
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', () => {
+    if (!swiping) return;
+    const sb = document.getElementById('sidebar');
+    if (sb) sb.style.transition = '';
+    if (currentX !== null && startX !== null && (startX - currentX) > 80) {
+      // Swiped left far enough — close
+      if (sb) sb.style.transform = '';
+      toggleSidebar();
+    } else {
+      // Not far enough — snap back
+      if (sb) sb.style.transform = '';
+    }
+    startX = null; currentX = null; swiping = false;
+  }, { passive: true });
+}
+
 // ============================================================
 // RENDER — main entry point
 // ============================================================
@@ -747,14 +785,19 @@ function render() {
       app.dataset.view = 'orders';
     }
     attachEventListeners();
+    attachSidebarSwipe();
 
     // Always rebuild lucide icons — innerHTML replaces the whole DOM tree
     if (window.lucide) lucide.createIcons();
 
-    // Animated counters — only on first load (not on every view switch)
+    // Animated counters — only animate on first load.
+    // On subsequent renders (view switches), set final value instantly so
+    // numbers don't get stuck at the "0" placeholder.
     if (!state.countersAnimated) {
-      animateCounters();
+      animateCounters(false);
       state.countersAnimated = true;
+    } else {
+      animateCounters(true);
     }
 
     // Restore focus + selection
@@ -781,13 +824,20 @@ function render() {
 
 // ============================================================
 // ANIMATED COUNTERS
+// instant=true → set final value immediately (no animation)
+// instant=false → count up from 0 to target over ~1.4s
 // ============================================================
-function animateCounters() {
+function animateCounters(instant) {
   document.querySelectorAll('[data-count]').forEach(el => {
     const target = parseFloat(el.dataset.count);
     const prefix = el.dataset.prefix || '';
     const suffix = el.dataset.suffix || '';
     const isShort = el.dataset.short === 'true';
+    const finalText = prefix + (isShort ? formatShort(target) : target) + suffix;
+    if (instant) {
+      el.textContent = finalText;
+      return;
+    }
     const duration = 1400;
     const start = performance.now();
     function tick(now) {
@@ -796,7 +846,7 @@ function animateCounters() {
       const val = Math.floor(target * eased);
       el.textContent = prefix + (isShort ? formatShort(val) : val) + suffix;
       if (t < 1) requestAnimationFrame(tick);
-      else el.textContent = prefix + (isShort ? formatShort(target) : target) + suffix;
+      else el.textContent = finalText;
     }
     requestAnimationFrame(tick);
   });
@@ -815,10 +865,11 @@ function renderSidebar() {
     <aside id="sidebar" class="sidebar slide-in flex flex-col">
       <div class="px-5 py-5 flex items-center gap-3 border-b" style="border-color: var(--border);">
         <div class="logo-glow shrink-0" style="background: var(--primary-grad); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; letter-spacing: 1px; font-size: 16px;">CGC</div>
-        <div>
+        <div class="flex-1 min-w-0">
           <div class="font-bold text-base" style="color: var(--text);">Century Gate</div>
           <div class="text-[10px] uppercase tracking-wider" style="color: var(--sub);">Order Tracker</div>
         </div>
+        <button class="btn-icon lg:hidden" style="width:32px;height:32px;flex-shrink:0;" onclick="toggleSidebar()" aria-label="Close sidebar"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
       <nav class="flex-1 px-3 py-4 space-y-1">
         <p class="px-3 pb-2 text-[10px] uppercase tracking-wider font-semibold" style="color: var(--muted);">Workspace</p>
