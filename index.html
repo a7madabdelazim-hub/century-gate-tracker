@@ -286,13 +286,14 @@ select.input option {
     -moz-appearance: auto;
     background-image: none !important;
     padding-right: 12px !important;
+    font-size: 16px !important;
   }
 }
 /* MOBILE FIX: Cap the search bar width so the greeting is visible on iPhone.
    Without this, flex:1 1 auto makes the search bar greedily fill all leftover
    space, pushing the greeting off-screen. */
 @media (max-width: 768px) {
-  .cmd-trigger-topbar { flex: 0 1 auto !important; max-width: 110px !important; min-width: 60px !important; }
+  .cmd-trigger-topbar { flex: 0 1 auto !important; max-width: 80px !important; min-width: 50px !important; }
 }
 
 .modal-backdrop {
@@ -1092,7 +1093,7 @@ function renderTopbar(title, subtitle) {
       </div>
       <span class="liquid-text shrink-0" style="font-size: 14px; margin-right: 4px; white-space: nowrap;">Madinah Area</span>
       <div class="header-greeting text-right shrink-0" style="margin-right: 4px;">
-        <div class="text-xs font-semibold" style="color: var(--text); line-height: 1.2;">${greeting}, Admin 👋</div>
+        <div class="text-xs font-semibold" style="color: var(--text); line-height: 1.2;">${greeting} 👋</div>
         <div class="text-[10px] hidden sm:block" style="color: var(--sub);">${today}</div>
       </div>
       <button class="btn-icon shrink-0" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="${state.theme === 'dark' ? 'moon' : 'sun'}" class="w-5 h-5" id="theme-icon"></i></button>
