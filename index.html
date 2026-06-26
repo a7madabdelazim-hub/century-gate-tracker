@@ -278,22 +278,27 @@ select.input option {
 /* MOBILE FIX: On iOS, appearance:none + custom arrow + padding-right narrows the
    select's text area and causes option text to truncate. On mobile we revert to
    the NATIVE iOS select rendering — no custom arrow, no padding-right, full text
-   width. iOS's native chevron is used instead. Desktop keeps the custom arrow. */
+   width. iOS's native chevron is used instead. Desktop keeps the custom arrow.
+   Vertical clipping fix: increase vertical padding + line-height + min-height so
+   ascenders/descenders of letters (like 'p' in 'Completed', 't' in 'Progress')
+   are no longer sliced off at the top/bottom. */
 @media (max-width: 768px) {
   select.input {
     appearance: auto;
     -webkit-appearance: auto;
     -moz-appearance: auto;
     background-image: none !important;
-    padding-right: 12px !important;
-    font-size: 16px !important;
+    padding: 14px 12px !important;
+    line-height: 1.5 !important;
+    min-height: 44px !important;
+    font-size: 14px !important;
   }
 }
-/* MOBILE FIX: Cap the search bar width so the greeting is visible on iPhone.
-   Without this, flex:1 1 auto makes the search bar greedily fill all leftover
-   space, pushing the greeting off-screen. */
+/* MOBILE FIX: Shrink the search bar to an icon-only button (40×40) so the greeting
+   is visible on iPhone. Desktop keeps the full search bar with text. */
 @media (max-width: 768px) {
-  .cmd-trigger-topbar { flex: 0 1 auto !important; max-width: 80px !important; min-width: 50px !important; }
+  .cmd-trigger-topbar { flex: 0 0 auto !important; width: 40px !important; min-width: 40px !important; max-width: 40px !important; padding: 8px !important; justify-content: center !important; }
+  .cmd-trigger-topbar > span { display: none !important; }
 }
 
 .modal-backdrop {
