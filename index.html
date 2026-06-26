@@ -1099,11 +1099,11 @@ function renderTopbar(title, subtitle) {
         <i data-lucide="search" class="w-4 h-4 shrink-0" style="color: var(--sub);"></i>
         <span class="text-sm flex-1 truncate" style="color: var(--muted);">Search...</span>
       </div>
-      <span class="liquid-text shrink-0" style="font-size: 14px; margin-right: 4px; white-space: nowrap;">Madinah Area</span>
-      <div class="header-greeting text-right shrink-0" style="margin-right: 4px;">
-        <div class="text-xs font-semibold" style="color: var(--text); line-height: 1.2;">${greeting} 👋</div>
-        <div class="text-[10px] hidden sm:block" style="color: var(--sub);">${today}</div>
+      <div class="header-greeting text-right shrink-0" style="margin-left: auto; margin-right: 4px;">
+        <div class="text-xs font-semibold" style="color: var(--text); line-height: 1.2; white-space: nowrap;">${greeting}, Admin 👋</div>
+        <div class="text-[10px]" style="color: var(--sub); white-space: nowrap;">${today}</div>
       </div>
+      <span class="liquid-text shrink-0" style="font-size: 12px; margin-right: 4px; white-space: nowrap;">Madinah</span>
       <button class="btn-icon shrink-0" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="${state.theme === 'dark' ? 'moon' : 'sun'}" class="w-5 h-5" id="theme-icon"></i></button>
     </header>
   `;
