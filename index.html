@@ -777,29 +777,52 @@ function render() {
   requestAnimationFrame(() => {
     const app = document.getElementById('app');
     const viewChanged = (app.dataset.view || '') !== state.view;
+    const shellExists = document.getElementById('main-content') !== null;
 
-    if (state.view === 'dashboard') {
-      app.innerHTML = renderDashboard();
-      app.dataset.view = 'dashboard';
-      renderDashboardCharts();
+    if (viewChanged || !shellExists) {
+      // FULL SHELL REBUILD — only on view switch or first load.
+      // This is the only path that touches sidebar + topbar, so the sidebar
+      // state and overlay never get out of sync on filter/sort/search changes.
+      app.innerHTML = renderShell();
+      app.dataset.view = state.view;
+      renderMainContent();
+      renderModals();
+      if (window.lucide) lucide.createIcons();
+      if (state.view === 'dashboard') {
+        renderDashboardCharts();
+        // Animated counters — only animate on first load.
+        if (!state.countersAnimated) {
+          animateCounters(false);
+          state.countersAnimated = true;
+        } else {
+          animateCounters(true);
+        }
+      }
     } else {
-      app.innerHTML = renderOrders();
-      app.dataset.view = 'orders';
+      // PARTIAL UPDATE — only re-render content + modals.
+      // Sidebar + topbar persist untouched → no white flash, no sidebar close bug.
+      renderMainContent();
+      renderModals();
+      // Only scan the content area for new icons (faster than full document scan)
+      if (window.lucide) {
+        const mc = document.getElementById('main-content');
+        const mod = document.getElementById('modal-container');
+        if (mc) lucide.createIcons({ root: mc });
+        if (mod) lucide.createIcons({ root: mod });
+        // Fallback: if scoped scan didn't work (older lucide versions), do full scan
+        // We detect this by checking if any [data-lucide] remain unprocessed
+        const unprocessed = document.querySelectorAll('[data-lucide]:not(svg)');
+        if (unprocessed.length > 0) lucide.createIcons();
+      }
+      // Charts: only rebuild if we're on dashboard (they don't depend on order filters,
+      // but they DO depend on order data which changes when orders are created/edited/deleted).
+      // We detect this by checking if the chart canvases exist but data may have changed.
+      // For now, only rebuild charts on view change (handled above) to avoid lag.
+      // Charts will refresh when user switches to dashboard view.
     }
+
+    syncSidebarState();
     attachEventListeners();
-
-    // Always rebuild lucide icons — innerHTML replaces the whole DOM tree
-    if (window.lucide) lucide.createIcons();
-
-    // Animated counters — only animate on first load.
-    // On subsequent renders (view switches), set final value instantly so
-    // numbers don't get stuck at the "0" placeholder.
-    if (!state.countersAnimated) {
-      animateCounters(false);
-      state.countersAnimated = true;
-    } else {
-      animateCounters(true);
-    }
 
     // Restore focus + selection
     if (focusId) {
@@ -821,6 +844,65 @@ function render() {
     }
     window.scrollTo(0, scrollY);
   });
+}
+
+// ============================================================
+// SHELL — sidebar + topbar wrapper + content container + modal container
+// Rendered once on view change; persists across filter/sort/search updates.
+// ============================================================
+function renderShell() {
+  const title = state.view === 'dashboard' ? 'Dashboard' : 'Orders';
+  const subtitle = state.view === 'dashboard' ? 'Overview of orders, revenue and operational status' : 'Search, filter and track all customer orders';
+  return `
+    <div class="flex min-h-screen w-full">
+      ${renderSidebar()}
+      <div class="flex-1 flex flex-col min-w-0">
+        ${renderTopbar(title, subtitle)}
+        <main class="flex-1 p-4 md:p-6 pb-24 lg:pb-6">
+          <div id="main-content" class="max-w-[1600px] mx-auto ${state.view === 'dashboard' ? 'space-y-6' : 'space-y-4'}"></div>
+        </main>
+      </div>
+    </div>
+    <div id="modal-container"></div>
+  `;
+}
+
+// Render only the main content area (KPIs/charts OR orders table)
+function renderMainContent() {
+  const mc = document.getElementById('main-content');
+  if (!mc) return;
+  if (state.view === 'dashboard') {
+    mc.innerHTML = renderDashboardContent();
+  } else {
+    mc.innerHTML = renderOrdersContent();
+  }
+}
+
+// Render modals into the modal container (separate from main content)
+function renderModals() {
+  const mc = document.getElementById('modal-container');
+  if (!mc) return;
+  mc.innerHTML = renderOrderDetailModal() + renderOrderFormModal();
+}
+
+// Sync sidebar open/closed state + overlay after every render.
+// This is THE fix for the recurring "sidebar won't close" bug.
+function syncSidebarState() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  if (sb) {
+    if (state.sidebarOpen) {
+      sb.classList.add('open');
+    } else {
+      sb.classList.remove('open');
+    }
+    // Clear any stale inline transform from old swipe code
+    sb.style.transform = '';
+    sb.style.transition = '';
+  }
+  if (ov) {
+    ov.style.display = state.sidebarOpen ? 'block' : 'none';
+  }
 }
 
 // ============================================================
@@ -980,16 +1062,10 @@ function closeNotifs() {
 // ============================================================
 // DASHBOARD VIEW
 // ============================================================
-function renderDashboard() {
+function renderDashboardContent() {
   const s = getStats();
   return `
-    <div class="flex min-h-screen w-full">
-      ${renderSidebar()}
-      <div class="flex-1 flex flex-col min-w-0">
-        ${renderTopbar('Dashboard', 'Overview of orders, revenue and operational status')}
-        <main class="flex-1 p-4 md:p-6 pb-24 lg:pb-6">
-          <div class="max-w-[1600px] mx-auto space-y-6">
-            <div class="fade-up">
+<div class="fade-up">
               <h1 class="text-2xl md:text-3xl font-extrabold mb-1" style="color: var(--text); letter-spacing: -0.02em;">Century Gate Dashboard</h1>
               <p class="text-sm" style="color: var(--sub);">Overview of orders, revenue and operational status</p>
             </div>
@@ -1134,13 +1210,6 @@ function renderDashboard() {
                 </div>
               </div>
             </div>
-
-          </div>
-        </main>
-      </div>
-    </div>
-    ${renderOrderDetailModal()}
-    ${renderOrderFormModal()}
   `;
 }
 
@@ -1235,7 +1304,7 @@ function renderDashboardCharts() {
 // ============================================================
 // ORDERS VIEW
 // ============================================================
-function renderOrders() {
+function renderOrdersContent() {
   const filtered = getFilteredOrders();
   const total = filtered.length;
   const totalPages = Math.ceil(total / state.pageSize) || 1;
@@ -1260,14 +1329,7 @@ function renderOrders() {
   };
 
   return `
-    <div class="flex min-h-screen w-full">
-      ${renderSidebar()}
-      <div class="flex-1 flex flex-col min-w-0">
-        ${renderTopbar('Orders', 'Search, filter and track all customer orders')}
-        <main class="flex-1 p-4 md:p-6 pb-24 lg:pb-6">
-          <div class="max-w-[1600px] mx-auto space-y-4">
-
-            <div class="fade-up">
+<div class="fade-up">
               <h1 class="text-2xl md:text-3xl font-extrabold mb-1" style="color: var(--text); letter-spacing: -0.02em;">Orders</h1>
               <p class="text-sm" style="color: var(--sub);">Search, filter and track all customer orders</p>
             </div>
@@ -1367,13 +1429,6 @@ function renderOrders() {
                 </div>
               </div>
             </div>
-
-          </div>
-        </main>
-      </div>
-    </div>
-    ${renderOrderDetailModal()}
-    ${renderOrderFormModal()}
   `;
 }
 
@@ -2080,7 +2135,7 @@ function attachEventListeners() {
       state.search = e.target.value;
       state.page = 1;
       clearTimeout(window._searchTimer);
-      window._searchTimer = setTimeout(() => { render(); }, 200);
+      window._searchTimer = setTimeout(() => { render(); }, 300);
     }, { passive: true });
   }
 
