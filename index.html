@@ -344,23 +344,40 @@ select.input option { background: var(--card); color: var(--text); }
 }
 
 .fab {
-  position: fixed; bottom: max(24px, env(safe-area-inset-bottom)); right: 24px;
+  position: fixed; bottom: calc(84px + env(safe-area-inset-bottom)); right: 20px;
   width: 56px; height: 56px; border-radius: 50%;
   background: var(--primary-grad); color: white; border: none; cursor: pointer;
   box-shadow: 0 12px 32px var(--primary-glow);
-  display: none; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   z-index: 45; transition: transform 0.2s;
 }
 .fab:hover { transform: scale(1.08) rotate(90deg); }
 .fab:active { transform: scale(0.95); }
 
-.mobile-menu-btn { display: none; }
-@media (max-width: 1024px) {
-  .sidebar { position: fixed; top: 0; left: 0; transform: translateX(-100%); box-shadow: 0 0 60px rgba(0,0,0,0.4); }
-  .sidebar.open { transform: translateX(0); }
-  .mobile-menu-btn { display: inline-flex; }
-  .fab { display: flex; }
+/* Bottom nav (replaces sidebar entirely) — Dashboard + Orders */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+  background: var(--sidebar); border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  padding: 10px 16px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  display: flex; gap: 10px; justify-content: center;
 }
+.nav-btn {
+  flex: 1; max-width: 200px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 16px; border-radius: 12px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.2s;
+  color: var(--sub); background: var(--card);
+  font-family: inherit;
+}
+.nav-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.nav-btn.active {
+  background: var(--primary-grad); color: white; border-color: transparent;
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+
 @media (max-width: 768px) {
   .header-greeting { display: none; }
 }
@@ -850,15 +867,35 @@ function renderShell() {
   const subtitle = state.view === 'dashboard' ? 'Overview of orders, revenue and operational status' : 'Search, filter and track all customer orders';
   return `
     <div class="flex min-h-screen w-full">
-      ${renderSidebar()}
       <div class="flex-1 flex flex-col min-w-0">
         ${renderTopbar(title, subtitle)}
-        <main class="flex-1 p-4 md:p-6 pb-24 lg:pb-6">
+        <main class="flex-1 p-4 md:p-6" style="padding-bottom: calc(96px + env(safe-area-inset-bottom));">
           <div id="main-content" class="max-w-[1600px] mx-auto ${state.view === 'dashboard' ? 'space-y-6' : 'space-y-4'}"></div>
         </main>
       </div>
     </div>
+    ${renderBottomNav()}
     <div id="modal-container"></div>
+  `;
+}
+
+// ============================================================
+// BOTTOM NAV — replaces the sidebar entirely.
+// Two tabs: Dashboard + Orders. Always visible at the bottom on all screen sizes.
+// Positioned with safe-area-inset-bottom so it clears the iPhone home indicator.
+// ============================================================
+function renderBottomNav() {
+  return `
+    <nav class="bottom-nav">
+      <button class="nav-btn ${state.view === 'dashboard' ? 'active' : ''}" onclick="setView('dashboard')">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-btn ${state.view === 'orders' ? 'active' : ''}" onclick="setView('orders')">
+        <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+        <span>Orders</span>
+      </button>
+    </nav>
   `;
 }
 
@@ -987,7 +1024,6 @@ function renderTopbar(title, subtitle) {
   const overdueCount = state.orders.filter(o => isOverdue(o.deadline, o.deliveryStatus)).length;
   return `
     <header class="sticky top-0 z-30 px-4 md:px-6 py-3 flex items-center gap-3" style="background: var(--topbar-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding-top: max(0.75rem, env(safe-area-inset-top));">
-      <button class="btn-icon mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
       <div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl cursor-pointer transition-all" onclick="openCmdPalette()" style="background: var(--card); border: 1px solid var(--border); min-width: 200px; flex: 0 1 auto;">
         <i data-lucide="search" class="w-4 h-4" style="color: var(--sub);"></i>
         <span class="text-sm flex-1 hidden md:inline" style="color: var(--muted);">Search...</span>
@@ -1015,7 +1051,6 @@ function renderTopbar(title, subtitle) {
           </div>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="openCreateForm()"><i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden sm:inline">New Order</span></button>
     </header>
   `;
 }
@@ -1342,11 +1377,7 @@ function renderOrdersContent() {
                 </button>
                 <button onclick="exportPDF()" id="pdf-btn" aria-label="Export to PDF" class="btn btn-ghost shrink-0" title="Export current filtered orders as PDF">
                   <i data-lucide="file-text" class="w-4 h-4"></i>
-                  <span class="hidden sm:inline">Export PDF</span>
-                </button>
-                <button onclick="openCreateForm()" aria-label="Create new order" class="btn btn-primary shrink-0">
-                  <i data-lucide="plus" class="w-4 h-4"></i>
-                  <span class="hidden sm:inline">New Order</span>
+                  <span>Export PDF</span>
                 </button>
               </div>
 
@@ -1936,7 +1967,7 @@ function exportPDF() {
     if (filtered.length === 0) {
       toast('No orders to export', 'No orders match your current filters.', 'destructive');
       state.isExportingPdf = false;
-      if (btn) btn.innerHTML = '<i data-lucide="file-text" class="w-4 h-4"></i> <span class="hidden sm:inline">Export PDF</span>';
+      if (btn) btn.innerHTML = '<i data-lucide="file-text" class="w-4 h-4"></i> <span>Export PDF</span>';
       if (window.lucide) lucide.createIcons();
       return;
     }
@@ -2122,7 +2153,7 @@ function exportPDF() {
     toast('PDF export failed', e.message || 'An unexpected error occurred.', 'destructive');
   } finally {
     state.isExportingPdf = false;
-    if (btn) btn.innerHTML = '<i data-lucide="file-text" class="w-4 h-4"></i> <span class="hidden sm:inline">Export PDF</span>';
+    if (btn) btn.innerHTML = '<i data-lucide="file-text" class="w-4 h-4"></i> <span>Export PDF</span>';
     if (window.lucide) lucide.createIcons();
   }
 }
