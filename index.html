@@ -372,6 +372,21 @@ button, nav, aside { -webkit-user-select: none; user-select: none; }
 .trend-flat { color: var(--muted); }
 .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
 .sortbtn { display: flex; align-items: center; gap: 4px; font-weight: 700; }
+
+/* Toolbar: stacked on phones, sized columns from md up.
+   flex-basis must NOT be set while the container is a column —
+   in column direction basis is the HEIGHT, which stretched the
+   filter cells to 340px/220px tall on iPhone. */
+.toolbar { display: flex; flex-direction: column; gap: 12px; }
+.toolbar > * { min-width: 0; width: 100%; }
+@media (min-width: 768px) {
+  .toolbar { flex-direction: row; align-items: center; }
+  .toolbar > * { width: auto; }
+  .tb-grow { flex: 1 1 340px; }
+  .tb-220  { flex: 0 1 220px; }
+  .tb-210  { flex: 0 1 210px; }
+  .tb-auto { flex: 0 0 auto; }
+}
 .table-wrap { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
 .table-wrap > div { overflow-x: auto; overflow-y: auto; }
 .table-embed { min-width: 560px; font-size: 13px; }
@@ -1217,61 +1232,52 @@ function uniqueValues(field) {
   return Array.from(set).sort();
 }
 
-function renderOrdersContent() {
+// The Orders view is split into three regions so that typing in the
+// search box can refresh ONLY the data regions. Re-rendering the
+// toolbar would destroy and recreate the focused <input>, which on iOS
+// dismisses and re-opens the keyboard and resets the shift/caps key.
+function ordersKpis() {
   const filtered = getFilteredOrders();
-  const total = filtered.length;
-  const totalPages = Math.ceil(total / state.pageSize) || 1;
-  if (state.page > totalPages) state.page = totalPages;
-  if (state.page < 1) state.page = 1;
-  const start = (state.page - 1) * state.pageSize;
-  const pageData = filtered.slice(start, start + state.pageSize);
-
   const totalValue = filtered.reduce((s, o) => s + (o.totalValue || 0), 0);
   const overdueCount = filtered.filter(o => isOverdue(o.deadline, o.deliveryStatus)).length;
   const openCount = filtered.filter(o => o.deliveryStatus !== 'Fully Delivered').length;
 
-  const activeFilterCount = [state.filterCustomer, state.filterCustomerGroup, state.filterProductType,
-    state.filterOrderType, state.filterProduction, state.filterInvoice, state.filterDelivery].filter(Boolean).length;
-
-  const sortIcon = (field) => {
-    if (state.sortBy !== field) return '<i data-lucide="chevrons-up-down" class="w-3 h-3" style="opacity:0.35"></i>';
-    return '<i data-lucide="' + (state.sortDir === 'asc' ? 'arrow-up' : 'arrow-down') + '" class="w-3 h-3" style="color: var(--accent);"></i>';
-  };
-  const th = (field, label, cls) =>
-    `<th class="${cls || ''}"><button class="sortbtn" data-action="sort" data-field="${field}">${label} ${sortIcon(field)}</button></th>`;
-
   return `
-    ${pageHeader('Orders', 'Search, filter and track every customer order')}
-
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      ${kpiTile('primary', 'Orders shown', formatNumber(total), null, 'd1')}
+      ${kpiTile('primary', 'Orders shown', formatNumber(filtered.length), null, 'd1')}
       ${kpiTile('accent', 'Total value', formatSARShort(totalValue), null, 'd2')}
       ${kpiTile('info', 'Not delivered', formatNumber(openCount), null, 'd3')}
       ${kpiTile('danger', 'Overdue', formatNumber(overdueCount), null, 'd4')}
     </div>
-
     ${state.filterCustomerGroup ? `
       <div class="banner fade-up flex items-center gap-3">
         <div class="kpi-icon icon-violet shrink-0" style="width:36px;height:36px;border-radius:12px;"><i data-lucide="users" class="w-4 h-4"></i></div>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-bold" style="color: var(--text);">Showing every order for ${esc(state.filterCustomerGroup)}</p>
-          <p class="text-[11px]" style="color: var(--sub);">Includes all names merged into this customer.</p>
+          <p class="text-[11px]" style="color: var(--sub);">Includes every brand under this company.</p>
         </div>
         <button data-action="clear-group-filter" class="btn btn-ghost btn-sm shrink-0"><i data-lucide="x" class="w-3.5 h-3.5"></i> Clear</button>
       </div>
     ` : ''}
+  `;
+}
 
+function ordersToolbar() {
+  const activeFilterCount = [state.filterCustomer, state.filterCustomerGroup, state.filterProductType,
+    state.filterOrderType, state.filterProduction, state.filterInvoice, state.filterDelivery].filter(Boolean).length;
+
+  return `
     <div class="card p-4 md:p-5 fade-up">
-      <div class="flex flex-col md:flex-row gap-3">
-        <div class="relative flex-1">
+      <div class="toolbar">
+        <div class="relative tb-grow">
           <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--sub);"></i>
-          <input id="search-input" type="text" aria-label="Search orders" value="${attr(state.search)}" placeholder="Search order ID, customer, product or description..." class="input" style="padding-left: 38px;">
+          <input id="search-input" type="text" aria-label="Search orders" value="${attr(state.search)}" placeholder="Search order ID, customer, product or description..." class="input" style="padding-left: 38px;" data-upper="1" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
         </div>
-        <button data-action="toggle-filters" aria-label="Toggle filters" class="btn ${state.showFilters ? 'btn-primary' : 'btn-ghost'} shrink-0">
+        <button data-action="toggle-filters" aria-label="Toggle filters" class="btn ${state.showFilters ? 'btn-primary' : 'btn-ghost'} tb-auto">
           <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Filters
           ${activeFilterCount > 0 ? '<span style="margin-left:4px; background: var(--accent-soft); color:#A8811A; font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px;">' + activeFilterCount + '</span>' : ''}
         </button>
-        <button data-action="export-pdf" id="pdf-btn" aria-label="Export to PDF" class="btn btn-ghost shrink-0" title="Export the current filtered orders as PDF">
+        <button data-action="export-pdf" id="pdf-btn" aria-label="Export to PDF" class="btn btn-ghost tb-auto" title="Export the current filtered orders as PDF">
           <i data-lucide="file-down" class="w-4 h-4"></i><span>Export PDF</span>
         </button>
       </div>
@@ -1285,11 +1291,30 @@ function renderOrdersContent() {
           ${filterSelect('Invoice', 'filterInvoice', uniqueValues('invoiceStatus'))}
           ${filterSelect('Delivery', 'filterDelivery', uniqueValues('deliveryStatus'))}
         </div>
-        <p class="text-[11px] mt-2" style="color: var(--muted);">The customer filter uses the name as typed on the order, not the merged group name.</p>
+        <p class="text-[11px] mt-2" style="color: var(--muted);">The customer filter uses the name as typed on the order, not the company name.</p>
         ${activeFilterCount > 0 ? '<div class="mt-3"><button data-action="clear-filters" class="btn btn-ghost btn-sm"><i data-lucide="x" class="w-3.5 h-3.5"></i> Clear all filters</button></div>' : ''}
       ` : ''}
     </div>
+  `;
+}
 
+function ordersResults() {
+  const filtered = getFilteredOrders();
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / state.pageSize) || 1;
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+  const start = (state.page - 1) * state.pageSize;
+  const pageData = filtered.slice(start, start + state.pageSize);
+
+  const sortIcon = (field) => {
+    if (state.sortBy !== field) return '<i data-lucide="chevrons-up-down" class="w-3 h-3" style="opacity:0.35"></i>';
+    return '<i data-lucide="' + (state.sortDir === 'asc' ? 'arrow-up' : 'arrow-down') + '" class="w-3 h-3" style="color: var(--accent);"></i>';
+  };
+  const th = (field, label, cls) =>
+    `<th class="${cls || ''}"><button class="sortbtn" data-action="sort" data-field="${field}">${label} ${sortIcon(field)}</button></th>`;
+
+  return `
     <div class="card overflow-hidden fade-up">
       <div class="overflow-x-auto scroll-thin">
         <table class="table">
@@ -1321,7 +1346,7 @@ function renderOrdersContent() {
                     <td class="text-xs whitespace-nowrap" style="color: var(--sub);">${formatDate(o.orderDate)}</td>
                     <td class="font-semibold text-sm whitespace-nowrap" style="color: var(--text);">
                       ${dash(esc(o.customerName))}
-                      ${isGrouped ? '<span class="alias-tag" style="margin-left:6px;" title="Grouped under ' + attr(grouped) + ' on the Customers tab"><i data-lucide="link" class="w-2.5 h-2.5"></i>' + esc(grouped) + '</span>' : ''}
+                      ${isGrouped ? '<span class="alias-tag" style="margin-left:6px;" title="Shown under ' + attr(grouped) + ' on the Customers tab"><i data-lucide="building-2" class="w-2.5 h-2.5"></i>' + esc(grouped) + '</span>' : ''}
                     </td>
                     <td class="whitespace-nowrap">${productChip(o.productType)}</td>
                     <td class="text-xs max-w-[220px] truncate" style="color: var(--sub);">${dash(esc(o.description))}</td>
@@ -1344,6 +1369,15 @@ function renderOrdersContent() {
       </div>
       ${paginationBar(total, start, state.pageSize, state.page, totalPages, 'orders')}
     </div>
+  `;
+}
+
+function renderOrdersContent() {
+  return `
+    ${pageHeader('Orders', 'Search, filter and track every customer order')}
+    <div id="kpi-region" class="space-y-4">${ordersKpis()}</div>
+    ${ordersToolbar()}
+    <div id="results-region">${ordersResults()}</div>
   `;
 }
 
@@ -1382,7 +1416,57 @@ function filterSelect(label, stateKey, options) {
 // and when. This is the fastest way to answer "what did we
 // charge X for Y, and when?"
 // ============================================================
-function renderItemsContent() {
+// Split into regions for the same reason as the Orders view: typing in
+// the search box must never destroy the focused <input>.
+function itemsKpis() {
+  const allItems = buildItemIndex();
+  const distinctDescriptions = new Set(allItems.map(i => normName(i.description))).size;
+  const changed = allItems.filter(i => i.priceDelta != null && i.priceDelta !== 0).length;
+  const priced = allItems.filter(i => i.lastPrice != null);
+  const avgPrice = priced.length ? priced.reduce((s, i) => s + i.lastPrice, 0) / priced.length : null;
+
+  return `
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      ${kpiTile('primary', 'Customer / item pairs', formatNumber(allItems.length), null, 'd1')}
+      ${kpiTile('violet', 'Distinct items', formatNumber(distinctDescriptions), null, 'd2')}
+      ${kpiTile('accent', 'Avg unit price', avgPrice != null ? formatSAR(avgPrice) : DASH, null, 'd3')}
+      ${kpiTile('danger', 'Price changed', formatNumber(changed), 'since the previous order', 'd4')}
+    </div>
+  `;
+}
+
+function itemsToolbar() {
+  const allItems = buildItemIndex();
+  const customerOptions = Array.from(new Set(allItems.map(i => i.customer))).sort();
+  const productOptions = Array.from(new Set(allItems.map(i => i.productType).filter(Boolean))).sort();
+  const activeFilters = [state.itemFilterProduct, state.itemFilterCustomer].filter(Boolean).length;
+
+  return `
+    <div class="card p-4 md:p-5 fade-up">
+      <div class="toolbar">
+        <div class="relative tb-grow">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--sub);"></i>
+          <input id="item-search-input" type="text" aria-label="Search items" value="${attr(state.itemSearch)}" placeholder="Search an item or a customer — e.g. SOS BAG, or MESHRAQ..." class="input" style="padding-left: 38px;" data-upper="1" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="tb-220">
+          <select data-action="set-item-filter" data-key="itemFilterCustomer" class="input" aria-label="Filter by customer">
+            <option value="">All customers</option>
+            ${customerOptions.map(c => '<option value="' + attr(c) + '"' + (c === state.itemFilterCustomer ? ' selected' : '') + '>' + esc(c) + '</option>').join('')}
+          </select>
+        </div>
+        <div class="tb-210">
+          <select data-action="set-item-filter" data-key="itemFilterProduct" class="input" aria-label="Filter by product type">
+            <option value="">All product types</option>
+            ${productOptions.map(p => '<option value="' + attr(p) + '"' + (p === state.itemFilterProduct ? ' selected' : '') + '>' + esc(p) + '</option>').join('')}
+          </select>
+        </div>
+        ${activeFilters > 0 ? '<button data-action="clear-item-filters" class="btn btn-ghost tb-auto"><i data-lucide="x" class="w-4 h-4"></i> Clear</button>' : ''}
+      </div>
+    </div>
+  `;
+}
+
+function itemsResults() {
   const items = getFilteredItems();
   const total = items.length;
   const totalPages = Math.ceil(total / state.itemPageSize) || 1;
@@ -1391,15 +1475,9 @@ function renderItemsContent() {
   const start = (state.itemPage - 1) * state.itemPageSize;
   const pageData = items.slice(start, start + state.itemPageSize);
 
-  const allItems = buildItemIndex();
-  const distinctDescriptions = new Set(allItems.map(i => normName(i.description))).size;
-  const changed = allItems.filter(i => i.priceDelta != null && i.priceDelta !== 0).length;
-  const priced = allItems.filter(i => i.lastPrice != null);
-  const avgPrice = priced.length ? priced.reduce((s, i) => s + i.lastPrice, 0) / priced.length : null;
-
-  const customerOptions = Array.from(new Set(allItems.map(i => i.customer))).sort();
-  const productOptions = Array.from(new Set(allItems.map(i => i.productType).filter(Boolean))).sort();
-  const activeFilters = [state.itemFilterProduct, state.itemFilterCustomer].filter(Boolean).length;
+  if (total === 0) {
+    return emptyState('search-x', 'No items found', 'Nothing matches your search or filters. Try a shorter search term.');
+  }
 
   const sortIcon = (field) => {
     if (state.itemSort !== field) return '<i data-lucide="chevrons-up-down" class="w-3 h-3" style="opacity:0.35"></i>';
@@ -1409,40 +1487,6 @@ function renderItemsContent() {
     `<th class="${cls || ''}"><button class="sortbtn ${cls && cls.includes('text-right') ? 'ml-auto' : ''}" data-action="sort-item" data-field="${field}">${label} ${sortIcon(field)}</button></th>`;
 
   return `
-    ${pageHeader('Items & Prices', 'Every item a customer has ordered, with its price and date')}
-
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      ${kpiTile('primary', 'Customer / item pairs', formatNumber(allItems.length), null, 'd1')}
-      ${kpiTile('violet', 'Distinct items', formatNumber(distinctDescriptions), null, 'd2')}
-      ${kpiTile('accent', 'Avg unit price', avgPrice != null ? formatSAR(avgPrice) : DASH, null, 'd3')}
-      ${kpiTile('danger', 'Price changed', formatNumber(changed), 'since the previous order', 'd4')}
-    </div>
-
-    <div class="card p-4 md:p-5 fade-up">
-      <div class="flex flex-col md:flex-row gap-3 items-stretch">
-        <div class="relative" style="flex: 1 1 340px; min-width: 0;">
-          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--sub);"></i>
-          <input id="item-search-input" type="text" aria-label="Search items" value="${attr(state.itemSearch)}" placeholder="Search an item or a customer — e.g. SOS BAG, or MESHRAQ..." class="input" style="padding-left: 38px;">
-        </div>
-        <div style="flex: 0 1 220px; min-width: 0;">
-          <select data-action="set-item-filter" data-key="itemFilterCustomer" class="input" aria-label="Filter by customer">
-            <option value="">All customers</option>
-            ${customerOptions.map(c => '<option value="' + attr(c) + '"' + (c === state.itemFilterCustomer ? ' selected' : '') + '>' + esc(c) + '</option>').join('')}
-          </select>
-        </div>
-        <div style="flex: 0 1 210px; min-width: 0;">
-          <select data-action="set-item-filter" data-key="itemFilterProduct" class="input" aria-label="Filter by product type">
-            <option value="">All product types</option>
-            ${productOptions.map(p => '<option value="' + attr(p) + '"' + (p === state.itemFilterProduct ? ' selected' : '') + '>' + esc(p) + '</option>').join('')}
-          </select>
-        </div>
-        ${activeFilters > 0 ? '<button data-action="clear-item-filters" class="btn btn-ghost shrink-0"><i data-lucide="x" class="w-4 h-4"></i> Clear</button>' : ''}
-      </div>
-    </div>
-
-    ${total === 0
-      ? emptyState('search-x', 'No items found', 'Nothing matches your search or filters. Try a shorter search term.')
-      : `
     <div class="card overflow-hidden fade-up">
       <div class="overflow-x-auto scroll-thin">
         <table class="table">
@@ -1476,7 +1520,15 @@ function renderItemsContent() {
       </div>
       ${paginationBar(total, start, state.itemPageSize, state.itemPage, totalPages, 'items')}
     </div>
-    `}
+  `;
+}
+
+function renderItemsContent() {
+  return `
+    ${pageHeader('Items & Prices', 'Every item a customer has ordered, with its price and date')}
+    <div id="kpi-region" class="space-y-4">${itemsKpis()}</div>
+    ${itemsToolbar()}
+    <div id="results-region">${itemsResults()}</div>
   `;
 }
 
@@ -1606,8 +1658,9 @@ function customerInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function renderCustomersContent() {
-  const list = getCustomerList();
+// Split into regions so typing in the search box never destroys the
+// focused <input> (which on iOS closes the keyboard and drops caps lock).
+function customersKpis() {
   const allList = getCustomerList({ skipSearch: true });
   const totalValue = allList.reduce((s, c) => s + c.totalValue, 0);
   const withOverdue = allList.filter(c => c.overdueCount > 0).length;
@@ -1615,8 +1668,6 @@ function renderCustomersContent() {
   const suggestions = findDuplicateSuggestions();
 
   return `
-    ${pageHeader('Customers', 'Companies, their brand names and full order history')}
-
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       ${kpiTile('primary', 'Customers', formatNumber(allList.length), null, 'd1')}
       ${kpiTile('accent', 'Combined value', formatSARShort(totalValue), null, 'd2')}
@@ -1633,13 +1684,13 @@ function renderCustomersContent() {
             <p class="text-xs mt-0.5" style="color: var(--sub);">These names share a customer number or look nearly identical, so they are probably brands of one company. You can ignore this and group any names you like.</p>
             ${state.showMergeSuggestions ? `
               <div class="mt-3 space-y-2">
-                ${suggestions.map((s, idx) => `
+                ${suggestions.map((sg, idx) => `
                   <div class="rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-2" style="background: rgba(255,255,255,0.72); border: 1px solid var(--border);">
                     <div class="flex-1 min-w-0">
                       <div class="flex flex-wrap gap-1.5 mb-1">
-                        ${s.names.map(n => '<span class="chip chip-neutral" style="font-size:11px;padding:2px 9px;">' + esc(n) + '</span>').join('')}
+                        ${sg.names.map(n => '<span class="chip chip-neutral" style="font-size:11px;padding:2px 9px;">' + esc(n) + '</span>').join('')}
                       </div>
-                      <p class="text-[11px]" style="color: var(--muted);">${esc(s.detail)}</p>
+                      <p class="text-[11px]" style="color: var(--muted);">${esc(sg.detail)}</p>
                     </div>
                     <button data-action="merge-from-suggestion" data-idx="${idx}" class="btn btn-accent btn-sm shrink-0"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Name this company</button>
                   </div>
@@ -1651,42 +1702,60 @@ function renderCustomersContent() {
         </div>
       </div>
     ` : ''}
+  `;
+}
 
+function customersToolbar() {
+  return `
     <div class="card p-4 md:p-5 fade-up">
-      <div class="flex flex-col md:flex-row gap-3">
-        <div class="relative flex-1">
+      <div class="toolbar">
+        <div class="relative tb-grow">
           <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--sub);"></i>
-          <input id="customer-search-input" type="text" aria-label="Search customers" value="${attr(state.customerSearch)}" placeholder="Search by company, brand name, customer number or phone..." class="input" style="padding-left: 38px;">
+          <input id="customer-search-input" type="text" aria-label="Search customers" value="${attr(state.customerSearch)}" placeholder="Search by company, brand name, customer number or phone..." class="input" style="padding-left: 38px;" data-upper="1" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
         </div>
-        <button data-action="open-merge" class="btn btn-primary shrink-0"><i data-lucide="building-2" class="w-4 h-4"></i> Name a company</button>
+        <button data-action="open-merge" class="btn btn-primary tb-auto"><i data-lucide="building-2" class="w-4 h-4"></i> Name a company</button>
       </div>
     </div>
+  `;
+}
 
+function customersResults() {
+  const list = getCustomerList();
+  if (list.length === 0) return emptyState('user-x', 'No customers found', 'Nothing matches your search.');
+
+  return `
     <div class="space-y-2 fade-up">
-      ${list.length === 0
-        ? emptyState('user-x', 'No customers found', 'Nothing matches your search.')
-        : list.map(c => `
-          <div class="card card-hover w-full p-4 flex items-center gap-4" data-action="open-customer" data-customer="${attr(c.customerName)}">
-            <div class="avatar text-sm" style="width:46px;height:46px;">${esc(customerInitials(c.customerName))}</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <p class="text-sm font-bold truncate" style="color: var(--text);">${esc(c.customerName)}</p>
-                ${c.category ? '<span class="chip chip-info chip-plain" style="font-size:10px; padding:2px 8px;">' + esc(c.category) + '</span>' : ''}
-                ${c.brands.length > 1 ? '<span class="alias-tag"><i data-lucide="tags" class="w-2.5 h-2.5"></i>' + c.brands.length + ' brands</span>' : ''}
-                ${c.overdueCount > 0 ? '<span class="chip chip-danger" style="font-size:10px; padding:2px 8px;">' + c.overdueCount + ' overdue</span>' : ''}
-              </div>
-              <p class="text-xs mt-0.5" style="color: var(--sub);">${c.customerNumber ? '#' + esc(c.customerNumber) + ' · ' : ''}${c.orders} order${c.orders === 1 ? '' : 's'} · last ${formatDate(c.lastOrderDate)}</p>
-              ${c.brands.length > 1 ? '<p class="text-[10.5px] mt-1 truncate" style="color: var(--violet);">' + esc(c.brands.join(' · ')) + '</p>' : ''}
+      ${list.map(c => `
+        <div class="card card-hover w-full p-4 flex items-center gap-4" data-action="open-customer" data-customer="${attr(c.customerName)}">
+          <div class="avatar text-sm" style="width:46px;height:46px;">${esc(customerInitials(c.customerName))}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-sm font-bold truncate" style="color: var(--text);">${esc(c.customerName)}</p>
+              ${c.category ? '<span class="chip chip-info chip-plain" style="font-size:10px; padding:2px 8px;">' + esc(c.category) + '</span>' : ''}
+              ${c.brands.length > 1 ? '<span class="alias-tag"><i data-lucide="tags" class="w-2.5 h-2.5"></i>' + c.brands.length + ' brands</span>' : ''}
+              ${c.overdueCount > 0 ? '<span class="chip chip-danger" style="font-size:10px; padding:2px 8px;">' + c.overdueCount + ' overdue</span>' : ''}
             </div>
-            <div class="text-right shrink-0">
-              <p class="text-sm font-bold tabular-nums" style="color: var(--primary);">${formatSARShort(c.totalValue)}</p>
-              <p class="text-[11px]" style="color: var(--sub);">avg ${formatSARShort(c.avgOrder)}</p>
-            </div>
-            <button data-action="rename-company" data-customer="${attr(c.customerName)}" title="Rename this company" class="btn btn-ghost btn-sm shrink-0" style="padding:7px;"><i data-lucide="building-2" class="w-3.5 h-3.5"></i></button>
-            <i data-lucide="chevron-right" class="w-4 h-4 shrink-0" style="color: var(--muted);"></i>
+            <p class="text-xs mt-0.5" style="color: var(--sub);">${c.customerNumber ? '#' + esc(c.customerNumber) + ' · ' : ''}${c.orders} order${c.orders === 1 ? '' : 's'} · last ${formatDate(c.lastOrderDate)}</p>
+            ${c.brands.length > 1 ? '<p class="text-[10.5px] mt-1 truncate" style="color: var(--violet);">' + esc(c.brands.join(' · ')) + '</p>' : ''}
           </div>
-        `).join('')}
+          <div class="text-right shrink-0">
+            <p class="text-sm font-bold tabular-nums" style="color: var(--primary);">${formatSARShort(c.totalValue)}</p>
+            <p class="text-[11px]" style="color: var(--sub);">avg ${formatSARShort(c.avgOrder)}</p>
+          </div>
+          <button data-action="rename-company" data-customer="${attr(c.customerName)}" title="Rename this company" class="btn btn-ghost btn-sm shrink-0" style="padding:7px;"><i data-lucide="building-2" class="w-3.5 h-3.5"></i></button>
+          <i data-lucide="chevron-right" class="w-4 h-4 shrink-0" style="color: var(--muted);"></i>
+        </div>
+      `).join('')}
     </div>
+  `;
+}
+
+function renderCustomersContent() {
+  return `
+    ${pageHeader('Customers', 'Companies, their brand names and full order history')}
+    <div id="kpi-region" class="space-y-4">${customersKpis()}</div>
+    ${customersToolbar()}
+    <div id="results-region">${customersResults()}</div>
   `;
 }
 
@@ -1698,19 +1767,101 @@ function renderCustomersContent() {
 // single-brand company is just a rename. The typed name is free text
 // and has nothing to do with customer numbers.
 // ============================================================
-function renderMergeModal() {
-  if (!state.mergeOpen) return '';
+// Shared derivations so the modal and its scoped refresh agree.
+function mergeSelectedEntries() {
   const list = getCustomerList({ skipSearch: true });
-  const selected = state.mergeSelected.filter(n => list.some(c => normName(c.customerName) === normName(n)));
-  const selectedEntries = selected.map(n => list.find(c => normName(c.customerName) === normName(n))).filter(Boolean);
-  const affectedOrders = selectedEntries.reduce((s, c) => s + c.orders, 0);
-  const affectedValue = selectedEntries.reduce((s, c) => s + c.totalValue, 0);
-  const brandCount = selectedEntries.reduce((s, c) => s + Math.max(1, c.brands.length), 0);
+  return state.mergeSelected
+    .map(n => list.find(c => normName(c.customerName) === normName(n)))
+    .filter(Boolean);
+}
+function mergeCanApply() {
+  const target = state.mergeTargetName.trim();
+  const unchanged = !!state.mergeRenameOf && normName(target) === normName(state.mergeRenameOf);
+  return mergeSelectedEntries().length >= 1 && target.length > 0 && !unchanged;
+}
+
+// The scrollable pick-list — refreshed on its own so the search input survives.
+function mergeListRegion() {
+  const list = getCustomerList({ skipSearch: true });
+  const selected = mergeSelectedEntries().map(c => c.customerName);
+  const q = (state.mergeSearch || '').toLowerCase();
+  return list
+    .filter(c => !q || c.customerName.toLowerCase().includes(q) || c.brands.some(a => a.toLowerCase().includes(q)))
+    .sort((a, b) => {
+      const sa = selected.some(n => normName(n) === normName(a.customerName)) ? 0 : 1;
+      const sb = selected.some(n => normName(n) === normName(b.customerName)) ? 0 : 1;
+      return sa !== sb ? sa - sb : b.totalValue - a.totalValue;
+    })
+    .map(c => {
+      const on = selected.some(n => normName(n) === normName(c.customerName));
+      return `
+        <div data-action="toggle-merge-pick" data-customer="${attr(c.customerName)}" class="flex items-center gap-3 px-4 py-2.5 cursor-pointer" style="border-bottom: 1px solid var(--border); background: ${on ? 'rgba(127,168,255,0.14)' : 'transparent'};">
+          <div class="checkbox ${on ? 'on' : ''}"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold truncate" style="color: var(--text);">${esc(c.customerName)}</p>
+            <p class="text-[11px]" style="color: var(--sub);">${c.customerNumber ? '#' + esc(c.customerNumber) + ' · ' : ''}${c.orders} orders · ${formatSARShort(c.totalValue)}</p>
+            ${c.brands.length > 1 ? '<p class="text-[10.5px] mt-0.5 truncate" style="color: var(--violet);">brands: ' + esc(c.brands.join(', ')) + '</p>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+}
+
+// The live preview under the name box.
+function mergePreviewRegion() {
+  const entries = mergeSelectedEntries();
   const target = state.mergeTargetName.trim();
   const renaming = !!state.mergeRenameOf;
-  // One brand is enough. Naming a single-brand company is a rename.
   const unchanged = renaming && normName(target) === normName(state.mergeRenameOf);
-  const canApply = selected.length >= 1 && target.length > 0 && !unchanged;
+  const affectedOrders = entries.reduce((s, c) => s + c.orders, 0);
+  const affectedValue = entries.reduce((s, c) => s + c.totalValue, 0);
+  const brandCount = entries.reduce((s, c) => s + Math.max(1, c.brands.length), 0);
+
+  if (!mergeCanApply()) {
+    const msg = unchanged
+      ? 'That is already the company name — type a different one.'
+      : (renaming ? 'Type a company name to continue.' : 'Tick at least one brand and type a company name to continue.');
+    return '<p class="text-xs" style="color: var(--muted);">' + msg + '</p>';
+  }
+  return `
+    <div class="banner">
+      <p class="text-sm font-bold mb-1" style="color: var(--text);">Preview</p>
+      <p class="text-xs" style="color: var(--sub);">
+        <span class="font-bold" style="color: var(--primary);">${esc(target.toUpperCase())}</span> —
+        <span class="font-bold" style="color: var(--text);">${brandCount}</span> brand${brandCount === 1 ? '' : 's'} ·
+        <span class="font-bold" style="color: var(--text);">${affectedOrders}</span> orders ·
+        <span class="font-bold" style="color: var(--text);">${formatSARShort(affectedValue)}</span>
+      </p>
+      <p class="text-[11px] mt-1" style="color: var(--muted);">The Orders tab is unchanged — every order keeps the brand name you typed on it.</p>
+    </div>
+  `;
+}
+
+// The add-brand pick-list.
+function addBrandListRegion() {
+  const company = state.addBrandTo;
+  const q = (state.addBrandSearch || '').toLowerCase();
+  const shown = getCustomerList({ skipSearch: true })
+    .filter(c => normName(c.customerName) !== normName(company))
+    .filter(c => !q || c.customerName.toLowerCase().includes(q));
+  if (shown.length === 0) return '<p class="text-sm text-center py-8" style="color: var(--muted);">No other customers match.</p>';
+  return shown.map(c => `
+    <div data-action="pick-brand" data-customer="${attr(c.customerName)}" class="flex items-center gap-3 px-4 py-2.5 cursor-pointer" style="border-bottom: 1px solid var(--border);">
+      <i data-lucide="plus-circle" class="w-4 h-4 shrink-0" style="color: var(--violet);"></i>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate" style="color: var(--text);">${esc(c.customerName)}</p>
+        <p class="text-[11px]" style="color: var(--sub);">${c.customerNumber ? '#' + esc(c.customerNumber) + ' · ' : ''}${c.orders} orders · ${formatSARShort(c.totalValue)}${c.brands.length > 1 ? ' · brings ' + c.brands.length + ' brands' : ''}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderMergeModal() {
+  if (!state.mergeOpen) return '';
+  const selectedEntries = mergeSelectedEntries();
+  const renaming = !!state.mergeRenameOf;
+  // One brand is enough. Naming a single-brand company is a rename.
+  const canApply = mergeCanApply();
 
   const heading = renaming ? 'Rename company' : 'Set master company name';
   const blurb = renaming
@@ -1736,38 +1887,18 @@ function renderMergeModal() {
           ` : `
             <div class="space-y-1.5">
               <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--sub);">1. Tick this company's brands</label>
-              <input id="merge-search" type="text" value="${attr(state.mergeSearch || '')}" placeholder="Filter the list..." class="input">
+              <input id="merge-search" type="text" value="${attr(state.mergeSearch || '')}" placeholder="Filter the list..." class="input" data-upper="1" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
               <p class="text-[11px]" style="color: var(--muted);">Tick one brand to simply rename it, or several to put them under one company. Brands do not need the same customer number.</p>
             </div>
 
             <div class="rounded-2xl overflow-hidden" style="border: 1px solid var(--border); max-height: 250px; overflow-y: auto;">
-              ${list
-                .filter(c => !state.mergeSearch || c.customerName.toLowerCase().includes(state.mergeSearch.toLowerCase()) || c.aliases.some(a => a.toLowerCase().includes(state.mergeSearch.toLowerCase())))
-                // Ticked names stay pinned to the top while you type the company name.
-                .sort((a, b) => {
-                  const sa = selected.some(n => normName(n) === normName(a.customerName)) ? 0 : 1;
-                  const sb = selected.some(n => normName(n) === normName(b.customerName)) ? 0 : 1;
-                  return sa !== sb ? sa - sb : b.totalValue - a.totalValue;
-                })
-                .map(c => {
-                  const on = selected.some(n => normName(n) === normName(c.customerName));
-                  return `
-                    <div data-action="toggle-merge-pick" data-customer="${attr(c.customerName)}" class="flex items-center gap-3 px-4 py-2.5 cursor-pointer" style="border-bottom: 1px solid var(--border); background: ${on ? 'rgba(127,168,255,0.14)' : 'transparent'};">
-                      <div class="checkbox ${on ? 'on' : ''}"></div>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold truncate" style="color: var(--text);">${esc(c.customerName)}</p>
-                        <p class="text-[11px]" style="color: var(--sub);">${c.customerNumber ? '#' + esc(c.customerNumber) + ' · ' : ''}${c.orders} orders · ${formatSARShort(c.totalValue)}</p>
-                        ${c.brands.length > 1 ? '<p class="text-[10.5px] mt-0.5 truncate" style="color: var(--violet);">brands: ' + esc(c.brands.join(', ')) + '</p>' : ''}
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
+              <div id="merge-list-region">${mergeListRegion()}</div>
             </div>
           `}
 
           <div class="space-y-1.5">
             <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--sub);">${renaming ? 'New master company name' : '2. Type the master company name'}</label>
-            <input id="merge-target" type="text" value="${attr(state.mergeTargetName)}" placeholder="e.g. AL SHISHITO GROUP — type any name you want" class="input" autocapitalize="characters">
+            <input id="merge-target" type="text" value="${attr(state.mergeTargetName)}" placeholder="e.g. AL SHISHITO GROUP — type any name you want" class="input" data-upper="1" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
             <p class="text-[11px]" style="color: var(--muted);">Free text. It does not have to match any brand name or customer number.</p>
             ${!renaming && selectedEntries.length > 0 ? `
               <div class="flex flex-wrap gap-1.5 pt-1">
@@ -1776,25 +1907,12 @@ function renderMergeModal() {
             ` : ''}
           </div>
 
-          ${canApply ? `
-            <div class="banner">
-              <p class="text-sm font-bold mb-1" style="color: var(--text);">Preview</p>
-              <p class="text-xs" style="color: var(--sub);">
-                <span class="font-bold" style="color: var(--primary);">${esc(target.toUpperCase())}</span> —
-                <span class="font-bold" style="color: var(--text);">${brandCount}</span> brand${brandCount === 1 ? '' : 's'} ·
-                <span class="font-bold" style="color: var(--text);">${affectedOrders}</span> orders ·
-                <span class="font-bold" style="color: var(--text);">${formatSARShort(affectedValue)}</span>
-              </p>
-              <p class="text-[11px] mt-1" style="color: var(--muted);">The Orders tab is unchanged — every order keeps the brand name you typed on it.</p>
-            </div>
-          ` : `
-            <p class="text-xs" style="color: var(--muted);">${unchanged ? 'That is already the company name — type a different one.' : (renaming ? 'Type a company name to continue.' : 'Tick at least one brand and type a company name to continue.')}</p>
-          `}
+          <div id="merge-preview-region">${mergePreviewRegion()}</div>
         </div>
 
         <div class="p-5 flex gap-2 justify-end shrink-0" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);">
           <button data-action="close-merge" class="btn btn-ghost">Cancel</button>
-          <button data-action="confirm-merge" class="btn btn-primary" ${canApply ? '' : 'disabled'}><i data-lucide="building-2" class="w-4 h-4"></i> Review &amp; apply</button>
+          <button id="merge-apply-btn" data-action="confirm-merge" class="btn btn-primary" ${canApply ? '' : 'disabled'}><i data-lucide="building-2" class="w-4 h-4"></i> Review &amp; apply</button>
         </div>
       </div>
     </div>
@@ -1807,10 +1925,6 @@ function renderMergeModal() {
 function renderAddBrandModal() {
   if (!state.addBrandTo) return '';
   const company = state.addBrandTo;
-  const list = getCustomerList({ skipSearch: true })
-    .filter(c => normName(c.customerName) !== normName(company));
-  const q = (state.addBrandSearch || '').toLowerCase();
-  const shown = list.filter(c => !q || c.customerName.toLowerCase().includes(q));
 
   return `
     <div class="modal-backdrop" role="dialog" aria-modal="true" data-action="close-add-brand-backdrop">
@@ -1822,21 +1936,11 @@ function renderAddBrandModal() {
           </div>
         </div>
         <div class="p-6 pb-3 shrink-0">
-          <input id="add-brand-search" type="text" value="${attr(state.addBrandSearch || '')}" placeholder="Search a name..." class="input">
+          <input id="add-brand-search" type="text" value="${attr(state.addBrandSearch || '')}" placeholder="Search a name..." class="input" data-upper="1" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
         </div>
         <div class="px-6 pb-6 overflow-y-auto scroll-thin flex-1">
           <div class="rounded-2xl overflow-hidden" style="border: 1px solid var(--border);">
-            ${shown.length === 0
-              ? '<p class="text-sm text-center py-8" style="color: var(--muted);">No other customers match.</p>'
-              : shown.map(c => `
-                <div data-action="pick-brand" data-customer="${attr(c.customerName)}" class="flex items-center gap-3 px-4 py-2.5 cursor-pointer" style="border-bottom: 1px solid var(--border);">
-                  <i data-lucide="plus-circle" class="w-4 h-4 shrink-0" style="color: var(--violet);"></i>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold truncate" style="color: var(--text);">${esc(c.customerName)}</p>
-                    <p class="text-[11px]" style="color: var(--sub);">${c.customerNumber ? '#' + esc(c.customerNumber) + ' · ' : ''}${c.orders} orders · ${formatSARShort(c.totalValue)}${c.aliases.length ? ' · brings ' + c.aliases.length + ' brand' + (c.aliases.length === 1 ? '' : 's') : ''}</p>
-                  </div>
-                </div>
-              `).join('')}
+            <div id="add-brand-list-region">${addBrandListRegion()}</div>
           </div>
         </div>
         <div class="p-5 flex justify-end shrink-0" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);">
@@ -2958,15 +3062,70 @@ function handleDelegatedInput(e) {
   if (name === 'quantity' || name === 'unitPrice' || name === 'clicheValue') recalcTotalValue();
   if (name === 'customerName' || name === 'description') updateLastPriceHint();
 
-  if (el.id === 'merge-search') { state.mergeSearch = el.value; scheduleRender('merge'); }
-  if (el.id === 'add-brand-search') { state.addBrandSearch = el.value; scheduleRender('addBrand'); }
-  if (el.id === 'merge-target') { state.mergeTargetName = el.value; scheduleRender('merge'); }
+  if (el.id === 'merge-search') {
+    state.mergeSearch = el.value;
+    clearTimeout(_debounceTimers.merge);
+    _debounceTimers.merge = setTimeout(renderMergeScoped, 200);
+  }
+  if (el.id === 'merge-target') {
+    state.mergeTargetName = el.value;
+    clearTimeout(_debounceTimers.merge);
+    _debounceTimers.merge = setTimeout(renderMergeScoped, 200);
+  }
+  if (el.id === 'add-brand-search') {
+    state.addBrandSearch = el.value;
+    clearTimeout(_debounceTimers.addBrand);
+    _debounceTimers.addBrand = setTimeout(renderAddBrandScoped, 200);
+  }
 }
 
 const _debounceTimers = {};
 function scheduleRender(key, delay) {
   clearTimeout(_debounceTimers[key]);
   _debounceTimers[key] = setTimeout(() => render(), delay == null ? 260 : delay);
+}
+
+// Refresh ONLY the data regions of the current view.
+// The toolbar — and therefore the focused search <input> — is left in the
+// DOM untouched. Replacing that input is what made iOS close and re-open
+// the keyboard mid-typing and reset the shift/caps-lock key.
+function renderSearchScoped() {
+  const kpi = document.getElementById('kpi-region');
+  const res = document.getElementById('results-region');
+  if (!kpi || !res) { render(); return; }
+  if (state.view === 'items') {
+    kpi.innerHTML = itemsKpis();
+    res.innerHTML = itemsResults();
+  } else if (state.view === 'customers') {
+    kpi.innerHTML = customersKpis();
+    res.innerHTML = customersResults();
+  } else {
+    kpi.innerHTML = ordersKpis();
+    res.innerHTML = ordersResults();
+  }
+  if (window.lucide) lucide.createIcons();
+}
+function scheduleScopedRender(key, delay) {
+  clearTimeout(_debounceTimers[key]);
+  _debounceTimers[key] = setTimeout(() => renderSearchScoped(), delay == null ? 220 : delay);
+}
+
+// Same idea inside the company modal: refresh the list / preview only.
+function renderMergeScoped() {
+  const listEl = document.getElementById('merge-list-region');
+  const prevEl = document.getElementById('merge-preview-region');
+  if (!prevEl) { render(); return; }
+  if (listEl) listEl.innerHTML = mergeListRegion();
+  prevEl.innerHTML = mergePreviewRegion();
+  const btn = document.getElementById('merge-apply-btn');
+  if (btn) btn.disabled = !mergeCanApply();
+  if (window.lucide) lucide.createIcons();
+}
+function renderAddBrandScoped() {
+  const el = document.getElementById('add-brand-list-region');
+  if (!el) { render(); return; }
+  el.innerHTML = addBrandListRegion();
+  if (window.lucide) lucide.createIcons();
 }
 
 function attachEventListeners() {
@@ -2976,7 +3135,7 @@ function attachEventListeners() {
     searchInput.addEventListener('input', (e) => {
       state.search = e.target.value;
       state.page = 1;
-      scheduleRender('search');
+      scheduleScopedRender('search');
     });
   }
   const customerSearchInput = document.getElementById('customer-search-input');
@@ -2984,7 +3143,7 @@ function attachEventListeners() {
     customerSearchInput.dataset.bound = '1';
     customerSearchInput.addEventListener('input', (e) => {
       state.customerSearch = e.target.value;
-      scheduleRender('customerSearch');
+      scheduleScopedRender('customerSearch');
     });
   }
   const itemSearchInput = document.getElementById('item-search-input');
@@ -2993,7 +3152,7 @@ function attachEventListeners() {
     itemSearchInput.addEventListener('input', (e) => {
       state.itemSearch = e.target.value;
       state.itemPage = 1;
-      scheduleRender('itemSearch');
+      scheduleScopedRender('itemSearch');
     });
   }
   if (document.getElementById('order-form')) {
