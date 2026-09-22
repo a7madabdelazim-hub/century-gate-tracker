@@ -663,6 +663,7 @@ const DEFAULT_SETTINGS = {
   accountantPhone: '',       // digits only, with country code, e.g. 9665XXXXXXXX
   varianceTolerance: 5,      // percent — beyond this a row is flagged
   includeCsvTail: false,
+  splitByCustomer: false,    // off = one message for the whole batch
 };
 
 function loadBatches() {
@@ -1266,21 +1267,22 @@ function money(n) {
 function qtyText(n) {
   return Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
+// Unit prices are sometimes set in fractions of a halala — 0.095,
+// say. Rounding that to 0.10 in the message would make the amount
+// look like an arithmetic mistake, so prices keep up to four
+// decimals and drop to two when that is all they have.
+function priceText(n) {
+  const v = Number(n || 0);
+  const decimals = Number.isInteger(v * 100) ? 2 : (Number.isInteger(v * 1000) ? 3 : 4);
+  return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: decimals });
+}
 
-// One message per customer. The accountant issues one invoice per
-// customer, so each message has to stand alone as a complete
-// instruction he can act on or forward.
-function buildWhatsAppMessage(group, batchId, dateText) {
-  const lines = [];
-  lines.push('*INVOICE REQUEST*');
-  lines.push(batchId + ' · ' + dateText);
-  lines.push('*' + group.customerName + '*' + (group.customerNumber ? ' — ' + group.customerNumber : ''));
-  lines.push('');
-
-  // The item description gets a whole line to itself so it is never
-  // truncated, with the quantity, price and amount on the line under
-  // it. Columns could not hold a long item name and a six-figure
-  // amount at the same time without one running into the other.
+// One customer's table, as monospace lines. The item description
+// gets a whole line to itself so it is never truncated, with the
+// quantity, price and amount on the line under it — columns could
+// not hold a long item name and a six-figure amount at the same
+// time without one running into the other.
+function customerTable(group, totalLabel) {
   const table = [];
   table.push(spread('QTY x PRICE', 'AMOUNT', WA_WIDTH));
   table.push('-'.repeat(WA_WIDTH));
@@ -1294,7 +1296,7 @@ function buildWhatsAppMessage(group, batchId, dateText) {
 
     table.push(String(o.description || '').trim().slice(0, WA_WIDTH));
     table.push(spread(
-      '  ' + qtyText(qty) + ' ' + String(o.qtyUnit || '').trim() + ' x ' + money(o.unitPrice),
+      '  ' + qtyText(qty) + ' ' + String(o.qtyUnit || '').trim() + ' x ' + priceText(o.unitPrice),
       money(lineValue), WA_WIDTH
     ));
 
@@ -1304,23 +1306,58 @@ function buildWhatsAppMessage(group, batchId, dateText) {
   }
 
   table.push('-'.repeat(WA_WIDTH));
-  table.push(spread('TOTAL', money(total), WA_WIDTH));
+  table.push(spread(totalLabel || 'TOTAL', money(total), WA_WIDTH));
+  return { lines: table, total: total };
+}
 
-  lines.push('```');
-  lines.push(table.join('\n'));
-  lines.push('```');
+function csvBlock(group) {
+  return group.orders.map(o =>
+    [group.customerNumber, o.description, billableQty(o), Number(o.unitPrice).toFixed(2), (invoiceValueOf(o) || 0).toFixed(2)].join(',')
+  ).join('\n');
+}
 
-  if (state.settings.includeCsvTail) {
-    lines.push('');
-    lines.push('For your system:');
-    lines.push('```');
-    lines.push(group.orders.map(o =>
-      [group.customerNumber, o.description, billableQty(o), Number(o.unitPrice).toFixed(2), (invoiceValueOf(o) || 0).toFixed(2)].join(',')
-    ).join('\n'));
-    lines.push('```');
+// ONE message covering the whole batch. Each customer is a bold
+// heading with its own table and subtotal, and the grand total
+// closes it — so the accountant gets everything in a single place
+// and can still see what belongs to which account.
+function buildBatchMessage(groups, batchId, dateText) {
+  const out = [];
+  const itemCount = groups.reduce((n, g) => n + g.orders.length, 0);
+
+  out.push('*INVOICE REQUEST*');
+  out.push(batchId + ' · ' + dateText);
+  out.push(groups.length + ' customer' + (groups.length === 1 ? '' : 's') + ' · ' + itemCount + ' item' + (itemCount === 1 ? '' : 's'));
+
+  let grand = 0;
+  for (const g of groups) {
+    const t = customerTable(g, groups.length > 1 ? 'SUBTOTAL' : 'TOTAL');
+    grand += t.total;
+    out.push('');
+    out.push('*' + g.customerName + '*' + (g.customerNumber ? ' — ' + g.customerNumber : ''));
+    out.push('```');
+    out.push(t.lines.join('\n'));
+    out.push('```');
   }
 
-  return lines.join('\n');
+  if (groups.length > 1) {
+    out.push('');
+    out.push('*GRAND TOTAL: SAR ' + money(grand) + '*');
+  }
+
+  if (state.settings.includeCsvTail) {
+    out.push('');
+    out.push('For your system:');
+    out.push('```');
+    out.push(groups.map(csvBlock).join('\n'));
+    out.push('```');
+  }
+
+  return out.join('\n');
+}
+
+// A single customer on its own, for the optional split mode.
+function buildWhatsAppMessage(group, batchId, dateText) {
+  return buildBatchMessage([group], batchId, dateText);
 }
 
 // Groups the currently selected orders the way they will be sent.
@@ -2699,7 +2736,7 @@ function billingRow(o) {
 
         <p class="text-[11px]" style="color: var(--muted);">
           <span class="font-mono">${esc(o.orderId)}</span>
-          ${o.unitPrice != null ? ' · ' + formatSAR(o.unitPrice) + ' / ' + esc(o.qtyUnit || 'unit') : ''}
+          ${o.unitPrice != null ? ' · SAR ' + priceText(o.unitPrice) + ' / ' + esc(o.qtyUnit || 'unit') : ''}
           ${Number(o.clicheValue) ? ' · cliche ' + formatNumber(o.clicheValue) : ''}
         </p>
 
@@ -2765,13 +2802,10 @@ function billingBatchesRegion() {
   const sorted = state.batches.slice().sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0));
 
   return sorted.map(b => {
-    const orderIds = (b.lines || []).map(l => l.orderId);
-    const stillOpen = orderIds.filter(id => {
-      const o = state.orders.find(x => x.orderId === id);
-      return o && o.invoiceStatus === 'Sent to Accountant';
-    }).length;
+    const st = batchStatus(b);
     const days = Math.floor((Date.now() - new Date(b.sentAt).getTime()) / 86400000);
-    const closed = stillOpen === 0;
+    const closed = st.pending === 0;
+    const pct = st.total ? Math.round((st.invoiced / st.total) * 100) : 0;
 
     return `
       <div class="card overflow-hidden fade-up">
@@ -2792,16 +2826,25 @@ function billingBatchesRegion() {
               : '<span class="chip ' + (days > 7 ? 'chip-danger' : 'chip-warning') + '">' + (days === 0 ? 'sent today' : days + ' day' + (days === 1 ? '' : 's')) + '</span>'}
           </div>
         </div>
+        <div class="px-3 md:px-4 pt-3">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[11px] font-bold" style="color: var(--sub);">${st.invoiced} of ${st.total} invoiced</span>
+            ${st.pending > 0 ? '<span class="text-[11px] tabular-nums" style="color: var(--warning);">' + formatSAR(st.pendingValue) + ' waiting</span>' : ''}
+          </div>
+          <div style="height:6px;border-radius:999px;background:rgba(27,42,74,0.09);overflow:hidden;">
+            <div style="height:100%;width:${pct}%;border-radius:999px;background:${closed ? 'var(--success)' : 'var(--accent-grad)'};"></div>
+          </div>
+        </div>
         <div class="p-3 md:p-4 flex gap-2 flex-wrap items-center">
           <button data-action="open-batch" data-batch-id="${attr(b.batchId)}" class="btn btn-ghost btn-sm">
-            <i data-lucide="eye" class="w-3.5 h-3.5"></i> What was sent
+            <i data-lucide="list-checks" class="w-3.5 h-3.5"></i> ${closed ? 'What was sent' : 'Tick invoiced lines'}
           </button>
           ${!closed ? `
             <button data-action="resend-batch" data-batch-id="${attr(b.batchId)}" class="btn btn-ghost btn-sm">
               <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Re-send
             </button>
             <button data-action="mark-batch-invoiced" data-batch-id="${attr(b.batchId)}" class="btn btn-primary btn-sm ml-auto">
-              <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Mark all invoiced
+              <i data-lucide="check-check" class="w-3.5 h-3.5"></i> All ${st.pending} invoiced
             </button>
           ` : ''}
         </div>
@@ -2857,8 +2900,13 @@ function renderSendModal() {
   const total = groups.reduce((s, g) => s + g.total, 0);
   const s = state.settings;
   const hasPhone = !!String(s.accountantPhone || '').trim();
-  const preview = buildWhatsAppMessage(groups[0], batchId, dateText);
-  const longest = Math.max(...groups.map(g => encodeURIComponent(buildWhatsAppMessage(g, batchId, dateText)).length));
+  const split = !!s.splitByCustomer;
+  const messageTexts = split
+    ? groups.map(g => buildWhatsAppMessage(g, batchId, dateText))
+    : [buildBatchMessage(groups, batchId, dateText)];
+  const preview = messageTexts[0];
+  const longest = Math.max(...messageTexts.map(t => encodeURIComponent(t).length));
+  const msgCount = messageTexts.length;
 
   return `
     <div class="modal-backdrop" role="dialog" aria-modal="true" data-action="close-send-backdrop">
@@ -2876,7 +2924,7 @@ function renderSendModal() {
               <span class="oi" style="background:#128C7E;"><i data-lucide="message-circle" class="w-4 h-4"></i></span>
               <span class="min-w-0">
                 <span class="block text-[13.5px] font-bold" style="color: var(--text);">Text table — opens the chat</span>
-                <span class="block text-[11.5px] mt-0.5" style="color: var(--sub);">One tap per customer. WhatsApp opens${hasPhone ? ' already addressed to ' + esc(s.accountantName || 'the accountant') : ' and asks you to pick the contact'}, message written.</span>
+                <span class="block text-[11.5px] mt-0.5" style="color: var(--sub);">WhatsApp opens${hasPhone ? ' already addressed to ' + esc(s.accountantName || 'the accountant') : ' and asks you to pick the contact'}, with the whole table written out.</span>
               </span>
             </button>
             <button class="send-opt ${state.sendMethod === 'copy' ? 'sel' : ''}" data-action="send-method" data-method="copy">
@@ -2888,16 +2936,28 @@ function renderSendModal() {
             </button>
           </div>
 
+          ${groups.length > 1 ? `
+            <div class="flex items-center gap-2.5 p-3 rounded-xl" style="background: rgba(27,42,74,0.05); border: 1px solid var(--border);">
+              <i data-lucide="${split ? 'copy' : 'layers'}" class="w-4 h-4 shrink-0" style="color: var(--primary);"></i>
+              <p class="text-[12px] flex-1" style="color: var(--sub);">
+                ${split
+                  ? 'Splitting into <span class="font-bold">' + groups.length + ' separate messages</span>, one per customer.'
+                  : 'All <span class="font-bold">' + groups.length + ' customers in one message</span>, each with its own table and subtotal.'}
+              </p>
+              <button data-action="toggle-split" class="btn btn-ghost btn-sm shrink-0">${split ? 'Combine' : 'Split'}</button>
+            </div>
+          ` : ''}
+
           ${longest > 1800 ? `
             <div class="flex items-start gap-2.5 p-3 rounded-xl" style="background: var(--warning-soft); border: 1px solid var(--warning-line);">
               <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5" style="color: var(--warning);"></i>
-              <p class="text-[12px]" style="color: var(--sub);">One of these messages is long enough that iOS may truncate it. Consider sending that customer in two smaller batches.</p>
+              <p class="text-[12px]" style="color: var(--sub);">This message is long enough that iOS may cut it short. ${groups.length > 1 && !split ? 'Tap <span class="font-bold">Split</span> above to send one message per customer instead.' : 'Consider sending this customer in two smaller batches.'}</p>
             </div>
           ` : ''}
 
           <div class="rounded-2xl p-3" style="background: rgba(27,42,74,0.05); border: 1px solid var(--border);">
             <p class="text-[10px] uppercase tracking-wider font-bold mb-2" style="color: var(--sub);">
-              Preview — ${esc(groups[0].customerName)}${groups.length > 1 ? ' (1 of ' + groups.length + ')' : ''}
+              Preview${split && groups.length > 1 ? ' — ' + esc(groups[0].customerName) + ' (1 of ' + groups.length + ')' : ' — the whole message'}
             </p>
             <pre style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 0; color: var(--text);">${esc(preview)}</pre>
           </div>
@@ -2921,7 +2981,7 @@ function renderSendModal() {
           <button data-action="close-send" class="btn btn-ghost">Cancel</button>
           <button data-action="confirm-send" class="btn btn-primary ml-auto">
             <i data-lucide="${state.sendMethod === 'copy' ? 'clipboard-copy' : 'send'}" class="w-4 h-4"></i>
-            ${state.sendMethod === 'copy' ? 'Copy and mark sent' : 'Open WhatsApp · ' + groups.length + ' message' + (groups.length === 1 ? '' : 's')}
+            ${state.sendMethod === 'copy' ? 'Copy and mark sent' : 'Open WhatsApp' + (msgCount > 1 ? ' · ' + msgCount + ' messages' : '')}
           </button>
         </div>
       </div>
@@ -2936,6 +2996,7 @@ function renderBatchDetailModal() {
   if (!state.selectedBatchId) return '';
   const b = state.batches.find(x => x.batchId === state.selectedBatchId);
   if (!b) return '';
+  const st = batchStatus(b);
 
   return `
     <div class="modal-backdrop" role="dialog" aria-modal="true" data-action="close-batch-backdrop">
@@ -2948,41 +3009,51 @@ function renderBatchDetailModal() {
         </div>
 
         <div class="p-6 space-y-4">
-          <p class="text-[12px]" style="color: var(--sub);">These are the figures as they stood when the batch was sent. Editing an order afterwards does not change this record.</p>
+          <p class="text-[12px]" style="color: var(--sub);">Tick a line once the accountant has actually invoiced it. The figures below are as they stood when the batch was sent — editing an order afterwards does not change this record.</p>
+
+          <div class="flex items-center gap-3 p-3 rounded-xl" style="background: ${st.pending === 0 ? 'var(--success-soft)' : 'var(--warning-soft)'}; border: 1px solid ${st.pending === 0 ? 'var(--success-line)' : 'var(--warning-line)'};">
+            <i data-lucide="${st.pending === 0 ? 'check-check' : 'hourglass'}" class="w-4 h-4 shrink-0" style="color: ${st.pending === 0 ? 'var(--success)' : 'var(--warning)'};"></i>
+            <p class="text-[12.5px] flex-1" style="color: var(--sub);">
+              <span class="font-bold" style="color: var(--text);">${st.invoiced} of ${st.total} invoiced</span>
+              ${st.pending > 0 ? ' · ' + formatSAR(st.pendingValue) + ' still waiting' : ' · this batch is closed'}
+            </p>
+          </div>
 
           <div class="card overflow-hidden">
-            <div class="overflow-x-auto scroll-thin">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th class="w-24">Order</th>
-                    <th class="min-w-[130px]">Customer</th>
-                    <th class="min-w-[150px]">Description</th>
-                    <th class="text-right w-20">Ordered</th>
-                    <th class="text-right w-20">Produced</th>
-                    <th class="text-right w-24">Price</th>
-                    <th class="text-right w-28">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${(b.lines || []).map(l => {
-                    const current = state.orders.find(o => o.orderId === l.orderId);
-                    const invoiced = current && current.invoiceStatus === 'Invoiced';
-                    return `
-                      <tr>
-                        <td class="font-mono text-xs">${esc(l.orderId)}${invoiced ? ' <span class="chip chip-success">✓</span>' : ''}</td>
-                        <td class="text-xs">${esc(l.customerName)}<br><span class="font-mono" style="color:var(--muted);">${esc(l.customerNumber || '')}</span></td>
-                        <td class="text-xs">${esc(l.description)}</td>
-                        <td class="text-right tabular-nums text-xs">${l.orderedQty != null ? formatNumber(l.orderedQty) : DASH}</td>
-                        <td class="text-right tabular-nums text-xs font-bold">${formatNumber(l.producedQty)} ${esc(l.qtyUnit || '')}</td>
-                        <td class="text-right tabular-nums text-xs">${formatSAR(l.unitPrice)}</td>
-                        <td class="text-right tabular-nums text-xs font-bold">${formatSAR(l.value)}</td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
+            ${(b.lines || []).map(l => {
+              const current = state.orders.find(o => o.orderId === l.orderId);
+              const missing = !current;
+              const invoiced = current && current.invoiceStatus === 'Invoiced';
+              return `
+                <div class="bill-row ${invoiced ? '' : 'blocked'}" style="${invoiced ? 'background: rgba(31,138,91,0.05);' : 'background:transparent;'}">
+                  <button class="bill-check ${invoiced ? 'on' : ''}"
+                    data-action="${missing ? 'noop' : 'toggle-line-invoiced'}" data-order-id="${attr(l.orderId)}"
+                    aria-label="${invoiced ? 'Mark not invoiced' : 'Mark invoiced'} — ${attr(l.orderId)}"
+                    ${missing ? 'disabled' : ''}
+                    style="${invoiced ? 'background: var(--success); border-color: var(--success);' : ''}"></button>
+
+                  <div class="flex-1 min-w-0 space-y-1">
+                    <p class="text-[13px] font-bold leading-tight" style="color: var(--text);">${esc(l.description)}</p>
+                    <p class="text-[11px]" style="color: var(--muted);">
+                      ${esc(l.customerName)} · <span class="font-mono">${esc(l.customerNumber || '—')}</span>
+                    </p>
+                    <p class="text-[11px] tabular-nums" style="color: var(--sub);">
+                      <span class="font-mono">${esc(l.orderId)}</span> ·
+                      ${l.orderedQty != null && l.orderedQty !== l.producedQty
+                        ? '<span class="qty-struck">' + formatNumber(l.orderedQty) + '</span> ' : ''}
+                      <span class="font-bold">${formatNumber(l.producedQty)} ${esc(l.qtyUnit || '')}</span>
+                      × SAR ${priceText(l.unitPrice)}${l.clicheValue ? ' + cliche ' + formatNumber(l.clicheValue) : ''}
+                    </p>
+                    ${missing ? '<span class="chip chip-danger">Order no longer exists</span>' : ''}
+                  </div>
+
+                  <div class="text-right shrink-0 space-y-1">
+                    <p class="text-[13.5px] font-extrabold tabular-nums" style="color: var(--text);">${formatSAR(l.value)}</p>
+                    <span class="chip ${invoiced ? 'chip-success' : 'chip-warning'}">${invoiced ? 'Invoiced' : 'Waiting'}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
 
           <details class="card p-4">
@@ -3000,9 +3071,15 @@ function renderBatchDetailModal() {
 
         <div class="p-5 flex gap-2 flex-wrap" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);">
           <button data-action="close-batch" class="btn btn-ghost">Close</button>
-          <button data-action="mark-batch-invoiced" data-batch-id="${attr(b.batchId)}" class="btn btn-primary ml-auto">
-            <i data-lucide="check-check" class="w-4 h-4"></i> Mark all invoiced
-          </button>
+          ${st.pending > 0 ? `
+            <button data-action="mark-batch-invoiced" data-batch-id="${attr(b.batchId)}" class="btn btn-primary ml-auto">
+              <i data-lucide="check-check" class="w-4 h-4"></i> Tick the remaining ${st.pending}
+            </button>
+          ` : `
+            <button data-action="unmark-batch-invoiced" data-batch-id="${attr(b.batchId)}" class="btn btn-ghost ml-auto">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reopen the batch
+            </button>
+          `}
         </div>
       </div>
     </div>
@@ -3040,6 +3117,13 @@ function renderSettingsModal() {
             <input name="varianceTolerance" type="text" inputmode="decimal" data-numeric="1" value="${attr(String(s.varianceTolerance == null ? 5 : s.varianceTolerance))}" placeholder="5" class="input">
             <p class="text-[11px]" style="color: var(--muted);">Produced quantities further than this from the ordered quantity are flagged red so you check them before sending.</p>
           </div>
+          <label class="flex items-start gap-2.5 p-3 rounded-xl cursor-pointer" style="background: rgba(27,42,74,0.04); border: 1px solid var(--border);">
+            <input name="splitByCustomer" type="checkbox" ${s.splitByCustomer ? 'checked' : ''} style="margin-top:3px;width:16px;height:16px;">
+            <span>
+              <span class="block text-[12.5px] font-bold" style="color: var(--text);">Send one message per customer</span>
+              <span class="block text-[11px]" style="color: var(--sub);">Off by default — the whole batch goes as a single message with a table per customer. Turn this on only if a batch gets long enough that WhatsApp cuts it short.</span>
+            </span>
+          </label>
           <label class="flex items-start gap-2.5 p-3 rounded-xl cursor-pointer" style="background: rgba(27,42,74,0.04); border: 1px solid var(--border);">
             <input name="includeCsvTail" type="checkbox" ${s.includeCsvTail ? 'checked' : ''} style="margin-top:3px;width:16px;height:16px;">
             <span>
@@ -3651,14 +3735,18 @@ function saveSettingsForm() {
     return el ? el.value : '';
   };
   const tolerance = Number(get('varianceTolerance'));
-  const cb = formEl.querySelector('[name="includeCsvTail"]');
+  const checked = (name) => {
+    const el = formEl.querySelector('[name="' + name + '"]');
+    return !!(el && el.checked);
+  };
 
   state.settings = {
     ...state.settings,
     accountantName: get('accountantName').trim().toUpperCase(),
     accountantPhone: get('accountantPhone').replace(/[^0-9]/g, ''),
     varianceTolerance: isNaN(tolerance) || tolerance <= 0 ? 5 : tolerance,
-    includeCsvTail: !!(cb && cb.checked),
+    includeCsvTail: checked('includeCsvTail'),
+    splitByCustomer: checked('splitByCustomer'),
   };
   saveSettings();
   state.settingsOpen = false;
@@ -3681,9 +3769,25 @@ function confirmSend() {
 
   const lines = [];
   const messages = [];
+
+  // One message for the whole batch unless the split option is on.
+  if (state.settings.splitByCustomer) {
+    for (const g of groups) {
+      messages.push({
+        customerName: g.customerName,
+        customerNumber: g.customerNumber,
+        text: buildWhatsAppMessage(g, batchId, dateText),
+      });
+    }
+  } else {
+    messages.push({
+      customerName: groups.length === 1 ? groups[0].customerName : groups.length + ' customers',
+      customerNumber: groups.length === 1 ? groups[0].customerNumber : '',
+      text: buildBatchMessage(groups, batchId, dateText),
+    });
+  }
+
   for (const g of groups) {
-    const text = buildWhatsAppMessage(g, batchId, dateText);
-    messages.push({ customerName: g.customerName, customerNumber: g.customerNumber, text: text });
     for (const o of g.orders) {
       lines.push({
         orderId: o.orderId,
@@ -3811,6 +3915,42 @@ function fallbackCopy(text) {
   ta.select();
   try { document.execCommand('copy'); } catch (e) { console.warn('Copy failed', e); }
   ta.remove();
+}
+
+// How far through a batch the accountant has got. Lines are counted
+// from the live orders, so ticking one line updates the batch card
+// and the Billing KPIs at the same time.
+function batchStatus(batch) {
+  const lines = batch.lines || [];
+  let invoiced = 0, pending = 0, pendingValue = 0;
+  for (const l of lines) {
+    const o = state.orders.find(x => x.orderId === l.orderId);
+    if (o && o.invoiceStatus === 'Invoiced') invoiced++;
+    else { pending++; pendingValue += l.value || 0; }
+  }
+  return { total: lines.length, invoiced: invoiced, pending: pending, pendingValue: pendingValue };
+}
+
+// Tick one line invoiced, or untick it back to waiting.
+function toggleLineInvoiced(orderId) {
+  const o = state.orders.find(x => x.orderId === orderId);
+  if (!o) return;
+  o.invoiceStatus = o.invoiceStatus === 'Invoiced' ? 'Sent to Accountant' : 'Invoiced';
+  saveOrders();
+  render();
+}
+
+function unmarkBatchInvoiced(batchId) {
+  const b = state.batches.find(x => x.batchId === batchId);
+  if (!b) return;
+  let n = 0;
+  for (const l of (b.lines || [])) {
+    const o = state.orders.find(x => x.orderId === l.orderId);
+    if (o && o.invoiceStatus === 'Invoiced') { o.invoiceStatus = 'Sent to Accountant'; n++; }
+  }
+  saveOrders();
+  toast('Batch reopened', n + ' line' + (n === 1 ? '' : 's') + ' back to waiting on ' + batchId + '.');
+  render();
 }
 
 function openBatchDetail(batchId) { state.selectedBatchId = batchId; render(); }
@@ -4154,6 +4294,12 @@ function handleDelegatedClick(e) {
     case 'open-send':         return openSendSheet();
     case 'close-send':        return closeSendSheet();
     case 'send-method':       { state.sendMethod = el.dataset.method; return render(); }
+    case 'toggle-split': {
+      state.settings.splitByCustomer = !state.settings.splitByCustomer;
+      saveSettings();
+      return render();
+    }
+    case 'toggle-line-invoiced': return toggleLineInvoiced(el.dataset.orderId);
     case 'confirm-send':      return confirmSend();
     case 'open-settings':     return openSettings();
     case 'close-settings':    return closeSettings();
@@ -4162,6 +4308,7 @@ function handleDelegatedClick(e) {
     case 'close-batch':       return closeBatchDetail();
     case 'resend-batch':      return resendBatch(el.dataset.batchId);
     case 'mark-batch-invoiced': return markBatchInvoiced(el.dataset.batchId);
+    case 'unmark-batch-invoiced': return unmarkBatchInvoiced(el.dataset.batchId);
 
     case 'open-item':         return openItemHistory(el.dataset.itemKey);
     case 'close-item':        return closeItemHistory();
