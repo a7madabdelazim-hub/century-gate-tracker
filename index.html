@@ -351,7 +351,65 @@ select.input option { background: #fff; color: var(--text); padding: 10px 12px; 
   box-shadow: 0 6px 18px rgba(27,42,74,0.30);
   transform: translateY(-2px);
 }
-@media (max-width: 420px) { .nav-btn span { font-size: 12.5px; } .nav-btn { padding: 11px 6px; gap: 6px; } }
+/* Four tabs no longer fit side-by-side on a phone, so below 560px
+   the icon sits above its label instead of beside it. */
+@media (max-width: 560px) {
+  .nav-btn { flex-direction: column; gap: 3px; padding: 8px 4px; border-radius: 17px; }
+  .nav-btn span { font-size: 10.5px; font-weight: 600; letter-spacing: 0.01em; }
+}
+.nav-badge {
+  position: absolute; top: 5px; right: 8px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 999px; background: var(--accent-grad); color: #3D2F02;
+  font-size: 10px; font-weight: 800; line-height: 17px; text-align: center;
+  box-shadow: 0 2px 6px rgba(201,162,39,0.45);
+}
+.nav-btn.active .nav-badge { background: #F3E4B0; color: var(--primary); }
+@media (max-width: 560px) { .nav-badge { top: 2px; right: calc(50% - 20px); } }
+
+/* ---- billing ---- */
+.bill-row { display: flex; gap: 11px; align-items: flex-start; padding: 11px 13px; border-bottom: 1px solid var(--border); }
+.bill-row:last-child { border-bottom: none; }
+.bill-row.blocked { background: rgba(195,60,48,0.035); }
+.bill-check {
+  flex: 0 0 auto; width: 21px; height: 21px; border-radius: 7px; margin-top: 2px;
+  border: 1.5px solid var(--border-strong); background: #fff; cursor: pointer;
+  display: grid; place-items: center; padding: 0; transition: all 0.2s;
+}
+.bill-check:hover { border-color: var(--primary); }
+.bill-check.on { background: var(--primary); border-color: var(--primary); }
+.bill-check.on::after { content: ''; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px,-1px); }
+.bill-check.off { border-style: dashed; border-color: var(--danger); background: var(--danger-soft); cursor: not-allowed; }
+.qty-input {
+  width: 74px; padding: 3px 7px; border-radius: 8px;
+  border: 1px solid rgba(201,162,39,0.5); background: var(--accent-soft);
+  font-size: 13px; font-weight: 700; color: #7A6009; text-align: right;
+  font-family: inherit; font-variant-numeric: tabular-nums;
+}
+.qty-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.qty-input.empty { border-style: dashed; background: rgba(195,60,48,0.07); border-color: var(--danger-line); color: var(--danger); }
+.qty-struck { color: var(--muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
+.send-bar {
+  position: sticky; bottom: 0; z-index: 5;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border); border-radius: 18px;
+  padding: 11px 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  box-shadow: var(--shadow-md);
+}
+.seg { display: inline-flex; background: rgba(27,42,74,0.06); border-radius: 13px; padding: 3px; gap: 3px; }
+.seg button {
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  padding: 7px 15px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--sub);
+}
+.seg button.on { background: #fff; color: var(--primary); box-shadow: var(--shadow-sm); }
+.send-opt {
+  display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left;
+  border: 1px solid var(--border-strong); border-radius: 16px; padding: 13px 14px;
+  background: #fff; cursor: pointer; font-family: inherit;
+}
+.send-opt.sel { border-color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
+.send-opt .oi { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex: 0 0 auto; color: #fff; }
 
 /* ---- misc ---- */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -522,6 +580,17 @@ let state = {
   itemPage: 1,
   itemPageSize: 25,
   selectedItemKey: null,    // "CUSTOMER<sep>DESCRIPTION"
+
+  // billing
+  billingTab: 'queue',      // 'queue' | 'batches'
+  billingSelected: [],      // order IDs ticked for the next batch
+  billingSearch: '',
+  sendOpen: false,          // the send sheet
+  sendMethod: 'text',       // 'text' | 'image'
+  settingsOpen: false,
+  selectedBatchId: null,
+  batches: [],              // sent invoice-request batches
+  settings: {},             // accountant contact, tolerance
 };
 
 // ============================================================
@@ -582,6 +651,42 @@ function loadCustomerGroups() {
   state.customerGroups = {};
 }
 function saveCustomerGroups() { safeSet(GROUPS_STORAGE_KEY, JSON.stringify(state.customerGroups)); }
+
+// ------------------------------------------------------------
+// BILLING STORAGE — sent batches and the accountant's details
+// ------------------------------------------------------------
+const BATCHES_STORAGE_KEY = 'century-gate-invoice-batches';
+const SETTINGS_STORAGE_KEY = 'century-gate-settings';
+
+const DEFAULT_SETTINGS = {
+  accountantName: '',
+  accountantPhone: '',       // digits only, with country code, e.g. 9665XXXXXXXX
+  varianceTolerance: 5,      // percent — beyond this a row is flagged
+  includeCsvTail: false,
+};
+
+function loadBatches() {
+  const stored = safeGet(BATCHES_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) { state.batches = parsed; return; }
+    } catch (e) { console.warn('Failed to parse stored batches', e); }
+  }
+  state.batches = [];
+}
+function saveBatches() { safeSet(BATCHES_STORAGE_KEY, JSON.stringify(state.batches)); }
+
+function loadSettings() {
+  const stored = safeGet(SETTINGS_STORAGE_KEY);
+  let parsed = {};
+  if (stored) {
+    try { parsed = JSON.parse(stored) || {}; }
+    catch (e) { console.warn('Failed to parse stored settings', e); }
+  }
+  state.settings = { ...DEFAULT_SETTINGS, ...parsed };
+}
+function saveSettings() { safeSet(SETTINGS_STORAGE_KEY, JSON.stringify(state.settings)); }
 
 function getCustomerMaster(name) {
   return state.customers.find(c => c.customerName === name) || null;
@@ -1011,10 +1116,244 @@ function isOverdue(deadline, deliveryStatus) {
 }
 
 // ============================================================
+// BILLING LOGIC
+// ------------------------------------------------------------
+// The ordered quantity (order.quantity) is frozen once the order
+// exists. What actually came off the line is order.producedQty,
+// keyed from the production sheet. Everything the accountant is
+// sent is calculated from producedQty — never from quantity.
+// ============================================================
+
+// The quantity that gets invoiced. Falls back to the ordered
+// quantity only so that older orders, saved before this field
+// existed, still show a sensible figure.
+function producedOf(order) {
+  if (order.producedQty != null && order.producedQty !== '') return Number(order.producedQty);
+  return null;
+}
+function billableQty(order) {
+  const p = producedOf(order);
+  return p != null ? p : (order.quantity != null ? Number(order.quantity) : null);
+}
+
+// Has the cliché already been billed on an earlier invoice? We only
+// add it when the order still carries one and has never been sent.
+function invoiceValueOf(order) {
+  const qty = billableQty(order);
+  if (qty == null || order.unitPrice == null) return null;
+  return qty * Number(order.unitPrice) + (Number(order.clicheValue) || 0);
+}
+
+// Returns { diff, pct, level } or null when there is nothing to compare.
+function varianceOf(order) {
+  const produced = producedOf(order);
+  const ordered = order.quantity != null ? Number(order.quantity) : null;
+  if (produced == null || ordered == null || ordered === 0) return null;
+  const diff = produced - ordered;
+  const pct = (diff / ordered) * 100;
+  const tol = Number(state.settings.varianceTolerance) || 5;
+  let level = 'exact';
+  if (diff !== 0) level = Math.abs(pct) > tol ? 'high' : 'low';
+  return { diff, pct, level };
+}
+
+// Why an order cannot be sent yet. An empty array means it is ready.
+function billingBlockers(order) {
+  const reasons = [];
+  if (producedOf(order) == null) reasons.push('No produced qty');
+  else if (producedOf(order) <= 0) reasons.push('Produced qty is zero');
+  if (order.unitPrice == null) reasons.push('No unit price');
+  if (!String(order.customerNumber || '').trim()) reasons.push('No customer number');
+  if (!String(order.description || '').trim()) reasons.push('No description');
+  return reasons;
+}
+
+function isReadyToBill(order) {
+  return order.productionStatus === 'Completed' && order.invoiceStatus === 'Not Invoiced';
+}
+
+// The billing queue, grouped by the customer name as typed on the
+// order — that is the name the accountant will see on his screen,
+// and the customer number travels with it.
+function getBillingQueue() {
+  const q = String(state.billingSearch || '').toLowerCase().trim();
+  let rows = state.orders.filter(isReadyToBill);
+  if (q) {
+    rows = rows.filter(o =>
+      (o.orderId || '').toLowerCase().includes(q) ||
+      (o.customerName || '').toLowerCase().includes(q) ||
+      (o.description || '').toLowerCase().includes(q)
+    );
+  }
+  const groups = new Map();
+  for (const o of rows) {
+    const key = (o.customerName || '').trim() || 'UNKNOWN';
+    if (!groups.has(key)) {
+      groups.set(key, {
+        customerName: key,
+        customerNumber: String(o.customerNumber || '').trim(),
+        orders: [],
+      });
+    }
+    const g = groups.get(key);
+    if (!g.customerNumber && o.customerNumber) g.customerNumber = String(o.customerNumber).trim();
+    g.orders.push(o);
+  }
+  const out = Array.from(groups.values());
+  for (const g of out) {
+    g.orders.sort((a, b) => new Date(a.orderDate || 0) - new Date(b.orderDate || 0));
+    g.readyCount = g.orders.filter(o => billingBlockers(o).length === 0).length;
+    g.selectedOrders = g.orders.filter(o => state.billingSelected.includes(o.orderId));
+    g.selectedValue = g.selectedOrders.reduce((s, o) => s + (invoiceValueOf(o) || 0), 0);
+  }
+  out.sort((a, b) => a.customerName.localeCompare(b.customerName));
+  return out;
+}
+
+function getSelectedOrders() {
+  return state.billingSelected
+    .map(id => state.orders.find(o => o.orderId === id))
+    .filter(o => o && isReadyToBill(o) && billingBlockers(o).length === 0);
+}
+
+function selectedTotal() {
+  return getSelectedOrders().reduce((s, o) => s + (invoiceValueOf(o) || 0), 0);
+}
+
+function getNextBatchId() {
+  const year = new Date().getFullYear();
+  const prefix = 'INV-REQ-' + year + '-';
+  let max = 0;
+  for (const b of state.batches) {
+    if (typeof b.batchId === 'string' && b.batchId.startsWith(prefix)) {
+      const n = parseInt(b.batchId.slice(prefix.length), 10);
+      if (!isNaN(n) && n > max) max = n;
+    }
+  }
+  return prefix + String(max + 1).padStart(3, '0');
+}
+
+// ============================================================
+// WHATSAPP MESSAGE BUILDER
+// ------------------------------------------------------------
+// WhatsApp renders text between triple backticks in a monospace
+// face, which is the only way to get columns that line up on a
+// phone. iPhone WhatsApp fits roughly 32 monospace characters
+// before wrapping, so the table is built to that width and the
+// line total sits on its own right-aligned line underneath.
+// ============================================================
+const WA_WIDTH = 30;
+
+function padRight(text, width) {
+  const s = String(text == null ? '' : text);
+  return s.length >= width ? s.slice(0, width) : s + ' '.repeat(width - s.length);
+}
+function padLeft(text, width) {
+  const s = String(text == null ? '' : text);
+  return s.length >= width ? s.slice(-width) : ' '.repeat(width - s.length) + s;
+}
+// Pushes two pieces of text to opposite edges of a fixed width,
+// always leaving at least one space between them so nothing collides
+// no matter how long the item name or the amount gets.
+function spread(left, right, width) {
+  const l = String(left), r = String(right);
+  const gap = width - l.length - r.length;
+  return gap >= 1 ? l + ' '.repeat(gap) + r : l + ' ' + r;
+}
+function money(n) {
+  return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function qtyText(n) {
+  return Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+// One message per customer. The accountant issues one invoice per
+// customer, so each message has to stand alone as a complete
+// instruction he can act on or forward.
+function buildWhatsAppMessage(group, batchId, dateText) {
+  const lines = [];
+  lines.push('*INVOICE REQUEST*');
+  lines.push(batchId + ' · ' + dateText);
+  lines.push('*' + group.customerName + '*' + (group.customerNumber ? ' — ' + group.customerNumber : ''));
+  lines.push('');
+
+  // The item description gets a whole line to itself so it is never
+  // truncated, with the quantity, price and amount on the line under
+  // it. Columns could not hold a long item name and a six-figure
+  // amount at the same time without one running into the other.
+  const table = [];
+  table.push(spread('QTY x PRICE', 'AMOUNT', WA_WIDTH));
+  table.push('-'.repeat(WA_WIDTH));
+
+  let total = 0;
+  for (const o of group.orders) {
+    const qty = billableQty(o);
+    const value = invoiceValueOf(o);
+    const lineValue = qty * Number(o.unitPrice);
+    total += value || 0;
+
+    table.push(String(o.description || '').trim().slice(0, WA_WIDTH));
+    table.push(spread(
+      '  ' + qtyText(qty) + ' ' + String(o.qtyUnit || '').trim() + ' x ' + money(o.unitPrice),
+      money(lineValue), WA_WIDTH
+    ));
+
+    if (Number(o.clicheValue)) {
+      table.push(spread('  CLICHE', money(o.clicheValue), WA_WIDTH));
+    }
+  }
+
+  table.push('-'.repeat(WA_WIDTH));
+  table.push(spread('TOTAL', money(total), WA_WIDTH));
+
+  lines.push('```');
+  lines.push(table.join('\n'));
+  lines.push('```');
+
+  if (state.settings.includeCsvTail) {
+    lines.push('');
+    lines.push('For your system:');
+    lines.push('```');
+    lines.push(group.orders.map(o =>
+      [group.customerNumber, o.description, billableQty(o), Number(o.unitPrice).toFixed(2), (invoiceValueOf(o) || 0).toFixed(2)].join(',')
+    ).join('\n'));
+    lines.push('```');
+  }
+
+  return lines.join('\n');
+}
+
+// Groups the currently selected orders the way they will be sent.
+function buildSendGroups() {
+  const groups = new Map();
+  for (const o of getSelectedOrders()) {
+    const key = (o.customerName || '').trim() || 'UNKNOWN';
+    if (!groups.has(key)) {
+      groups.set(key, { customerName: key, customerNumber: String(o.customerNumber || '').trim(), orders: [] });
+    }
+    groups.get(key).orders.push(o);
+  }
+  const out = Array.from(groups.values());
+  for (const g of out) {
+    g.total = g.orders.reduce((s, o) => s + (invoiceValueOf(o) || 0), 0);
+  }
+  out.sort((a, b) => a.customerName.localeCompare(b.customerName));
+  return out;
+}
+
+function waLink(phone, text) {
+  const digits = String(phone || '').replace(/[^0-9]/g, '');
+  const encoded = encodeURIComponent(text);
+  return digits
+    ? 'https://wa.me/' + digits + '?text=' + encoded
+    : 'https://wa.me/?text=' + encoded;
+}
+
+// ============================================================
 // CHIPS
 // ============================================================
 const GOOD_STATUSES = ['Completed', 'Fully Delivered', 'Invoiced', 'Fully Paid'];
-const WARN_STATUSES = ['In Progress', 'Partially Delivered', '50% Advance Paid'];
+const WARN_STATUSES = ['In Progress', 'Partially Delivered', '50% Advance Paid', 'Sent to Accountant'];
 const BAD_STATUSES  = ['Not Shipped', 'No Payment'];
 const NEUTRAL_STATUSES = ['Pending', 'Not Invoiced', 'Reorder'];
 
@@ -1154,16 +1493,19 @@ function renderShell() {
 }
 
 function renderBottomNav() {
+  const readyCount = state.orders.filter(o => isReadyToBill(o) && billingBlockers(o).length === 0).length;
   const tabs = [
     { key: 'orders',    icon: 'clipboard-list', label: 'Orders' },
     { key: 'items',     icon: 'tags',           label: 'Items' },
     { key: 'customers', icon: 'users',          label: 'Customers' },
+    { key: 'billing',   icon: 'receipt-text',   label: 'Billing', badge: readyCount },
   ];
   return `
     <nav class="bottom-nav">
       ${tabs.map(t => `
-        <button class="nav-btn ${state.view === t.key ? 'active' : ''}" data-action="set-view" data-view="${t.key}">
+        <button class="nav-btn ${state.view === t.key ? 'active' : ''}" data-action="set-view" data-view="${t.key}" style="position:relative;">
           <i data-lucide="${t.icon}" class="w-5 h-5"></i><span>${t.label}</span>
+          ${t.badge ? '<span class="nav-badge">' + (t.badge > 99 ? '99+' : t.badge) + '</span>' : ''}
         </button>
       `).join('')}
     </nav>
@@ -1175,6 +1517,7 @@ function renderMainContent() {
   if (!mc) return;
   if (state.view === 'customers') mc.innerHTML = renderCustomersContent();
   else if (state.view === 'items') mc.innerHTML = renderItemsContent();
+  else if (state.view === 'billing') mc.innerHTML = renderBillingContent();
   else mc.innerHTML = renderOrdersContent();
 }
 
@@ -1188,7 +1531,10 @@ function renderModals() {
     renderCustomerFormModal() +
     renderMergeModal() +
     renderAddBrandModal() +
-    renderItemHistoryModal();
+    renderItemHistoryModal() +
+    renderSendModal() +
+    renderBatchDetailModal() +
+    renderSettingsModal();
 }
 
 function pageHeader(title, subtitle, right) {
@@ -2257,6 +2603,461 @@ function saveCustomerForm() {
 // ============================================================
 // ORDER DETAIL MODAL
 // ============================================================
+// ============================================================
+// BILLING VIEW
+// ============================================================
+function billingKpis() {
+  const queue = getBillingQueue();
+  const allOrders = queue.reduce((s, g) => s + g.orders.length, 0);
+  const readyOrders = queue.reduce((s, g) => s + g.readyCount, 0);
+  const readyValue = queue.reduce((s, g) =>
+    s + g.orders.filter(o => billingBlockers(o).length === 0).reduce((t, o) => t + (invoiceValueOf(o) || 0), 0), 0);
+  const awaiting = state.orders.filter(o => o.invoiceStatus === 'Sent to Accountant').length;
+  const blocked = allOrders - readyOrders;
+
+  return `
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      ${kpiTile('accent', 'Ready value', formatSARShort(readyValue), null, 'd1')}
+      ${kpiTile('primary', 'Ready to send', formatNumber(readyOrders), null, 'd2')}
+      ${kpiTile('info', 'Awaiting accountant', formatNumber(awaiting), null, 'd3')}
+      ${kpiTile('danger', 'Blocked', formatNumber(blocked), null, 'd4')}
+    </div>
+  `;
+}
+
+function billingToolbar() {
+  const s = state.settings;
+  const hasAccountant = !!String(s.accountantPhone || '').trim();
+  return `
+    <div class="card p-4 md:p-5 fade-up">
+      <div class="toolbar">
+        <div class="seg tb-auto">
+          <button data-action="billing-tab" data-tab="queue" class="${state.billingTab === 'queue' ? 'on' : ''}">Ready to invoice</button>
+          <button data-action="billing-tab" data-tab="batches" class="${state.billingTab === 'batches' ? 'on' : ''}">Sent batches</button>
+        </div>
+        <div class="relative tb-grow">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--sub);"></i>
+          <input id="billing-search-input" type="text" aria-label="Search the billing queue" value="${attr(state.billingSearch)}" placeholder="Search customer, item or order ID..." class="input" style="padding-left: 38px;" data-upper="1" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
+        </div>
+        <button data-action="open-settings" class="btn ${hasAccountant ? 'btn-ghost' : 'btn-accent'} tb-auto" title="Set the accountant's WhatsApp number">
+          <i data-lucide="user-cog" class="w-4 h-4"></i><span>${hasAccountant ? esc(s.accountantName || 'Accountant') : 'Set accountant'}</span>
+        </button>
+      </div>
+      ${!hasAccountant ? `
+        <div class="mt-3 flex items-start gap-2.5 p-3 rounded-xl" style="background: var(--accent-soft); border: 1px solid rgba(201,162,39,0.34);">
+          <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5" style="color: #A8811A;"></i>
+          <p class="text-[12px]" style="color: var(--sub);">Add the accountant's WhatsApp number once and every batch will open already addressed to him. Without it, WhatsApp will ask you to pick the contact each time.</p>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function billingRow(o) {
+  const blockers = billingBlockers(o);
+  const blocked = blockers.length > 0;
+  const selected = state.billingSelected.includes(o.orderId);
+  const v = varianceOf(o);
+  const produced = producedOf(o);
+  const value = invoiceValueOf(o);
+  const overdue = isOverdue(o.deadline, o.deliveryStatus);
+
+  let varianceChip = '';
+  if (v) {
+    if (v.level === 'exact') varianceChip = '<span class="chip chip-success">exact</span>';
+    else {
+      const sign = v.diff > 0 ? '+' : '';
+      const cls = v.level === 'high' ? 'chip chip-danger' : 'chip chip-warning';
+      varianceChip = '<span class="' + cls + '">' + sign + v.pct.toFixed(1) + '%</span>';
+    }
+  }
+
+  return `
+    <div class="bill-row ${blocked ? 'blocked' : ''}">
+      <button class="bill-check ${selected ? 'on' : ''} ${blocked ? 'off' : ''}"
+        data-action="${blocked ? 'noop' : 'toggle-bill-pick'}" data-order-id="${attr(o.orderId)}"
+        aria-label="${blocked ? 'Cannot select, fix the problems first' : (selected ? 'Deselect' : 'Select') + ' ' + attr(o.orderId)}"
+        ${blocked ? 'disabled' : ''}></button>
+
+      <div class="flex-1 min-w-0 space-y-1.5">
+        <p class="text-[13.5px] font-bold leading-tight" style="color: var(--text);">${dash(esc(o.description))}</p>
+
+        <div class="flex items-center gap-2 flex-wrap text-[11.5px]">
+          ${o.quantity != null && produced != null && Number(o.quantity) !== produced
+            ? '<span class="qty-struck">' + formatNumber(o.quantity) + '</span>' : ''}
+          <input type="text" inputmode="decimal" data-numeric="1"
+            class="qty-input ${produced == null ? 'empty' : ''}"
+            data-action="set-produced" data-order-id="${attr(o.orderId)}"
+            id="produced-${attr(o.orderId)}"
+            value="${attr(produced == null ? '' : String(produced))}"
+            placeholder="${attr(o.quantity != null ? String(o.quantity) : 'qty')}"
+            aria-label="Produced quantity for ${attr(o.orderId)}">
+          <span style="color: var(--sub); font-weight:600;">${esc(o.qtyUnit || '')}</span>
+          ${varianceChip}
+          ${overdue ? '<span class="chip chip-danger">late</span>' : ''}
+        </div>
+
+        <p class="text-[11px]" style="color: var(--muted);">
+          <span class="font-mono">${esc(o.orderId)}</span>
+          ${o.unitPrice != null ? ' · ' + formatSAR(o.unitPrice) + ' / ' + esc(o.qtyUnit || 'unit') : ''}
+          ${Number(o.clicheValue) ? ' · cliche ' + formatNumber(o.clicheValue) : ''}
+        </p>
+
+        ${blocked ? '<div class="flex gap-1.5 flex-wrap">' +
+          blockers.map(b => '<span class="chip chip-danger">' + esc(b) + '</span>').join('') +
+          '<button data-action="edit-order" data-order-id="' + attr(o.orderId) + '" class="btn btn-ghost btn-sm"><i data-lucide="pencil" class="w-3 h-3"></i> Fix</button>' +
+          '</div>' : ''}
+      </div>
+
+      <div class="text-right shrink-0">
+        <p class="text-[13.5px] font-extrabold tabular-nums" style="color: ${blocked ? 'var(--muted)' : 'var(--text)'};">
+          ${value != null ? formatSAR(value) : DASH}
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function billingQueueRegion() {
+  const queue = getBillingQueue();
+  if (queue.length === 0) {
+    return emptyState('check-check', 'Nothing waiting to be invoiced',
+      'Orders appear here the moment production is marked Completed and they have not been invoiced yet.');
+  }
+
+  return queue.map(g => {
+    const readyOrders = g.orders.filter(o => billingBlockers(o).length === 0);
+    const allPicked = readyOrders.length > 0 && readyOrders.every(o => state.billingSelected.includes(o.orderId));
+    const groupTotal = readyOrders.reduce((s, o) => s + (invoiceValueOf(o) || 0), 0);
+
+    return `
+      <div class="card overflow-hidden fade-up">
+        <div class="flex items-center gap-3 p-3 md:p-4" style="background: rgba(250,248,242,0.85); border-bottom: 1px solid var(--border);">
+          <div class="avatar shrink-0" style="width:38px;height:38px;font-size:12px;">${esc(customerInitials(g.customerName))}</div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-extrabold truncate" style="color: var(--text);">${esc(g.customerName)}</p>
+            <p class="text-[11px] font-mono" style="color: ${g.customerNumber ? 'var(--muted)' : 'var(--danger)'};">
+              ${g.customerNumber ? esc(g.customerNumber) : 'no customer number'}
+            </p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-sm font-extrabold tabular-nums" style="color: var(--text);">${formatSAR(groupTotal)}</p>
+            <p class="text-[10px]" style="color: var(--muted);">${g.readyCount} of ${g.orders.length} ready</p>
+          </div>
+          ${readyOrders.length > 0 ? `
+            <button data-action="toggle-bill-group" data-customer="${attr(g.customerName)}" class="btn btn-ghost btn-sm shrink-0">
+              <i data-lucide="${allPicked ? 'square' : 'check-square'}" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">${allPicked ? 'None' : 'All'}</span>
+            </button>
+          ` : ''}
+        </div>
+        ${g.orders.map(billingRow).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function billingBatchesRegion() {
+  if (state.batches.length === 0) {
+    return emptyState('history', 'No batches sent yet',
+      'Every batch you send to the accountant is saved here with the exact quantities and prices it carried.');
+  }
+  const sorted = state.batches.slice().sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0));
+
+  return sorted.map(b => {
+    const orderIds = (b.lines || []).map(l => l.orderId);
+    const stillOpen = orderIds.filter(id => {
+      const o = state.orders.find(x => x.orderId === id);
+      return o && o.invoiceStatus === 'Sent to Accountant';
+    }).length;
+    const days = Math.floor((Date.now() - new Date(b.sentAt).getTime()) / 86400000);
+    const closed = stillOpen === 0;
+
+    return `
+      <div class="card overflow-hidden fade-up">
+        <div class="flex items-center gap-3 p-3 md:p-4" style="background: rgba(250,248,242,0.85); border-bottom: 1px solid var(--border);">
+          <div class="kpi-icon ${closed ? 'icon-success' : 'icon-accent'} shrink-0" style="width:38px;height:38px;border-radius:13px;">
+            <i data-lucide="${closed ? 'check' : 'send'}" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-extrabold font-mono truncate" style="color: var(--text);">${esc(b.batchId)}</p>
+            <p class="text-[11px]" style="color: var(--muted);">
+              ${formatDate(b.sentAt)} · ${b.customerCount} customer${b.customerCount === 1 ? '' : 's'} · ${(b.lines || []).length} item${(b.lines || []).length === 1 ? '' : 's'}
+            </p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-sm font-extrabold tabular-nums" style="color: var(--text);">${formatSAR(b.total)}</p>
+            ${closed
+              ? '<span class="chip chip-success">All invoiced</span>'
+              : '<span class="chip ' + (days > 7 ? 'chip-danger' : 'chip-warning') + '">' + (days === 0 ? 'sent today' : days + ' day' + (days === 1 ? '' : 's')) + '</span>'}
+          </div>
+        </div>
+        <div class="p-3 md:p-4 flex gap-2 flex-wrap items-center">
+          <button data-action="open-batch" data-batch-id="${attr(b.batchId)}" class="btn btn-ghost btn-sm">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i> What was sent
+          </button>
+          ${!closed ? `
+            <button data-action="resend-batch" data-batch-id="${attr(b.batchId)}" class="btn btn-ghost btn-sm">
+              <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Re-send
+            </button>
+            <button data-action="mark-batch-invoiced" data-batch-id="${attr(b.batchId)}" class="btn btn-primary btn-sm ml-auto">
+              <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Mark all invoiced
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function billingResults() {
+  return state.billingTab === 'batches' ? billingBatchesRegion() : billingQueueRegion();
+}
+
+function billingSendBar() {
+  const picked = getSelectedOrders();
+  if (state.billingTab !== 'queue' || picked.length === 0) return '';
+  const groups = buildSendGroups();
+  return `
+    <div class="send-bar fade-up">
+      <div class="min-w-0">
+        <p class="text-[11px] font-bold uppercase tracking-wide" style="color: var(--sub);">
+          ${picked.length} item${picked.length === 1 ? '' : 's'} · ${groups.length} customer${groups.length === 1 ? '' : 's'}
+        </p>
+        <p class="text-lg font-extrabold tabular-nums leading-tight" style="color: var(--text);">${formatSAR(selectedTotal())}</p>
+      </div>
+      <button data-action="clear-bill-pick" class="btn btn-ghost btn-sm">Clear</button>
+      <button data-action="open-send" class="btn btn-primary ml-auto">
+        <i data-lucide="send" class="w-4 h-4"></i> Send to accountant
+      </button>
+    </div>
+  `;
+}
+
+function renderBillingContent() {
+  return `
+    ${pageHeader('Billing', 'Send completed orders to the accountant with the quantity that was actually produced.')}
+    <div id="kpi-region" class="space-y-4">${billingKpis()}</div>
+    ${billingToolbar()}
+    <div id="results-region" class="space-y-4">${billingResults()}</div>
+    <div id="send-bar-region">${billingSendBar()}</div>
+  `;
+}
+
+// ============================================================
+// SEND SHEET — confirm the batch, then hand it to WhatsApp
+// ============================================================
+function renderSendModal() {
+  if (!state.sendOpen) return '';
+  const groups = buildSendGroups();
+  if (groups.length === 0) return '';
+
+  const batchId = getNextBatchId();
+  const dateText = formatDate(new Date().toISOString());
+  const total = groups.reduce((s, g) => s + g.total, 0);
+  const s = state.settings;
+  const hasPhone = !!String(s.accountantPhone || '').trim();
+  const preview = buildWhatsAppMessage(groups[0], batchId, dateText);
+  const longest = Math.max(...groups.map(g => encodeURIComponent(buildWhatsAppMessage(g, batchId, dateText)).length));
+
+  return `
+    <div class="modal-backdrop" role="dialog" aria-modal="true" data-action="close-send-backdrop">
+      <div class="modal-content max-w-xl max-h-[92vh] overflow-y-auto scroll-thin">
+        <div class="modal-head p-6">
+          <div class="relative" style="z-index:1;">
+            <h2 class="mh-title text-xl font-bold">Send ${esc(batchId)}</h2>
+            <p class="mh-sub text-sm mt-1">${groups.length} customer${groups.length === 1 ? '' : 's'} · ${groups.reduce((n, g) => n + g.orders.length, 0)} items · ${formatSAR(total)}</p>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <div class="space-y-2">
+            <button class="send-opt ${state.sendMethod === 'text' ? 'sel' : ''}" data-action="send-method" data-method="text">
+              <span class="oi" style="background:#128C7E;"><i data-lucide="message-circle" class="w-4 h-4"></i></span>
+              <span class="min-w-0">
+                <span class="block text-[13.5px] font-bold" style="color: var(--text);">Text table — opens the chat</span>
+                <span class="block text-[11.5px] mt-0.5" style="color: var(--sub);">One tap per customer. WhatsApp opens${hasPhone ? ' already addressed to ' + esc(s.accountantName || 'the accountant') : ' and asks you to pick the contact'}, message written.</span>
+              </span>
+            </button>
+            <button class="send-opt ${state.sendMethod === 'copy' ? 'sel' : ''}" data-action="send-method" data-method="copy">
+              <span class="oi" style="background: var(--accent);"><i data-lucide="clipboard-copy" class="w-4 h-4"></i></span>
+              <span class="min-w-0">
+                <span class="block text-[13.5px] font-bold" style="color: var(--text);">Copy the text instead</span>
+                <span class="block text-[11.5px] mt-0.5" style="color: var(--sub);">Puts every message on the clipboard so you can paste it wherever you like.</span>
+              </span>
+            </button>
+          </div>
+
+          ${longest > 1800 ? `
+            <div class="flex items-start gap-2.5 p-3 rounded-xl" style="background: var(--warning-soft); border: 1px solid var(--warning-line);">
+              <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5" style="color: var(--warning);"></i>
+              <p class="text-[12px]" style="color: var(--sub);">One of these messages is long enough that iOS may truncate it. Consider sending that customer in two smaller batches.</p>
+            </div>
+          ` : ''}
+
+          <div class="rounded-2xl p-3" style="background: rgba(27,42,74,0.05); border: 1px solid var(--border);">
+            <p class="text-[10px] uppercase tracking-wider font-bold mb-2" style="color: var(--sub);">
+              Preview — ${esc(groups[0].customerName)}${groups.length > 1 ? ' (1 of ' + groups.length + ')' : ''}
+            </p>
+            <pre style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 0; color: var(--text);">${esc(preview)}</pre>
+          </div>
+
+          <div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--primary-soft); border: 1px solid var(--border);">
+            <i data-lucide="user-round" class="w-4 h-4 shrink-0" style="color: var(--primary);"></i>
+            <div class="min-w-0 flex-1">
+              <p class="text-[12.5px] font-bold" style="color: var(--text);">${esc(s.accountantName || 'No accountant saved')}</p>
+              <p class="text-[11px] font-mono" style="color: var(--muted);">${hasPhone ? esc(s.accountantPhone) : 'WhatsApp will ask you to choose'}</p>
+            </div>
+            <button data-action="open-settings" class="btn btn-ghost btn-sm shrink-0">Change</button>
+          </div>
+
+          <p class="text-[11.5px]" style="color: var(--muted);">
+            ${(() => { const n = groups.reduce((t, g) => t + g.orders.length, 0);
+              return 'Sending marks ' + (n === 1 ? 'this order' : 'these ' + n + ' orders'); })()} as <span class="font-bold">Sent to Accountant</span> and saves the batch, so nothing can be sent twice by accident.
+          </p>
+        </div>
+
+        <div class="p-5 flex gap-2 flex-wrap" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);">
+          <button data-action="close-send" class="btn btn-ghost">Cancel</button>
+          <button data-action="confirm-send" class="btn btn-primary ml-auto">
+            <i data-lucide="${state.sendMethod === 'copy' ? 'clipboard-copy' : 'send'}" class="w-4 h-4"></i>
+            ${state.sendMethod === 'copy' ? 'Copy and mark sent' : 'Open WhatsApp · ' + groups.length + ' message' + (groups.length === 1 ? '' : 's')}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// BATCH DETAIL — exactly what was sent, as it was sent
+// ============================================================
+function renderBatchDetailModal() {
+  if (!state.selectedBatchId) return '';
+  const b = state.batches.find(x => x.batchId === state.selectedBatchId);
+  if (!b) return '';
+
+  return `
+    <div class="modal-backdrop" role="dialog" aria-modal="true" data-action="close-batch-backdrop">
+      <div class="modal-content max-w-2xl max-h-[92vh] overflow-y-auto scroll-thin">
+        <div class="modal-head p-6">
+          <div class="relative" style="z-index:1;">
+            <h2 class="mh-title text-xl font-bold font-mono">${esc(b.batchId)}</h2>
+            <p class="mh-sub text-sm mt-1">Sent ${formatDate(b.sentAt)} · ${formatSAR(b.total)}</p>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <p class="text-[12px]" style="color: var(--sub);">These are the figures as they stood when the batch was sent. Editing an order afterwards does not change this record.</p>
+
+          <div class="card overflow-hidden">
+            <div class="overflow-x-auto scroll-thin">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th class="w-24">Order</th>
+                    <th class="min-w-[130px]">Customer</th>
+                    <th class="min-w-[150px]">Description</th>
+                    <th class="text-right w-20">Ordered</th>
+                    <th class="text-right w-20">Produced</th>
+                    <th class="text-right w-24">Price</th>
+                    <th class="text-right w-28">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(b.lines || []).map(l => {
+                    const current = state.orders.find(o => o.orderId === l.orderId);
+                    const invoiced = current && current.invoiceStatus === 'Invoiced';
+                    return `
+                      <tr>
+                        <td class="font-mono text-xs">${esc(l.orderId)}${invoiced ? ' <span class="chip chip-success">✓</span>' : ''}</td>
+                        <td class="text-xs">${esc(l.customerName)}<br><span class="font-mono" style="color:var(--muted);">${esc(l.customerNumber || '')}</span></td>
+                        <td class="text-xs">${esc(l.description)}</td>
+                        <td class="text-right tabular-nums text-xs">${l.orderedQty != null ? formatNumber(l.orderedQty) : DASH}</td>
+                        <td class="text-right tabular-nums text-xs font-bold">${formatNumber(l.producedQty)} ${esc(l.qtyUnit || '')}</td>
+                        <td class="text-right tabular-nums text-xs">${formatSAR(l.unitPrice)}</td>
+                        <td class="text-right tabular-nums text-xs font-bold">${formatSAR(l.value)}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <details class="card p-4">
+            <summary class="text-[12.5px] font-bold cursor-pointer" style="color: var(--text);">The exact messages that were sent</summary>
+            <div class="mt-3 space-y-3">
+              ${(b.messages || []).map(m => `
+                <div class="rounded-xl p-3" style="background: rgba(27,42,74,0.05); border: 1px solid var(--border);">
+                  <p class="text-[10px] uppercase tracking-wider font-bold mb-2" style="color: var(--sub);">${esc(m.customerName)}</p>
+                  <pre style="font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 0; color: var(--text);">${esc(m.text)}</pre>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+        </div>
+
+        <div class="p-5 flex gap-2 flex-wrap" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);">
+          <button data-action="close-batch" class="btn btn-ghost">Close</button>
+          <button data-action="mark-batch-invoiced" data-batch-id="${attr(b.batchId)}" class="btn btn-primary ml-auto">
+            <i data-lucide="check-check" class="w-4 h-4"></i> Mark all invoiced
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SETTINGS — who the batches go to
+// ============================================================
+function renderSettingsModal() {
+  if (!state.settingsOpen) return '';
+  const s = state.settings;
+  return `
+    <div class="modal-backdrop" role="dialog" aria-modal="true" data-action="close-settings-backdrop" style="z-index:110;">
+      <div class="modal-content max-w-md max-h-[92vh] overflow-y-auto scroll-thin">
+        <div class="modal-head p-6">
+          <div class="relative" style="z-index:1;">
+            <h2 class="mh-title text-xl font-bold">Accountant &amp; billing</h2>
+            <p class="mh-sub text-sm mt-1">Saved on this device only.</p>
+          </div>
+        </div>
+
+        <form id="settings-form" class="p-6 space-y-4" onsubmit="return false">
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold" style="color: var(--text);">Accountant name</label>
+            <input name="accountantName" type="text" value="${attr(s.accountantName || '')}" placeholder="e.g. MOHAMMED" class="input" data-upper="1" autocapitalize="characters">
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold" style="color: var(--text);">WhatsApp number</label>
+            <input name="accountantPhone" type="tel" inputmode="tel" value="${attr(s.accountantPhone || '')}" placeholder="9665XXXXXXXX" class="input">
+            <p class="text-[11px]" style="color: var(--muted);">Country code first, no plus sign and no spaces. A Saudi number starts 9665.</p>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold" style="color: var(--text);">Variance tolerance (%)</label>
+            <input name="varianceTolerance" type="text" inputmode="decimal" data-numeric="1" value="${attr(String(s.varianceTolerance == null ? 5 : s.varianceTolerance))}" placeholder="5" class="input">
+            <p class="text-[11px]" style="color: var(--muted);">Produced quantities further than this from the ordered quantity are flagged red so you check them before sending.</p>
+          </div>
+          <label class="flex items-start gap-2.5 p-3 rounded-xl cursor-pointer" style="background: rgba(27,42,74,0.04); border: 1px solid var(--border);">
+            <input name="includeCsvTail" type="checkbox" ${s.includeCsvTail ? 'checked' : ''} style="margin-top:3px;width:16px;height:16px;">
+            <span>
+              <span class="block text-[12.5px] font-bold" style="color: var(--text);">Add a comma-separated copy</span>
+              <span class="block text-[11px]" style="color: var(--sub);">Appends the same lines in a form he can paste straight into Excel.</span>
+            </span>
+          </label>
+        </form>
+
+        <div class="p-5 flex gap-2 flex-wrap" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);">
+          <button data-action="close-settings" class="btn btn-ghost">Cancel</button>
+          <button data-action="save-settings" class="btn btn-primary ml-auto"><i data-lucide="save" class="w-4 h-4"></i> Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderOrderDetailModal() {
   if (!state.selectedOrderId) return '';
   const order = state.orders.find(o => o.orderId === state.selectedOrderId);
@@ -2319,8 +3120,59 @@ function renderOrderDetailModal() {
 
           <hr class="divider">
 
+          ${(() => {
+            const v = varianceOf(order);
+            const produced = producedOf(order);
+            const value = invoiceValueOf(order);
+            if (produced == null) {
+              return order.productionStatus === 'Completed' ? `
+                <div class="flex items-start gap-2.5 p-3 rounded-xl" style="background: var(--accent-soft); border: 1px solid rgba(201,162,39,0.34);">
+                  <i data-lucide="clipboard-pen" class="w-4 h-4 shrink-0 mt-0.5" style="color: #A8811A;"></i>
+                  <p class="text-sm" style="color: var(--sub);">Production is complete but no produced quantity has been entered, so this cannot be sent to the accountant yet. Add it on the <span class="font-bold">Billing</span> tab or by editing the order.</p>
+                </div>` : '';
+            }
+            const tone = !v || v.level === 'exact' ? 'success' : (v.level === 'high' ? 'danger' : 'warning');
+            const sign = v && v.diff > 0 ? '+' : '';
+            return `
+              <div class="rounded-2xl p-4" style="background: rgba(255,255,255,0.65); border: 1px solid var(--border);">
+                <p class="text-[10px] uppercase tracking-wider font-bold mb-3" style="color: var(--sub);">Ordered vs produced</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="rounded-xl p-3" style="background: rgba(27,42,74,0.04); border: 1px solid var(--border);">
+                    <p class="text-[10px] uppercase tracking-wide font-bold" style="color: var(--sub);">Ordered</p>
+                    <p class="text-xl font-extrabold tabular-nums" style="color: var(--text);">${formatNumber(order.quantity)}</p>
+                    <p class="text-[10px]" style="color: var(--muted);">${esc(order.qtyUnit || '')} · locked</p>
+                  </div>
+                  <div class="rounded-xl p-3" style="background: var(--accent-soft); border: 1.5px solid rgba(201,162,39,0.55);">
+                    <p class="text-[10px] uppercase tracking-wide font-bold" style="color: #8A6D10;">Produced</p>
+                    <p class="text-xl font-extrabold tabular-nums" style="color: #6F5708;">${formatNumber(produced)}</p>
+                    <p class="text-[10px]" style="color: #8A6D10;">${esc(order.qtyUnit || '')} · invoiced figure</p>
+                  </div>
+                </div>
+                ${v && v.level !== 'exact' ? `
+                  <div class="mt-3 flex items-center gap-2 p-2.5 rounded-xl" style="background: var(--${tone}-soft);">
+                    <span class="chip chip-${tone}">${sign}${formatNumber(v.diff)} ${esc(order.qtyUnit || '')} · ${sign}${v.pct.toFixed(1)}%</span>
+                    <span class="text-[12px]" style="color: var(--${tone});">
+                      ${v.diff > 0 ? 'Over-production' : 'Under-production'}${v.level === 'high' ? ' — beyond tolerance, worth checking' : ', within tolerance'}
+                    </span>
+                  </div>` : '<div class="mt-3"><span class="chip chip-success">Produced exactly as ordered</span></div>'}
+                ${value != null ? `
+                  <div class="mt-3 pt-3 flex items-baseline justify-between" style="border-top: 1px solid var(--border);">
+                    <span class="text-[12px]" style="color: var(--sub);">${formatNumber(produced)} × ${formatSAR(order.unitPrice)}${Number(order.clicheValue) ? ' + cliche ' + formatNumber(order.clicheValue) : ''}</span>
+                    <span class="text-lg font-extrabold tabular-nums" style="color: var(--primary);">${formatSAR(value)}</span>
+                  </div>` : ''}
+              </div>
+            `;
+          })()}
+
+          ${order.invoiceRequestId ? `
+            <div class="flex items-start gap-2.5 p-3 rounded-xl" style="background: var(--info-soft); border: 1px solid var(--info-line);">
+              <i data-lucide="send" class="w-4 h-4 shrink-0 mt-0.5" style="color: var(--info);"></i>
+              <p class="text-sm" style="color: var(--sub);">Sent to the accountant on <span class="font-bold" style="color: var(--text);">${formatDate(order.invoiceRequestDate)}</span> in batch <span class="font-mono font-bold" style="color: var(--text);">${esc(order.invoiceRequestId)}</span>.</p>
+            </div>
+          ` : ''}
+
           <dl class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            ${coloredField('Quantity', formatNumber(order.quantity), 'var(--teal)', 'hash')}
+            ${coloredField('Quantity ordered', formatNumber(order.quantity), 'var(--teal)', 'hash')}
             ${coloredField('Qty Unit', esc(order.qtyUnit), 'var(--teal)', 'ruler')}
             ${coloredField('Unit Price', order.unitPrice != null ? formatSAR(order.unitPrice) : null, 'var(--warning)', 'tag')}
             ${coloredField('Cliche Value', order.clicheValue != null ? formatSAR(order.clicheValue) : null, 'var(--violet)', 'palette')}
@@ -2359,7 +3211,7 @@ const PRODUCT_TYPES = ['Plain Items', 'Printed Boxes', 'Printed Cups', 'Printed 
 const ORDER_TYPES = ['New Order', 'Reorder'];
 const QTY_UNITS = ['PCS', 'CTN', 'KGS', 'KILO', 'M', 'M²', 'ROLL', 'PKT', 'BOX'];
 const PRODUCTION_STATUSES = ['In Progress', 'Completed'];
-const INVOICE_STATUSES = ['Not Invoiced', 'Invoiced'];
+const INVOICE_STATUSES = ['Not Invoiced', 'Sent to Accountant', 'Invoiced'];
 const DELIVERY_STATUSES = ['Not Shipped', 'Partially Delivered', 'Fully Delivered'];
 const PAYMENT_STATUSES = ['No Payment', '50% Advance Paid', 'Fully Paid'];
 const YES_NO = ['Yes', 'No'];
@@ -2374,6 +3226,7 @@ function renderOrderFormModal() {
       orderDate: new Date().toISOString().slice(0, 10),
       customerNumber: '', customerName: '', orderType: 'New Order', productType: '',
       description: '', quantity: '', qtyUnit: 'PCS', unitPrice: '', clicheValue: '', totalValue: '',
+      producedQty: '',
       deadline: '', productionStatus: 'In Progress', invoiceStatus: 'Not Invoiced',
       deliveryStatus: 'Not Shipped', remainingQty: '', advance50Paid: 'No', fullPayment: 'No', paymentSummary: 'No Payment',
     };
@@ -2383,7 +3236,7 @@ function renderOrderFormModal() {
     form = { ...existing };
     if (form.orderDate) form.orderDate = toDateInput(form.orderDate);
     if (form.deadline) form.deadline = toDateInput(form.deadline);
-    ['quantity', 'unitPrice', 'clicheValue', 'totalValue', 'remainingQty'].forEach(k => {
+    ['quantity', 'producedQty', 'unitPrice', 'clicheValue', 'totalValue', 'remainingQty'].forEach(k => {
       form[k] = form[k] == null ? '' : String(form[k]);
     });
   }
@@ -2461,7 +3314,8 @@ function renderOrderFormModal() {
           <div class="space-y-3">
             <h3 class="text-xs font-bold uppercase tracking-wider" style="color: var(--sub);">Quantity &amp; pricing</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              ${numericField('Quantity', 'quantity', form.quantity, '0')}
+              ${numericField('Quantity ordered', 'quantity', form.quantity, '0')}
+              ${numericField('Quantity produced', 'producedQty', form.producedQty, 'from production sheet')}
               ${selectField('Qty Unit', 'qtyUnit', form.qtyUnit, QTY_UNITS)}
               ${numericField('Unit Price (SAR)', 'unitPrice', form.unitPrice, '0.00')}
               ${numericField('Cliche Value (SAR)', 'clicheValue', form.clicheValue, '0.00')}
@@ -2471,7 +3325,7 @@ function renderOrderFormModal() {
                 <input name="totalValue" type="text" inputmode="decimal" value="${attr(form.totalValue)}" placeholder="auto-calculated" class="input" style="background: rgba(27,42,74,0.05); cursor: not-allowed;" readonly>
               </div>
             </div>
-            <p class="text-[11px]" style="color: var(--sub);">Auto = Quantity × Unit Price + Cliche Value</p>
+            <p class="text-[11px]" style="color: var(--sub);">Auto = Quantity × Unit Price + Cliche Value. Once a produced quantity is entered, the produced figure is what gets invoiced.</p>
           </div>
 
           <hr class="divider">
@@ -2578,11 +3432,15 @@ function sanitizeDecimal(value) {
 function recalcTotalValue() {
   const formEl = document.getElementById('order-form');
   if (!formEl) return;
-  const qtyInput = formEl.querySelector('[name="quantity"]');
+  const orderedInput = formEl.querySelector('[name="quantity"]');
+  const producedInput = formEl.querySelector('[name="producedQty"]');
   const priceInput = formEl.querySelector('[name="unitPrice"]');
   const clicheInput = formEl.querySelector('[name="clicheValue"]');
   const totalInput = formEl.querySelector('[name="totalValue"]');
-  if (!qtyInput || !priceInput || !totalInput) return;
+  if (!orderedInput || !priceInput || !totalInput) return;
+  // Once a produced quantity exists it is what the total is based on.
+  const hasProduced = producedInput && producedInput.value.trim() !== '';
+  const qtyInput = hasProduced ? producedInput : orderedInput;
   const qty = parseFloat(qtyInput.value);
   const price = parseFloat(priceInput.value);
   const cliche = clicheInput ? (parseFloat(clicheInput.value) || 0) : 0;
@@ -2613,14 +3471,17 @@ function saveForm() {
     return;
   }
 
-  ['quantity', 'unitPrice', 'clicheValue', 'totalValue', 'remainingQty'].forEach(k => {
+  ['quantity', 'producedQty', 'unitPrice', 'clicheValue', 'totalValue', 'remainingQty'].forEach(k => {
     const n = Number(data[k]);
     data[k] = (data[k] === '' || isNaN(n)) ? null : n;
   });
   ['orderDate', 'deadline'].forEach(k => { data[k] = data[k] || null; });
 
-  if (data.totalValue == null && data.quantity != null && data.unitPrice != null) {
-    data.totalValue = data.quantity * data.unitPrice + (data.clicheValue || 0);
+  // The produced quantity wins once it exists — that is the figure
+  // the accountant will invoice.
+  const billable = data.producedQty != null ? data.producedQty : data.quantity;
+  if (data.totalValue == null && billable != null && data.unitPrice != null) {
+    data.totalValue = billable * data.unitPrice + (data.clicheValue || 0);
   }
 
   if (state.formMode === 'create') {
@@ -2712,6 +3573,271 @@ function confirmUnmerge(aliasName, masterName) {
   });
 }
 
+
+// ============================================================
+// BILLING ACTIONS
+// ============================================================
+function setBillingTab(tab) {
+  state.billingTab = tab;
+  render();
+}
+
+function toggleBillPick(orderId) {
+  const order = state.orders.find(o => o.orderId === orderId);
+  if (!order || billingBlockers(order).length > 0) return;
+  const i = state.billingSelected.indexOf(orderId);
+  if (i === -1) state.billingSelected.push(orderId);
+  else state.billingSelected.splice(i, 1);
+  render();
+}
+
+function toggleBillGroup(customerName) {
+  const group = getBillingQueue().find(g => g.customerName === customerName);
+  if (!group) return;
+  const ready = group.orders.filter(o => billingBlockers(o).length === 0).map(o => o.orderId);
+  const allPicked = ready.length > 0 && ready.every(id => state.billingSelected.includes(id));
+  if (allPicked) {
+    state.billingSelected = state.billingSelected.filter(id => !ready.includes(id));
+  } else {
+    for (const id of ready) {
+      if (!state.billingSelected.includes(id)) state.billingSelected.push(id);
+    }
+  }
+  render();
+}
+
+function clearBillPick() {
+  state.billingSelected = [];
+  render();
+}
+
+// Typing a produced quantity writes straight through to the order.
+// The row is re-rendered scoped so the field keeps focus on iOS.
+function setProducedQty(orderId, rawValue) {
+  const order = state.orders.find(o => o.orderId === orderId);
+  if (!order) return;
+  const trimmed = String(rawValue).trim();
+  const n = Number(trimmed);
+  const value = (trimmed === '' || isNaN(n)) ? null : n;
+  order.producedQty = value;
+  // Keep the headline order value in step with what will be invoiced.
+  const recalculated = invoiceValueOf(order);
+  if (recalculated != null) order.totalValue = recalculated;
+  // A row that has just lost its produced quantity cannot stay selected.
+  if (billingBlockers(order).length > 0) {
+    state.billingSelected = state.billingSelected.filter(id => id !== orderId);
+  }
+  saveOrders();
+}
+
+function openSendSheet() {
+  if (getSelectedOrders().length === 0) {
+    toast('Nothing selected', 'Tick at least one item first.', 'destructive');
+    return;
+  }
+  state.sendOpen = true;
+  render();
+}
+function closeSendSheet() { state.sendOpen = false; render(); }
+
+function openSettings() { state.settingsOpen = true; render(); }
+function closeSettings() { state.settingsOpen = false; render(); }
+
+function saveSettingsForm() {
+  const formEl = document.getElementById('settings-form');
+  if (!formEl) return;
+  const get = (name) => {
+    const el = formEl.querySelector('[name="' + name + '"]');
+    return el ? el.value : '';
+  };
+  const tolerance = Number(get('varianceTolerance'));
+  const cb = formEl.querySelector('[name="includeCsvTail"]');
+
+  state.settings = {
+    ...state.settings,
+    accountantName: get('accountantName').trim().toUpperCase(),
+    accountantPhone: get('accountantPhone').replace(/[^0-9]/g, ''),
+    varianceTolerance: isNaN(tolerance) || tolerance <= 0 ? 5 : tolerance,
+    includeCsvTail: !!(cb && cb.checked),
+  };
+  saveSettings();
+  state.settingsOpen = false;
+  toast('Saved', state.settings.accountantPhone
+    ? 'Batches will open addressed to ' + (state.settings.accountantName || 'the accountant') + '.'
+    : 'WhatsApp will ask you to choose the contact.');
+  render();
+}
+
+// Build the batch record, stamp the orders, then hand each message
+// to WhatsApp. Opening several tabs in a row is blocked by iOS, so
+// the messages are opened one at a time with a short gap between.
+function confirmSend() {
+  const groups = buildSendGroups();
+  if (groups.length === 0) { closeSendSheet(); return; }
+
+  const batchId = getNextBatchId();
+  const sentAt = new Date().toISOString();
+  const dateText = formatDate(sentAt);
+
+  const lines = [];
+  const messages = [];
+  for (const g of groups) {
+    const text = buildWhatsAppMessage(g, batchId, dateText);
+    messages.push({ customerName: g.customerName, customerNumber: g.customerNumber, text: text });
+    for (const o of g.orders) {
+      lines.push({
+        orderId: o.orderId,
+        customerName: o.customerName,
+        customerNumber: String(o.customerNumber || ''),
+        description: o.description,
+        orderedQty: o.quantity != null ? Number(o.quantity) : null,
+        producedQty: billableQty(o),
+        qtyUnit: o.qtyUnit || '',
+        unitPrice: Number(o.unitPrice),
+        clicheValue: Number(o.clicheValue) || 0,
+        value: invoiceValueOf(o),
+      });
+    }
+  }
+
+  const batch = {
+    batchId: batchId,
+    sentAt: sentAt,
+    method: state.sendMethod,
+    accountantName: state.settings.accountantName || '',
+    accountantPhone: state.settings.accountantPhone || '',
+    customerCount: groups.length,
+    total: lines.reduce((s, l) => s + (l.value || 0), 0),
+    lines: lines,
+    messages: messages,
+  };
+
+  state.batches.push(batch);
+  saveBatches();
+
+  // Stamp every order so it leaves the queue and cannot be sent twice.
+  for (const l of lines) {
+    const o = state.orders.find(x => x.orderId === l.orderId);
+    if (!o) continue;
+    o.invoiceStatus = 'Sent to Accountant';
+    o.invoiceRequestId = batchId;
+    o.invoiceRequestDate = sentAt;
+  }
+  saveOrders();
+
+  state.billingSelected = [];
+  state.sendOpen = false;
+
+  if (state.sendMethod === 'copy') {
+    const joined = messages.map(m => m.text).join('\n\n');
+    copyText(joined);
+    toast('Copied and marked sent', batchId + ' · ' + messages.length + ' message' + (messages.length === 1 ? '' : 's') + ' on the clipboard.');
+    render();
+    return;
+  }
+
+  openWhatsAppMessages(messages, batchId);
+  render();
+}
+
+// Opens the first message immediately — that keeps it inside the
+// user's tap, which is what iOS requires — and offers the rest one
+// at a time so no pop-up is ever blocked.
+function openWhatsAppMessages(messages, batchId) {
+  const phone = state.settings.accountantPhone;
+  if (messages.length === 0) return;
+
+  window.open(waLink(phone, messages[0].text), '_blank');
+
+  if (messages.length === 1) {
+    toast('Sent', batchId + ' opened in WhatsApp.');
+    return;
+  }
+  showNextMessagePrompt(messages, 1, batchId);
+}
+
+function showNextMessagePrompt(messages, index, batchId) {
+  if (index >= messages.length) return;
+  const container = document.createElement('div');
+  container.className = 'modal-backdrop';
+  container.setAttribute('role', 'dialog');
+  container.setAttribute('aria-modal', 'true');
+  container.style.zIndex = '130';
+  container.innerHTML =
+    '<div class="modal-content max-w-md w-full p-6">' +
+      '<div class="flex items-center gap-3 mb-3">' +
+        '<div class="kpi-icon icon-accent shrink-0" style="border-radius:14px;"><i data-lucide="message-circle" class="w-5 h-5"></i></div>' +
+        '<h3 class="text-lg font-bold" style="color: var(--text);">Next customer</h3>' +
+      '</div>' +
+      '<p class="text-sm mb-5" style="color: var(--sub);">' +
+        'Message ' + (index + 1) + ' of ' + messages.length + ' — ' +
+        '<span class="font-bold" style="color: var(--text);">' + esc(messages[index].customerName) + '</span>. ' +
+        'Come back here after sending it and tap below for the next one.' +
+      '</p>' +
+      '<div class="flex gap-2 justify-end">' +
+        '<button id="next-msg-stop" class="btn btn-ghost">Stop here</button>' +
+        '<button id="next-msg-go" class="btn btn-primary"><i data-lucide="send" class="w-4 h-4"></i> Open message ' + (index + 1) + '</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(container);
+  if (window.lucide) lucide.createIcons();
+
+  const close = () => container.remove();
+  container.querySelector('#next-msg-stop').addEventListener('click', () => {
+    close();
+    toast('Stopped', 'The batch is saved. Re-send it from Sent batches whenever you like.');
+  });
+  container.querySelector('#next-msg-go').addEventListener('click', () => {
+    close();
+    window.open(waLink(state.settings.accountantPhone, messages[index].text), '_blank');
+    if (index + 1 < messages.length) showNextMessagePrompt(messages, index + 1, batchId);
+    else toast('Sent', batchId + ' · all ' + messages.length + ' messages opened.');
+  });
+}
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) { console.warn('Copy failed', e); }
+  ta.remove();
+}
+
+function openBatchDetail(batchId) { state.selectedBatchId = batchId; render(); }
+function closeBatchDetail() { state.selectedBatchId = null; render(); }
+
+function resendBatch(batchId) {
+  const b = state.batches.find(x => x.batchId === batchId);
+  if (!b || !(b.messages || []).length) return;
+  openWhatsAppMessages(b.messages, b.batchId);
+}
+
+function markBatchInvoiced(batchId) {
+  const b = state.batches.find(x => x.batchId === batchId);
+  if (!b) return;
+  let n = 0;
+  for (const l of (b.lines || [])) {
+    const o = state.orders.find(x => x.orderId === l.orderId);
+    if (o && o.invoiceStatus === 'Sent to Accountant') {
+      o.invoiceStatus = 'Invoiced';
+      n++;
+    }
+  }
+  saveOrders();
+  state.selectedBatchId = null;
+  toast('Marked invoiced', n + ' order' + (n === 1 ? '' : 's') + ' closed on ' + batchId + '.');
+  render();
+}
 
 // ============================================================
 // NAVIGATION / STATE ACTIONS
@@ -2939,6 +4065,9 @@ function handleDelegatedClick(e) {
     if (a === 'close-merge-backdrop') return closeMergeModal();
     if (a === 'close-add-brand-backdrop') return closeAddBrand();
     if (a === 'close-item-backdrop') return closeItemHistory();
+    if (a === 'close-send-backdrop') return closeSendSheet();
+    if (a === 'close-batch-backdrop') return closeBatchDetail();
+    if (a === 'close-settings-backdrop') return closeSettings();
   }
 
   const el = e.target.closest('[data-action]');
@@ -3016,6 +4145,24 @@ function handleDelegatedClick(e) {
       return confirmUnmerge(el.dataset.alias, master);
     }
 
+    case 'noop':              return;
+    case 'billing-tab':       return setBillingTab(el.dataset.tab);
+    case 'toggle-bill-pick':  return toggleBillPick(el.dataset.orderId);
+    case 'toggle-bill-group': return toggleBillGroup(el.dataset.customer);
+    case 'clear-bill-pick':   return clearBillPick();
+    case 'set-produced':      return;      // handled on 'input'
+    case 'open-send':         return openSendSheet();
+    case 'close-send':        return closeSendSheet();
+    case 'send-method':       { state.sendMethod = el.dataset.method; return render(); }
+    case 'confirm-send':      return confirmSend();
+    case 'open-settings':     return openSettings();
+    case 'close-settings':    return closeSettings();
+    case 'save-settings':     return saveSettingsForm();
+    case 'open-batch':        return openBatchDetail(el.dataset.batchId);
+    case 'close-batch':       return closeBatchDetail();
+    case 'resend-batch':      return resendBatch(el.dataset.batchId);
+    case 'mark-batch-invoiced': return markBatchInvoiced(el.dataset.batchId);
+
     case 'open-item':         return openItemHistory(el.dataset.itemKey);
     case 'close-item':        return closeItemHistory();
     case 'item-view-orders':  { const n = el.dataset.customer; closeItemHistory(); return goToOrdersWithCustomer(n); }
@@ -3034,6 +4181,11 @@ function handleDelegatedChange(e) {
   const el = e.target.closest('[data-action]');
   if (!el) return;
   if (el.dataset.action === 'set-filter') return setFilter(el.dataset.key, el.value);
+  // Leaving the produced-qty field refreshes its variance chip and value.
+  if (el.dataset.action === 'set-produced') {
+    setProducedQty(el.dataset.orderId, el.value);
+    return render();
+  }
   if (el.dataset.action === 'set-item-filter') {
     state[el.dataset.key] = el.value;
     state.itemPage = 1;
@@ -3058,8 +4210,19 @@ function handleDelegatedInput(e) {
     }
   }
 
+  // Produced quantity is written through on every keystroke, but only
+  // the totals are re-rendered — replacing the row would take the
+  // keyboard down on iOS mid-number. The row's own chips refresh on
+  // blur, through the 'change' handler.
+  if (el.dataset && el.dataset.action === 'set-produced') {
+    setProducedQty(el.dataset.orderId, el.value);
+    el.classList.toggle('empty', el.value.trim() === '');
+    renderBillingScoped();
+    return;
+  }
+
   const name = el.getAttribute && el.getAttribute('name');
-  if (name === 'quantity' || name === 'unitPrice' || name === 'clicheValue') recalcTotalValue();
+  if (name === 'quantity' || name === 'producedQty' || name === 'unitPrice' || name === 'clicheValue') recalcTotalValue();
   if (name === 'customerName' || name === 'description') updateLastPriceHint();
 
   if (el.id === 'merge-search') {
@@ -3099,12 +4262,28 @@ function renderSearchScoped() {
   } else if (state.view === 'customers') {
     kpi.innerHTML = customersKpis();
     res.innerHTML = customersResults();
+  } else if (state.view === 'billing') {
+    kpi.innerHTML = billingKpis();
+    res.innerHTML = billingResults();
+    const bar = document.getElementById('send-bar-region');
+    if (bar) bar.innerHTML = billingSendBar();
   } else {
     kpi.innerHTML = ordersKpis();
     res.innerHTML = ordersResults();
   }
   if (window.lucide) lucide.createIcons();
 }
+// Refreshes only the totals on the Billing tab, leaving every row —
+// and the focused produced-qty field — exactly where it is.
+function renderBillingScoped() {
+  if (state.view !== 'billing') return;
+  const kpi = document.getElementById('kpi-region');
+  const bar = document.getElementById('send-bar-region');
+  if (kpi) kpi.innerHTML = billingKpis();
+  if (bar) bar.innerHTML = billingSendBar();
+  if (window.lucide) lucide.createIcons();
+}
+
 function scheduleScopedRender(key, delay) {
   clearTimeout(_debounceTimers[key]);
   _debounceTimers[key] = setTimeout(() => renderSearchScoped(), delay == null ? 220 : delay);
@@ -3155,6 +4334,14 @@ function attachEventListeners() {
       scheduleScopedRender('itemSearch');
     });
   }
+  const billingSearchInput = document.getElementById('billing-search-input');
+  if (billingSearchInput && !billingSearchInput.dataset.bound) {
+    billingSearchInput.dataset.bound = '1';
+    billingSearchInput.addEventListener('input', (e) => {
+      state.billingSearch = e.target.value;
+      scheduleScopedRender('billingSearch');
+    });
+  }
   if (document.getElementById('order-form')) {
     recalcTotalValue();
     updateLastPriceHint();
@@ -3198,6 +4385,8 @@ function renderCmdResults(query) {
     { icon: 'sliders-horizontal', label: 'Toggle filters', desc: 'Show or hide the filter panel', run: () => { closeCmdPalette(); if (state.view !== 'orders') setView('orders'); else toggleFilters(); } },
     { icon: 'clipboard-list', label: 'Go to Orders', desc: 'Switch to the orders view', run: () => { closeCmdPalette(); setView('orders'); } },
     { icon: 'users', label: 'Go to Customers', desc: 'Switch to the customers view', run: () => { closeCmdPalette(); setView('customers'); } },
+    { icon: 'receipt-text', label: 'Go to Billing', desc: 'Send completed orders to the accountant', run: () => { closeCmdPalette(); setView('billing'); } },
+    { icon: 'user-cog', label: 'Set the accountant', desc: 'Save the WhatsApp number batches go to', run: () => { closeCmdPalette(); setView('billing'); openSettings(); } },
   ];
 
   const filteredActions = q ? actions.filter(a => a.label.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)) : actions.slice(0, 5);
@@ -3581,6 +4770,8 @@ function init() {
   loadOrders();
   loadCustomerMasters();
   loadCustomerGroups();
+  loadBatches();
+  loadSettings();
 
   document.addEventListener('click', handleDelegatedClick);
   document.addEventListener('change', handleDelegatedChange);
