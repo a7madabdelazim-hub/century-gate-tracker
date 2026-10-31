@@ -1757,7 +1757,7 @@ function ordersResults() {
 
 function renderOrdersContent() {
   return `
-    ${pageHeader('Orders', 'Search, filter and track every customer order')}
+    ${pageHeader('Orders', 'Search, filter and track every customer order', '<button data-action="import-quote" class="btn btn-primary shrink-0"><i data-lucide="file-down" class="w-4 h-4"></i> Import from Quotation</button>')}
     <div id="kpi-region" class="space-y-4">${ordersKpis()}</div>
     ${ordersToolbar()}
     <div id="results-region">${ordersResults()}</div>
@@ -3200,6 +3200,7 @@ function renderOrderDetailModal() {
             ${field('Customer Name', esc(order.customerName))}
             ${field('Customer Number', order.customerNumber ? '<span class="font-mono">' + esc(order.customerNumber) + '</span>' : null)}
             ${field('Description', esc(order.description))}
+            ${order.quotationRef ? field('From Quotation', '<span class="font-mono">' + esc(order.quotationRef) + '</span>') : ''}
           </dl>
 
           <hr class="divider">
@@ -3293,7 +3294,7 @@ function miniStatChip(label, chipHtml) {
 // ============================================================
 const PRODUCT_TYPES = ['Plain Items', 'Printed Boxes', 'Printed Cups', 'Printed Napkins', 'Printed Paper Bags', 'Printed Sheet'];
 const ORDER_TYPES = ['New Order', 'Reorder'];
-const QTY_UNITS = ['PCS', 'CTN', 'KGS', 'KILO', 'M', 'M²', 'ROLL', 'PKT', 'BOX'];
+const QTY_UNITS = ['CTN', 'PCS', 'KILO'];
 const PRODUCTION_STATUSES = ['In Progress', 'Completed'];
 const INVOICE_STATUSES = ['Not Invoiced', 'Sent to Accountant', 'Invoiced'];
 const DELIVERY_STATUSES = ['Not Shipped', 'Partially Delivered', 'Fully Delivered'];
@@ -3328,6 +3329,7 @@ function renderOrderFormModal() {
   function selectField(label, name, value, options) {
     return '<div class="space-y-1.5"><label class="text-xs font-semibold" style="color: var(--text);">' + esc(label) + '</label>' +
       '<select name="' + name + '" class="input h-9"><option value="">' + DASH + '</option>' +
+      (value && options.indexOf(value) === -1 ? '<option value="' + attr(value) + '" selected>' + esc(value) + '</option>' : '') +
       options.map(o => '<option value="' + attr(o) + '"' + (o === value ? ' selected' : '') + '>' + esc(o) + '</option>').join('') +
       '</select></div>';
   }
@@ -3576,6 +3578,183 @@ function saveForm() {
     toast('Order updated', data.orderId + ' has been saved.');
   }
   closeForm();
+}
+
+// ============================================================
+// IMPORT FROM QUOTATION
+// The Quotation app copies an accepted quotation as text starting
+// with "CGC-QUOTE:". This reads it, matches the customer by
+// Customer Number, shows a review, then creates one order per line.
+// ============================================================
+function parseQuotePayload(text) {
+  const raw = String(text || '').trim();
+  const i = raw.indexOf('CGC-QUOTE:');
+  if (i === -1) return null;
+  try {
+    const p = JSON.parse(raw.slice(i + 10).trim());
+    if (!p || !p.ref || !Array.isArray(p.lines) || !p.lines.length) return null;
+    return p;
+  } catch (e) { return null; }
+}
+function normDesc(d) { return String(d || '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+function openQuoteImport() {
+  const box = document.createElement('div');
+  box.className = 'modal-backdrop';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-modal', 'true');
+  box.style.zIndex = '110';
+  box.innerHTML = '<div class="modal-content max-w-2xl w-full max-h-[93vh] overflow-y-auto scroll-thin" id="qi-card"></div>';
+  document.body.appendChild(box);
+  const card = box.querySelector('#qi-card');
+  const close = () => box.remove();
+  box.addEventListener('click', (e) => { if (e.target === box) close(); });
+  let R = null; // review state
+
+  function head(title, sub) {
+    return '<div class="modal-head p-6"><div class="relative" style="z-index:1;"><h2 class="mh-title text-xl font-bold">' + esc(title) + '</h2><p class="mh-sub text-sm mt-1">' + esc(sub) + '</p></div></div>';
+  }
+  function note(tone, html) {
+    return '<div class="p-3 rounded-xl text-sm" style="background: var(--' + tone + '-soft); border: 1px solid var(--' + tone + '-line, var(--border)); color: var(--' + tone + ');">' + html + '</div>';
+  }
+
+  function drawPaste(msg) {
+    card.innerHTML = head('Import from Quotation', 'In the Quotation app, open the accepted quotation and press "Send to Order Tracker". Then come back here.') +
+      '<div class="p-6 space-y-3">' + (msg ? note('danger', msg) : '') +
+      '<button id="qi-read" class="btn btn-primary w-full"><i data-lucide="clipboard-paste" class="w-4 h-4"></i> Paste from Quotation app</button>' +
+      '<p class="text-xs" style="color: var(--sub);">If the button does not work, long-press the box below, choose Paste, then press Continue.</p>' +
+      '<textarea id="qi-text" rows="3" class="input" placeholder="CGC-QUOTE:..." style="font-family: ui-monospace, monospace; font-size: 12px;"></textarea>' +
+      '</div><div class="p-5 flex gap-2" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);"><button id="qi-cancel" class="btn btn-ghost">Cancel</button><button id="qi-go" class="btn btn-primary ml-auto">Continue</button></div>';
+    if (window.lucide) lucide.createIcons();
+    card.querySelector('#qi-cancel').addEventListener('click', close);
+    card.querySelector('#qi-go').addEventListener('click', () => useText(card.querySelector('#qi-text').value));
+    card.querySelector('#qi-read').addEventListener('click', readClipboard);
+  }
+  function readClipboard() {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(useText).catch(() => drawPaste('Could not read the clipboard. Paste it into the box instead.'));
+    } else drawPaste('This browser cannot read the clipboard. Paste it into the box instead.');
+  }
+  function useText(text) {
+    const p = parseQuotePayload(text);
+    if (!p) return drawPaste('That is not a quotation from the Quotation app. Press "Send to Order Tracker" there first, then try again.');
+    startReview(p);
+  }
+
+  function startReview(p) {
+    const no = String(p.customerNumber || '').trim().toUpperCase();
+    const dupOrders = state.orders.filter(o => o.quotationRef === p.ref);
+    let match = null;
+    if (no && no !== 'NEW') {
+      const hits = state.orders.filter(o => String(o.customerNumber || '').trim() === no)
+        .sort((a, b) => String(b.orderDate || '').localeCompare(String(a.orderDate || '')));
+      if (hits.length) match = hits[0].customerName;
+    }
+    const custName = match || String(p.customerName || '').toUpperCase().trim();
+    const custKey = normName(resolveCustomerName(custName));
+    R = {
+      p, no, match, custName, dupOrders, confirmNew: false, tried: false,
+      deadline: p.deadline || '',
+      orderDate: p.acceptedDate || new Date().toISOString().slice(0, 10),
+      lines: p.lines.map(l => {
+        const desc = normDesc(l.description);
+        const past = state.orders.find(o => normDesc(o.description) === desc &&
+          ((no && no !== 'NEW' && String(o.customerNumber || '').trim() === no) || normName(resolveCustomerName(o.customerName)) === custKey));
+        const anyPast = past || state.orders.find(o => normDesc(o.description) === desc && o.productType);
+        const qty = Number(l.qty) || 0, price = Number(l.unitPrice) || 0, cliche = Number(l.clicheCost) || 0;
+        return {
+          desc, qty, price, cliche,
+          productType: PRODUCT_TYPES.indexOf(l.productType) !== -1 ? l.productType : (anyPast && anyPast.productType) || '',
+          typeFrom: PRODUCT_TYPES.indexOf(l.productType) !== -1 ? 'quote' : (anyPast && anyPast.productType ? 'past' : ''),
+          unit: QTY_UNITS.indexOf(String(l.unit || '').toUpperCase()) !== -1 ? String(l.unit).toUpperCase() : '',
+          origUnit: l.unit || '',
+          orderType: past ? 'Reorder' : 'New Order',
+        };
+      }),
+    };
+    drawReview();
+  }
+
+  function drawReview() {
+    const p = R.p;
+    let h = head('Review ' + p.ref, 'Check everything, then create the orders.') + '<div class="p-6 space-y-4">';
+    if (R.dupOrders.length) {
+      h += note('danger', '<b>Already imported.</b> ' + esc(p.ref) + ' is already in the Tracker as ' + R.dupOrders.map(o => esc(o.orderId)).join(', ') + '. Nothing will be added. If you changed the quotation after sending it, edit those orders by hand.');
+      card.innerHTML = h + '</div><div class="p-5 flex gap-2" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);"><button id="qi-cancel" class="btn btn-primary ml-auto">Close</button></div>';
+      card.querySelector('#qi-cancel').addEventListener('click', close);
+      return;
+    }
+    if (p.currency && p.currency !== 'SAR') {
+      h += note('danger', '<b>This quotation is in ' + esc(p.currency) + '.</b> The Tracker works in SAR only, so it cannot be imported.');
+      card.innerHTML = h + '</div><div class="p-5 flex gap-2" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);"><button id="qi-cancel" class="btn btn-primary ml-auto">Close</button></div>';
+      card.querySelector('#qi-cancel').addEventListener('click', close);
+      return;
+    }
+    h += '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+      '<div class="space-y-1.5"><label class="text-xs font-semibold">Customer name</label><input class="input" value="' + attr(R.custName) + '" readonly style="background: rgba(27,42,74,0.05);"></div>' +
+      '<div class="space-y-1.5"><label class="text-xs font-semibold">Customer number</label><input class="input font-mono" value="' + attr(R.no) + '" readonly style="background: rgba(27,42,74,0.05);"></div></div>';
+    if (R.match) {
+      h += note('violet', '<b>Matched by number.</b> ' + esc(R.no) + ' is <b>' + esc(R.match) + '</b> in your Tracker, so the orders go there.' + (normName(R.match) !== normName(p.customerName) ? ' The quotation calls it "' + esc(p.customerName) + '".' : ''));
+    } else if (R.no === 'NEW') {
+      h += note('violet', '<b>New customer.</b> The orders are saved under "' + esc(R.custName) + '" with number NEW.');
+    } else {
+      h += note('danger', '<b>Number ' + esc(R.no) + ' is not in your Tracker.</b> It may be a typo. Check the customer card in the Quotation app. If it really is a new number, confirm below.') +
+        '<label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="qi-confirm" ' + (R.confirmNew ? 'checked' : '') + '> Yes, ' + esc(R.no) + ' is correct. Create "' + esc(R.custName) + '" as a new customer.</label>' +
+        (R.tried && !R.confirmNew ? '<p class="text-xs font-semibold" style="color: var(--danger);">Confirm the number, or cancel and fix it in the Quotation app.</p>' : '');
+    }
+    h += '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+      '<div class="space-y-1.5"><label class="text-xs font-semibold">Order date (day accepted)</label><input type="date" class="input" value="' + attr(R.orderDate) + '" readonly style="background: rgba(27,42,74,0.05);"></div>' +
+      '<div class="space-y-1.5"><label class="text-xs font-semibold">Deadline (optional)</label><input type="date" id="qi-deadline" class="input" value="' + attr(R.deadline) + '"></div></div>';
+    R.lines.forEach((l, i) => {
+      const bad = R.tried && (!l.productType || !l.unit);
+      h += '<div class="rounded-xl p-3 space-y-2" style="border: ' + (bad ? '2px solid var(--danger)' : '1px solid var(--border)') + ';">' +
+        '<div class="flex justify-between gap-2"><span class="font-bold text-sm">' + (i + 1) + '. ' + esc(l.desc) + '</span>' + statusChip(l.orderType) + '</div>' +
+        '<div class="grid grid-cols-2 gap-2">' +
+        '<div class="space-y-1"><label class="text-[11px] font-semibold" style="color: var(--sub);">Product type' + (l.typeFrom === 'past' ? ' · from past orders' : '') + '</label><select class="input h-9" data-qi-type="' + i + '"><option value="">' + DASH + '</option>' + PRODUCT_TYPES.map(t => '<option' + (t === l.productType ? ' selected' : '') + '>' + esc(t) + '</option>').join('') + '</select></div>' +
+        '<div class="space-y-1"><label class="text-[11px] font-semibold" style="color: var(--sub);">Unit' + (!l.unit && l.origUnit ? ' · "' + esc(l.origUnit) + '" not in Tracker' : '') + '</label><select class="input h-9" data-qi-unit="' + i + '"><option value="">' + DASH + '</option>' + QTY_UNITS.map(u => '<option' + (u === l.unit ? ' selected' : '') + '>' + esc(u) + '</option>').join('') + '</select></div></div>' +
+        '<p class="text-sm">' + formatNumber(l.qty) + ' × ' + formatSAR(l.price) + (l.cliche ? ' + cliche ' + formatSAR(l.cliche) : '') + ' = <b>' + formatSAR(l.qty * l.price + l.cliche) + '</b> <span class="text-xs" style="color: var(--sub);">(no VAT)</span></p>' +
+        (bad ? '<p class="text-xs font-semibold" style="color: var(--danger);">Choose ' + (!l.productType && !l.unit ? 'a product type and a unit' : (!l.productType ? 'a product type' : 'a unit')) + '.</p>' : '') +
+        '</div>';
+    });
+    h += '<p class="text-xs" style="color: var(--sub);">New orders start as In Progress · Not Invoiced · Not Shipped · No Payment.</p></div>';
+    h += '<div class="p-5 flex gap-2" style="border-top: 1px solid var(--border); background: rgba(27,42,74,0.035);"><button id="qi-cancel" class="btn btn-ghost">Cancel</button><button id="qi-create" class="btn btn-primary ml-auto"><i data-lucide="check" class="w-4 h-4"></i> Create ' + R.lines.length + ' order' + (R.lines.length === 1 ? '' : 's') + '</button></div>';
+    card.innerHTML = h;
+    if (window.lucide) lucide.createIcons();
+    card.querySelector('#qi-cancel').addEventListener('click', close);
+    card.querySelector('#qi-create').addEventListener('click', create);
+    const dl = card.querySelector('#qi-deadline'); if (dl) dl.addEventListener('change', () => { R.deadline = dl.value; });
+    const cf = card.querySelector('#qi-confirm'); if (cf) cf.addEventListener('change', () => { R.confirmNew = cf.checked; drawReview(); });
+    card.querySelectorAll('[data-qi-type]').forEach(el => el.addEventListener('change', () => { const l = R.lines[+el.dataset.qiType]; l.productType = el.value; l.typeFrom = ''; }));
+    card.querySelectorAll('[data-qi-unit]').forEach(el => el.addEventListener('change', () => { R.lines[+el.dataset.qiUnit].unit = el.value; }));
+  }
+
+  function create() {
+    R.tried = true;
+    const needConfirm = !R.match && R.no !== 'NEW';
+    if ((needConfirm && !R.confirmNew) || R.lines.some(l => !l.productType || !l.unit)) return drawReview();
+    if (state.orders.some(o => o.quotationRef === R.p.ref)) { R.dupOrders = state.orders.filter(o => o.quotationRef === R.p.ref); return drawReview(); }
+    const ids = [];
+    R.lines.forEach(l => {
+      const id = getNextOrderId();
+      ids.push(id);
+      createOrder({
+        orderId: id, orderDate: R.orderDate, customerNumber: R.no, customerName: R.custName,
+        orderType: l.orderType, productType: l.productType, description: l.desc,
+        quantity: l.qty, qtyUnit: l.unit, unitPrice: l.price, clicheValue: l.cliche ? l.cliche : null,
+        totalValue: Math.round((l.qty * l.price + l.cliche) * 100) / 100,
+        producedQty: null, deadline: R.deadline || null,
+        productionStatus: 'In Progress', invoiceStatus: 'Not Invoiced', deliveryStatus: 'Not Shipped',
+        remainingQty: null, advance50Paid: 'No', fullPayment: 'No', paymentSummary: 'No Payment',
+        quotationRef: R.p.ref,
+      });
+    });
+    close();
+    state.view = 'orders';
+    toast('Orders created', ids.length === 1 ? ids[0] + ' from ' + R.p.ref : ids[0] + ' to ' + ids[ids.length - 1] + ' from ' + R.p.ref);
+    render();
+  }
+
+  drawPaste();
+  readClipboard();
 }
 
 // ============================================================
@@ -4224,6 +4403,7 @@ function handleDelegatedClick(e) {
     case 'page':            return changePage(el.dataset.scope, parseInt(el.dataset.delta, 10));
     case 'export-pdf':      return exportPDF();
     case 'new-order':       return openCreateForm();
+    case 'import-quote':    return openQuoteImport();
 
     case 'open-order':      return openOrderDetail(el.dataset.orderId);
     case 'close-order':     return closeOrderDetail();
