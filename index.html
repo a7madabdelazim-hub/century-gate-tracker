@@ -4128,6 +4128,7 @@ function saveForm() {
 // Each app writes and reads only its own section and ignores the other.
 // ============================================================
 const BACKUP_MAX_BYTES = 8 * 1024 * 1024;   // refuse absurdly large files
+const APP_VERSION = '12 Nov 2026 (2)';        // [E5] shown in Settings so you can tell which version an icon runs
 const ALL_STORAGE_KEYS = () => [STORAGE_KEY, CUSTOMERS_STORAGE_KEY, GROUPS_STORAGE_KEY, BATCHES_STORAGE_KEY, SETTINGS_STORAGE_KEY];
 
 function isIOSDevice() {
@@ -4180,6 +4181,7 @@ function backupSectionHtml() {
       '<button data-action="backup-restore" class="btn btn-ghost btn-sm"><i data-lucide="upload" class="w-4 h-4"></i> Restore backup</button>' +
     '</div>' +
     '<div class="p-3 rounded-xl space-y-1.5" style="background: rgba(27,42,74,0.04); border: 1px solid var(--border);">' +
+      row('Version', esc(APP_VERSION), false) +
       row('Last backup', esc(backupText) + (stale ? ' · export one now' : ''), stale) +
       row('Orders on this device', formatNumber(state.orders.length), false) +
       row('Storage used', formatNumber(storageUsedKB()) + ' KB', false) +
@@ -4487,7 +4489,8 @@ function openQuoteImport() {
         productType: fromQuote ? l.productType : (anyPast && anyPast.productType) || '',
         typeFrom: fromQuote ? 'quote' : (anyPast && anyPast.productType ? 'past' : ''),
         unit, origUnit: l.unit,
-        orderType: past ? 'Reorder' : 'New Order',
+        orderType: past ? 'Reorder' : 'New Order',   // a guess the user can change [E4]
+        pastId: past ? past.orderId : '',
         match: match || null,
         status: !match ? 'new' : (changes.length ? 'changed' : 'same'),
         changes,
@@ -4578,10 +4581,12 @@ function openQuoteImport() {
       if (creating) {
         h += '<div class="grid grid-cols-2 gap-2">' +
           '<div class="space-y-1"><label class="text-[11px] font-semibold" style="color: var(--sub);">Product type' + (l.typeFrom === 'past' ? ' · from past orders' : '') + '</label><select class="input h-9" data-qi-type="' + i + '"><option value="">' + DASH + '</option>' + PRODUCT_TYPES.map(t => '<option' + (t === l.productType ? ' selected' : '') + '>' + esc(t) + '</option>').join('') + '</select></div>' +
-          '<div class="space-y-1"><label class="text-[11px] font-semibold" style="color: var(--sub);">Unit' + (!l.unit && l.origUnit ? ' · "' + esc(l.origUnit) + '" not in Tracker' : '') + '</label><select class="input h-9" data-qi-unit="' + i + '"><option value="">' + DASH + '</option>' + QTY_UNITS.map(u => '<option' + (u === l.unit ? ' selected' : '') + '>' + esc(u) + '</option>').join('') + '</select></div></div>';
+          '<div class="space-y-1"><label class="text-[11px] font-semibold" style="color: var(--sub);">Unit' + (!l.unit && l.origUnit ? ' · "' + esc(l.origUnit) + '" not in Tracker' : '') + '</label><select class="input h-9" data-qi-unit="' + i + '"><option value="">' + DASH + '</option>' + QTY_UNITS.map(u => '<option' + (u === l.unit ? ' selected' : '') + '>' + esc(u) + '</option>').join('') + '</select></div>' +
+          // [E4] Reorder = this item was produced for this customer before. Pre-filled, but yours to change.
+          '<div class="space-y-1" style="grid-column: 1 / -1;"><label class="text-[11px] font-semibold" style="color: var(--sub);">Order type · ' + (l.pastId ? 'found before: ' + esc(l.pastId) : 'no past order with this exact description') + '</label><select class="input h-9" data-qi-otype="' + i + '">' + ORDER_TYPES.map(t => '<option' + (t === l.orderType ? ' selected' : '') + '>' + esc(t) + '</option>').join('') + '</select></div></div>';
       }
       h += '<p class="text-sm">' + formatNumber(l.qty) + ' × ' + formatSAR(l.price) + (l.cliche ? ' + cliche ' + formatSAR(l.cliche) : '') + ' = <b>' + formatSAR(l.qty * l.price + l.cliche) + '</b> <span class="text-xs" style="color: var(--sub);">(no VAT)</span>' +
-        (creating && l.status === 'new' ? ' ' + statusChip(l.orderType) : '') + '</p>' +
+        '</p>' +
         (bad ? '<p class="text-xs font-semibold" style="color: var(--danger);">Choose ' + (!l.productType && !l.unit ? 'a product type and a unit' : (!l.productType ? 'a product type' : 'a unit')) + '.</p>' : '') +
         '</div>';
     });
@@ -4625,6 +4630,7 @@ function openQuoteImport() {
     const ak = card.querySelector('#qi-ack'); if (ak) ak.addEventListener('change', () => { R.ackDup = ak.checked; drawReview(); });
     card.querySelectorAll('input[name="qi-mode"]').forEach(el => el.addEventListener('change', () => { R.mode = el.value; R.tried = false; drawReview(); }));
     card.querySelectorAll('[data-qi-type]').forEach(el => el.addEventListener('change', () => { const l = R.lines[+el.dataset.qiType]; l.productType = el.value; l.typeFrom = ''; }));
+    card.querySelectorAll('[data-qi-otype]').forEach(el => el.addEventListener('change', () => { R.lines[+el.dataset.qiOtype].orderType = el.value; }));
     card.querySelectorAll('[data-qi-unit]').forEach(el => el.addEventListener('change', () => { R.lines[+el.dataset.qiUnit].unit = el.value; }));
   }
 
